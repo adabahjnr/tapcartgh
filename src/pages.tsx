@@ -6,6 +6,7 @@ import {
 } from "lucide-react";
 import { MarketingLayout } from "@/components/marketing/MarketingLayout";
 import { AppShell, dashboardNav } from "@/components/app/AppShell";
+import { supabase } from "@/lib/supabase";
 import { Reveal } from "@/components/ui/reveal";
 import { GradientAvatar } from "@/components/ui/gradient-avatar";
 import { DotLoader, RingLoader, SkeletonShimmer } from "@/components/ui/loader";
@@ -367,14 +368,66 @@ export function ContactPage() {
 export function AuthPage() {
   const [searchParams] = useSearchParams();
   const [isSignup, setIsSignup] = React.useState(searchParams.get("mode") === "signup");
+  const [formState, setFormState] = React.useState({ username: "", email: "", password: "" });
   const [loading, setLoading] = React.useState(false);
+  const [error, setError] = React.useState<string | null>(null);
   const navigate = useNavigate();
 
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setError(null);
+    setLoading(true);
+
+    const email = formState.email.trim();
+    const password = formState.password;
+    const username = formState.username.trim();
+
+    if (!email || !password) {
+      setError("Please enter both email and password.");
+      setLoading(false);
+      return;
+    }
+
+    if (isSignup) {
+      if (!username) {
+        setError("Please choose a username for your store.");
+        setLoading(false);
+        return;
+      }
+
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: { username },
+        },
+      });
+
+      if (error) {
+        setError(error.message);
+      } else {
+        navigate("/dashboard");
+      }
+    } else {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) {
+        setError(error.message);
+      } else if (data.session) {
+        navigate("/dashboard");
+      }
+    }
+  };
+
   return (
-    <div className="relative flex min-h-screen flex-col bg-background">
-      <div className="tc-grid-bg pointer-events-none absolute inset-0 opacity-50" aria-hidden />
-      <div className="relative mx-auto w-full max-w-6xl px-6 py-6">
-        <Link to="/" className="text-base font-semibold tracking-tight">TapCart</Link>
+    <div className="flex min-h-screen flex-col bg-background">
+      <div className="mx-auto w-full max-w-6xl px-6 py-6">
+        <Link to="/" className="text-base font-semibold tracking-tight">
+          TapCart
+        </Link>
       </div>
       <div className="relative flex flex-1 items-center justify-center px-6 pb-20">
         <div className="tc-fade-up w-full max-w-sm rounded-3xl border border-border bg-card p-10 shadow-[0_30px_80px_-40px_rgba(0,0,0,0.25)]">
@@ -382,27 +435,51 @@ export function AuthPage() {
           <p className="mt-2 text-sm text-muted-foreground">
             {isSignup ? "It's free, forever." : "Sign in to your dashboard."}
           </p>
-          <form
-            className="mt-8 space-y-4"
-            onSubmit={(event) => {
-              event.preventDefault();
-              setLoading(true);
-              setTimeout(() => navigate("/dashboard"), 700);
-            }}
-          >
-            {isSignup && <Input label="Username" placeholder="yourname" prefix="tap-cart.shop/s/" />}
-            <Input label="Email" type="email" placeholder="you@example.com" />
-            <Input label="Password" type="password" placeholder="••••••••" />
+
+          {error ? <div className="rounded-2xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">{error}</div> : null}
+
+          <form className="mt-8 space-y-4" onSubmit={handleSubmit}>
+            {isSignup && (
+              <Input
+                label="Store username"
+                placeholder="yourname"
+                prefix="tap-cart.shop/s/"
+                value={formState.username}
+                onChange={(event) => setFormState((prev) => ({ ...prev, username: event.target.value }))}
+              />
+            )}
+            <Input
+              label="Email"
+              type="email"
+              placeholder="you@example.com"
+              value={formState.email}
+              onChange={(event) => setFormState((prev) => ({ ...prev, email: event.target.value }))}
+            />
+            <Input
+              label="Password"
+              type="password"
+              placeholder="••••••••"
+              value={formState.password}
+              onChange={(event) => setFormState((prev) => ({ ...prev, password: event.target.value }))}
+            />
             <button
+              type="submit"
               disabled={loading}
-              className="flex w-full items-center justify-center gap-2 rounded-full bg-primary px-6 py-3 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-80"
+              className="w-full rounded-full bg-primary px-6 py-3 text-sm font-medium text-primary-foreground hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {loading ? <DotLoader /> : isSignup ? "Create account" : "Sign in"}
             </button>
           </form>
           <p className="mt-6 text-center text-sm text-muted-foreground">
             {isSignup ? "Already have an account? " : "New to TapCart? "}
-            <button onClick={() => setIsSignup(!isSignup)} className="text-foreground tc-link-underline">
+            <button
+              type="button"
+              onClick={() => {
+                setIsSignup(!isSignup);
+                setError(null);
+              }}
+              className="text-foreground underline-offset-4 hover:underline"
+            >
               {isSignup ? "Sign in" : "Create one"}
             </button>
           </p>
