@@ -1,4 +1,4 @@
-import { Link } from "@tanstack/react-router";
+import { Link } from "react-router-dom";
 
 export function SiteFooter() {
   return (
@@ -22,7 +22,7 @@ export function SiteFooter() {
           ]} />
           <FooterCol title="Account" items={[
             { to: "/auth", label: "Sign in" },
-            { to: "/auth", label: "Get started" },
+            { to: "/auth?mode=signup", label: "Get started" },
           ]} />
         </div>
         <div className="mt-16 flex flex-col items-start justify-between gap-3 border-t border-border/60 pt-8 text-xs text-muted-foreground md:flex-row md:items-center">

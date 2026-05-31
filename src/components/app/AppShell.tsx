@@ -1,6 +1,6 @@
-import { Link, Outlet, useRouterState } from "@tanstack/react-router";
+import { Link, useLocation } from "react-router-dom";
 import { LayoutDashboard, Store, Package, ShoppingBag, BarChart3, Settings, ExternalLink } from "lucide-react";
-import type { ComponentType } from "react";
+import type { ComponentType, ReactNode } from "react";
 
 type NavItem = { to: string; label: string; icon: ComponentType<{ className?: string }> };
 
@@ -15,7 +15,7 @@ export function AppShell({
   storeLink?: string;
   children?: React.ReactNode;
 }) {
-  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const pathname = useLocation().pathname;
   return (
     <div className="flex min-h-screen bg-background">
       <aside className="hidden w-64 shrink-0 border-r border-border bg-sidebar md:flex md:flex-col">
@@ -43,7 +43,7 @@ export function AppShell({
         </nav>
         {storeLink && (
           <div className="border-t border-sidebar-border p-3">
-            <Link to="/s/$username" params={{ username: storeLink }} className="flex items-center justify-between rounded-md px-3 py-2 text-xs text-muted-foreground hover:bg-sidebar-accent hover:text-foreground">
+            <Link to={`/s/${storeLink}`} className="flex items-center justify-between rounded-md px-3 py-2 text-xs text-muted-foreground hover:bg-sidebar-accent hover:text-foreground">
               <span>View public store</span>
               <ExternalLink className="h-3.5 w-3.5" />
             </Link>
@@ -54,7 +54,7 @@ export function AppShell({
         <header className="border-b border-border px-6 py-4 md:px-10">
           <div className="text-xs text-muted-foreground">{brand}</div>
         </header>
-        <main className="flex-1 px-6 py-10 md:px-10 md:py-14">{children ?? <Outlet />}</main>
+        <main className="flex-1 px-6 py-10 md:px-10 md:py-14">{children}</main>
       </div>
     </div>
   );

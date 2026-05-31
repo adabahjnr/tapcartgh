@@ -1,4 +1,4 @@
-import { Link } from "@tanstack/react-router";
+import { Link } from "react-router-dom";
 import { useState } from "react";
 import { Menu, X } from "lucide-react";
 
@@ -24,7 +24,6 @@ export function SiteHeader() {
               key={l.to}
               to={l.to}
               className="text-sm text-muted-foreground transition-colors hover:text-foreground"
-              activeProps={{ className: "text-sm text-foreground" }}
             >
               {l.label}
             </Link>
@@ -35,8 +34,7 @@ export function SiteHeader() {
             Sign in
           </Link>
           <Link
-            to="/auth"
-            search={{ mode: "signup" }}
+            to="/auth?mode=signup"
             className="rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90"
           >
             Get started
@@ -54,8 +52,10 @@ export function SiteHeader() {
                 {l.label}
               </Link>
             ))}
-            <Link to="/auth" onClick={() => setOpen(false)} className="text-sm">Sign in</Link>
-            <Link to="/auth" onClick={() => setOpen(false)} className="rounded-full bg-primary px-4 py-2 text-center text-sm text-primary-foreground">
+            <Link to="/auth" onClick={() => setOpen(false)} className="text-sm text-muted-foreground">
+              Sign in
+            </Link>
+            <Link to="/auth?mode=signup" onClick={() => setOpen(false)} className="rounded-full bg-primary px-4 py-2 text-center text-sm text-primary-foreground">
               Get started
             </Link>
           </div>
