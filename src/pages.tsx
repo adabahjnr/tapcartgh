@@ -1,13 +1,14 @@
 import React from "react";
 import { Link, Outlet, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import {
-  ArrowRight, BarChart3, Bell, Check, LayoutDashboard, Package,
+  ArrowRight, BarChart3, Bell, Check, LayoutDashboard, Package, Plus, Trash2,
   ShoppingBag, Store, Users, Settings, Sparkles, MessageCircle, Link2,
 } from "lucide-react";
 import { MarketingLayout } from "@/components/marketing/MarketingLayout";
 import { AppShell, dashboardNav } from "@/components/app/AppShell";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth-context";
+import { useProfile, useProducts, useOrders, useStoreViews } from "@/lib/dashboard-data";
 import { Reveal } from "@/components/ui/reveal";
 import { GradientAvatar } from "@/components/ui/gradient-avatar";
 import { DotLoader, RingLoader, SkeletonShimmer } from "@/components/ui/loader";
@@ -541,13 +542,13 @@ export function AuthPage() {
   );
 }
 
-function Input({ label, prefix, ...rest }: { label: string; prefix?: string } & React.InputHTMLAttributes<HTMLInputElement>) {
+function Input({ label, prefix, required = true, className, ...rest }: { label: string; prefix?: string } & React.InputHTMLAttributes<HTMLInputElement>) {
   return (
     <label className="block">
       <span className="mb-2 block text-xs font-medium uppercase tracking-wider text-muted-foreground">{label}</span>
       <div className="flex items-stretch overflow-hidden rounded-lg border border-border transition-colors focus-within:border-foreground">
         {prefix && <span className="flex items-center bg-secondary px-3 text-xs text-muted-foreground">{prefix}</span>}
-        <input {...rest} required className="w-full bg-background px-4 py-3 text-sm outline-none" />
+        <input {...rest} required={required} className={`w-full bg-background px-4 py-3 text-sm outline-none disabled:opacity-60 ${className ?? ""}`} />
       </div>
     </label>
   );
@@ -556,8 +557,10 @@ function Input({ label, prefix, ...rest }: { label: string; prefix?: string } & 
 /* --------------------- DASHBOARD --------------------- */
 
 export function DashboardLayout() {
+  const { profile } = useProfile();
+  const brand = profile?.store_name?.trim() || profile?.full_name?.trim() || profile?.username || "Your store";
   return (
-    <AppShell items={dashboardNav} brand="Bloom & Co." storeLink="bloom">
+    <AppShell items={dashboardNav} brand={brand} storeLink={profile?.username ?? undefined}>
       <Outlet />
     </AppShell>
   );
@@ -590,14 +593,38 @@ function Stat({ label, value, prefix = "", suffix = "" }: { label: string; value
   );
 }
 
+function EmptyState({ title, body, action }: { title: string; body: string; action?: React.ReactNode }) {
+  return (
+    <div className="tc-fade-up flex flex-col items-center rounded-3xl border border-dashed border-border bg-card p-10 text-center">
+      <EmptyBoxIllustration className="h-24 w-24 text-muted-foreground" />
+      <h3 className="mt-6 text-lg font-semibold">{title}</h3>
+      <p className="mt-2 max-w-sm text-sm text-muted-foreground">{body}</p>
+      {action && <div className="mt-6">{action}</div>}
+    </div>
+  );
+}
+
 export function DashboardIndexPage() {
+  const { profile, loading: profileLoading } = useProfile();
+  const { products } = useProducts();
+  const { orders } = useOrders();
+  const { count: views } = useStoreViews();
+
+  const totalSales = orders.reduce((sum, o) => sum + Number(o.total ?? 0), 0);
+  const firstName = (profile?.full_name?.split(" ")[0]) || profile?.username || "there";
+
   return (
     <div className="space-y-8">
       <div className="tc-fade-up rounded-3xl border border-border bg-card p-8 shadow-sm">
         <div className="flex items-center justify-between gap-4">
           <div>
             <p className="text-xs uppercase tracking-[0.24em] text-muted-foreground">Overview</p>
-            <h1 className="mt-3 text-3xl font-semibold">Your dashboard</h1>
+            <h1 className="mt-3 text-3xl font-semibold">
+              {profileLoading ? "Welcome" : `Welcome, ${firstName}`}
+            </h1>
+            {profile?.username && (
+              <p className="mt-2 text-sm text-muted-foreground">tap-cart.shop/s/{profile.username}</p>
+            )}
           </div>
           <span className="inline-flex items-center gap-2 rounded-full bg-secondary px-3 py-1.5 text-xs text-muted-foreground">
             <span className="relative inline-flex h-1.5 w-1.5">
@@ -608,44 +635,69 @@ export function DashboardIndexPage() {
           </span>
         </div>
         <div className="tc-stagger mt-8 grid gap-4 md:grid-cols-3">
-          <Stat label="Orders" value={28} />
-          <Stat label="Sales" value={1400} prefix="$" />
-          <Stat label="Visitors" value={1924} />
+          <Stat label="Orders" value={orders.length} />
+          <Stat label="Sales" value={Math.round(totalSales)} prefix="$" />
+          <Stat label="Store views" value={views} />
         </div>
       </div>
-      <Reveal className="rounded-3xl border border-border bg-card p-8 shadow-sm">
-        <h2 className="text-xl font-semibold">Quick actions</h2>
-        <div className="tc-stagger mt-6 grid gap-4 md:grid-cols-3">
-          {[
-            { label: "Manage products", to: "/dashboard/products", icon: Package },
-            { label: "View orders", to: "/dashboard/orders", icon: ShoppingBag },
-            { label: "Open store page", to: "/dashboard/store", icon: Store },
-          ].map((item) => {
-            const Icon = item.icon;
-            return (
-              <Link key={item.to} to={item.to} className="tc-lift group flex items-center justify-between rounded-3xl border border-border bg-background px-5 py-6 text-sm font-medium">
-                <span className="flex items-center gap-3"><Icon className="h-4 w-4 text-muted-foreground" />{item.label}</span>
-                <ArrowRight className="h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-1" />
-              </Link>
-            );
-          })}
-        </div>
-      </Reveal>
+
+      {products.length === 0 && orders.length === 0 ? (
+        <EmptyState
+          title="Let's set up your store"
+          body="Add your first product to start sharing your TapCart link and accepting WhatsApp orders."
+          action={
+            <Link to="/dashboard/products" className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground">
+              <Plus className="h-4 w-4" /> Add a product
+            </Link>
+          }
+        />
+      ) : (
+        <Reveal className="rounded-3xl border border-border bg-card p-8 shadow-sm">
+          <h2 className="text-xl font-semibold">Quick actions</h2>
+          <div className="tc-stagger mt-6 grid gap-4 md:grid-cols-3">
+            {[
+              { label: "Manage products", to: "/dashboard/products", icon: Package },
+              { label: "View orders", to: "/dashboard/orders", icon: ShoppingBag },
+              { label: "Open store page", to: "/dashboard/store", icon: Store },
+            ].map((item) => {
+              const Icon = item.icon;
+              return (
+                <Link key={item.to} to={item.to} className="tc-lift group flex items-center justify-between rounded-3xl border border-border bg-background px-5 py-6 text-sm font-medium">
+                  <span className="flex items-center gap-3"><Icon className="h-4 w-4 text-muted-foreground" />{item.label}</span>
+                  <ArrowRight className="h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-1" />
+                </Link>
+              );
+            })}
+          </div>
+        </Reveal>
+      )}
     </div>
   );
 }
 
 export function DashboardStorePage() {
+  const { profile, loading } = useProfile();
   const [copied, setCopied] = React.useState(false);
+
+  if (loading) {
+    return <div className="flex items-center justify-center py-20"><RingLoader /></div>;
+  }
+  if (!profile?.username) {
+    return <EmptyState title="No store yet" body="Finish setting up your profile to get a public store link." />;
+  }
+
+  const url = `${window.location.origin}/s/${profile.username}`;
+  const brand = profile.store_name?.trim() || profile.full_name?.trim() || profile.username;
+
   return (
     <div className="grid gap-8 md:grid-cols-2">
       <Reveal>
         <div className="tc-lift rounded-3xl border border-border bg-card p-8 shadow-sm">
           <div className="flex items-center gap-3">
-            <GradientAvatar name="Bloom & Co." size={44} />
+            <GradientAvatar name={brand} size={44} />
             <div>
-              <h2 className="text-xl font-semibold">Bloom & Co.</h2>
-              <p className="text-xs text-muted-foreground">tap-cart.shop/s/bloom</p>
+              <h2 className="text-xl font-semibold">{brand}</h2>
+              <p className="text-xs text-muted-foreground">tap-cart.shop/s/{profile.username}</p>
             </div>
           </div>
           <p className="mt-6 text-sm text-muted-foreground">Your public store is live and ready to receive WhatsApp orders.</p>
@@ -657,10 +709,10 @@ export function DashboardStorePage() {
           <p className="mt-3 text-sm text-muted-foreground">Copy the link and share it in socials, WhatsApp, or email.</p>
           <div className="mt-6 flex items-center gap-2 rounded-full border border-border bg-background px-4 py-2 text-sm">
             <Link2 className="h-4 w-4 text-muted-foreground" />
-            <span className="flex-1 truncate text-muted-foreground">tap-cart.shop/s/bloom</span>
+            <span className="flex-1 truncate text-muted-foreground">{url}</span>
             <button
               onClick={() => {
-                navigator.clipboard?.writeText("https://tap-cart.shop/s/bloom");
+                navigator.clipboard?.writeText(url);
                 setCopied(true);
                 setTimeout(() => setCopied(false), 1500);
               }}
@@ -676,67 +728,154 @@ export function DashboardStorePage() {
 }
 
 export function DashboardProductsPage() {
-  const products = [
-    { name: "Garden Rose Bouquet", price: "$48" },
-    { name: "Wildflower Mix", price: "$36" },
-    { name: "White Peony Bundle", price: "$62" },
-  ];
+  const { products, loading, create, remove } = useProducts();
+  const [showForm, setShowForm] = React.useState(false);
+  const [form, setForm] = React.useState({ name: "", price: "", description: "", image_url: "", stock: "" });
+  const [submitting, setSubmitting] = React.useState(false);
+  const [error, setError] = React.useState<string | null>(null);
+
+  const onSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    const price = Number(form.price);
+    if (!form.name.trim() || !Number.isFinite(price) || price < 0) {
+      setError("Please enter a name and a valid price.");
+      return;
+    }
+    setSubmitting(true);
+    const { error } = await create({
+      name: form.name.trim(),
+      price,
+      description: form.description.trim() || undefined,
+      image_url: form.image_url.trim() || undefined,
+      stock: form.stock ? Number(form.stock) : undefined,
+    });
+    setSubmitting(false);
+    if (error) {
+      setError(error);
+    } else {
+      setForm({ name: "", price: "", description: "", image_url: "", stock: "" });
+      setShowForm(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
-      <div className="tc-fade-up rounded-3xl border border-border bg-card p-8 shadow-sm">
-        <h2 className="text-xl font-semibold">Products</h2>
-        <p className="mt-2 text-sm text-muted-foreground">Add and manage the items you sell in your store.</p>
+      <div className="tc-fade-up flex items-center justify-between rounded-3xl border border-border bg-card p-8 shadow-sm">
+        <div>
+          <h2 className="text-xl font-semibold">Products</h2>
+          <p className="mt-2 text-sm text-muted-foreground">Add and manage the items you sell in your store.</p>
+        </div>
+        <button
+          onClick={() => setShowForm((v) => !v)}
+          className="inline-flex items-center gap-2 rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground"
+        >
+          <Plus className="h-4 w-4" /> {showForm ? "Cancel" : "Add product"}
+        </button>
       </div>
-      <div className="tc-stagger grid gap-4 md:grid-cols-3">
-        {products.map((product) => (
-          <div key={product.name} className="tc-lift rounded-3xl border border-border bg-background p-6">
-            <div className="flex items-center gap-3">
-              <GradientAvatar name={product.name} size={32} />
-              <div className="text-sm text-muted-foreground">{product.name}</div>
-            </div>
-            <div className="mt-4 text-2xl font-semibold tabular-nums">{product.price}</div>
+
+      {showForm && (
+        <form onSubmit={onSubmit} className="tc-fade-up grid gap-4 rounded-3xl border border-border bg-card p-6 md:grid-cols-2">
+          <Input label="Name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+          <Input label="Price (USD)" type="number" step="0.01" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} />
+          <Input label="Image URL" value={form.image_url} onChange={(e) => setForm({ ...form, image_url: e.target.value })} required={false} />
+          <Input label="Stock" type="number" value={form.stock} onChange={(e) => setForm({ ...form, stock: e.target.value })} required={false} />
+          <label className="md:col-span-2 block">
+            <span className="mb-2 block text-xs font-medium uppercase tracking-wider text-muted-foreground">Description</span>
+            <textarea rows={3} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} className="w-full rounded-lg border border-border bg-background px-4 py-3 text-sm outline-none focus:border-foreground" />
+          </label>
+          {error && <div className="md:col-span-2 rounded-2xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">{error}</div>}
+          <div className="md:col-span-2">
+            <button type="submit" disabled={submitting} className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground disabled:opacity-60">
+              {submitting ? <DotLoader /> : <>Save product <ArrowRight className="h-4 w-4" /></>}
+            </button>
           </div>
-        ))}
-      </div>
+        </form>
+      )}
+
+      {loading ? (
+        <div className="grid gap-4 md:grid-cols-3">
+          {[0, 1, 2].map((i) => <SkeletonShimmer key={i} className="h-36 rounded-3xl" />)}
+        </div>
+      ) : products.length === 0 ? (
+        <EmptyState
+          title="No products yet"
+          body="Add your first product to make your storefront ready for orders."
+          action={
+            <button onClick={() => setShowForm(true)} className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground">
+              <Plus className="h-4 w-4" /> Add product
+            </button>
+          }
+        />
+      ) : (
+        <div className="tc-stagger grid gap-4 md:grid-cols-3">
+          {products.map((product) => (
+            <div key={product.id} className="tc-lift relative rounded-3xl border border-border bg-background p-6">
+              <button
+                onClick={() => remove(product.id)}
+                aria-label="Delete"
+                className="absolute right-4 top-4 rounded-full p-1.5 text-muted-foreground hover:bg-secondary hover:text-foreground"
+              >
+                <Trash2 className="h-4 w-4" />
+              </button>
+              <div className="flex items-center gap-3">
+                <GradientAvatar name={product.name} size={32} />
+                <div className="text-sm text-muted-foreground">{product.name}</div>
+              </div>
+              <div className="mt-4 text-2xl font-semibold tabular-nums">${Number(product.price).toFixed(2)}</div>
+              {product.description && (
+                <p className="mt-2 line-clamp-2 text-xs text-muted-foreground">{product.description}</p>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
 
 export function DashboardOrdersPage() {
-  const orders = [
-    { id: "#221", buyer: "Naomi", total: "$48" },
-    { id: "#220", buyer: "Amir", total: "$62" },
-    { id: "#219", buyer: "Leila", total: "$36" },
-  ];
+  const { orders, loading } = useOrders();
   return (
     <div className="space-y-6">
       <div className="tc-fade-up rounded-3xl border border-border bg-card p-8 shadow-sm">
         <h2 className="text-xl font-semibold">Recent orders</h2>
         <p className="mt-2 text-sm text-muted-foreground">Orders arrive as WhatsApp-ready messages, so you can confirm details instantly.</p>
       </div>
-      <div className="tc-stagger grid gap-4 md:grid-cols-3">
-        {orders.map((order) => (
-          <div key={order.id} className="tc-lift rounded-3xl border border-border bg-card p-5">
-            <div className="flex items-center justify-between">
-              <span className="text-xs uppercase tracking-[0.18em] text-muted-foreground">{order.id}</span>
-              <span className="inline-flex h-2 w-2 rounded-full bg-[color:var(--whatsapp)]" />
-            </div>
-            <div className="mt-3 flex items-center gap-3">
-              <GradientAvatar name={order.buyer} size={32} />
-              <div>
-                <div className="font-medium">{order.buyer}</div>
-                <div className="text-xs text-muted-foreground tabular-nums">{order.total}</div>
+      {loading ? (
+        <div className="grid gap-4 md:grid-cols-3">
+          {[0, 1, 2].map((i) => <SkeletonShimmer key={i} className="h-28 rounded-3xl" />)}
+        </div>
+      ) : orders.length === 0 ? (
+        <EmptyState
+          title="No orders yet"
+          body="When buyers place an order from your TapCart link, you'll see it here."
+        />
+      ) : (
+        <div className="tc-stagger grid gap-4 md:grid-cols-3">
+          {orders.map((order) => (
+            <div key={order.id} className="tc-lift rounded-3xl border border-border bg-card p-5">
+              <div className="flex items-center justify-between">
+                <span className="text-xs uppercase tracking-[0.18em] text-muted-foreground">#{order.id.slice(0, 6)}</span>
+                <span className="inline-flex h-2 w-2 rounded-full bg-[color:var(--whatsapp)]" />
+              </div>
+              <div className="mt-3 flex items-center gap-3">
+                <GradientAvatar name={order.customer_name} size={32} />
+                <div>
+                  <div className="font-medium">{order.customer_name}</div>
+                  <div className="text-xs text-muted-foreground tabular-nums">${Number(order.total).toFixed(2)} · {order.items_count} items</div>
+                </div>
               </div>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
 
 function MiniBars({ data }: { data: number[] }) {
-  const max = Math.max(...data);
+  const max = Math.max(...data, 1);
   return (
     <div className="flex h-32 items-end gap-2">
       {data.map((v, i) => (
@@ -751,6 +890,22 @@ function MiniBars({ data }: { data: number[] }) {
 }
 
 export function DashboardAnalyticsPage() {
+  const { orders } = useOrders();
+  const { count: views } = useStoreViews();
+  const revenue = orders.reduce((s, o) => s + Number(o.total ?? 0), 0);
+  const conversion = views > 0 ? Math.round((orders.length / views) * 100) : 0;
+
+  const buckets = React.useMemo(() => {
+    const days = Array.from({ length: 14 }, (_, i) => {
+      const d = new Date();
+      d.setDate(d.getDate() - (13 - i));
+      return d.toISOString().slice(0, 10);
+    });
+    return days.map((day) => orders.filter((o) => o.created_at?.slice(0, 10) === day).length);
+  }, [orders]);
+
+  const hasData = orders.length > 0 || views > 0;
+
   return (
     <div className="tc-fade-up rounded-3xl border border-border bg-card p-8 shadow-sm">
       <div className="flex items-center justify-between gap-4">
@@ -760,28 +915,75 @@ export function DashboardAnalyticsPage() {
         </div>
       </div>
       <div className="tc-stagger mt-8 grid gap-6 md:grid-cols-3">
-        <Stat label="Revenue" value={1400} prefix="$" />
-        <Stat label="Conversion" value={13} suffix="%" />
-        <Stat label="Messages" value={84} />
+        <Stat label="Revenue" value={Math.round(revenue)} prefix="$" />
+        <Stat label="Conversion" value={conversion} suffix="%" />
+        <Stat label="Store views" value={views} />
       </div>
       <Reveal className="mt-8 rounded-3xl border border-border bg-background p-6">
         <div className="mb-4 text-xs uppercase tracking-[0.18em] text-muted-foreground">Last 14 days</div>
-        <MiniBars data={[6, 8, 5, 9, 12, 10, 14, 11, 13, 16, 12, 18, 15, 20]} />
+        {hasData ? (
+          <MiniBars data={buckets} />
+        ) : (
+          <p className="py-8 text-center text-sm text-muted-foreground">No activity yet. Share your store link to start collecting data.</p>
+        )}
       </Reveal>
     </div>
   );
 }
 
 export function DashboardSettingsPage() {
+  const { profile, loading, update } = useProfile();
+  const [form, setForm] = React.useState({ store_name: "", whatsapp_number: "", full_name: "" });
+  const [saving, setSaving] = React.useState(false);
+  const [saved, setSaved] = React.useState(false);
+  const [error, setError] = React.useState<string | null>(null);
+
+  React.useEffect(() => {
+    if (profile) {
+      setForm({
+        store_name: profile.store_name ?? "",
+        whatsapp_number: profile.whatsapp_number ?? profile.phone ?? "",
+        full_name: profile.full_name ?? "",
+      });
+    }
+  }, [profile]);
+
+  const onSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSaving(true);
+    setError(null);
+    const { error } = await update({
+      store_name: form.store_name.trim() || null,
+      whatsapp_number: form.whatsapp_number.trim() || null,
+      full_name: form.full_name.trim() || null,
+    });
+    setSaving(false);
+    if (error) setError(error);
+    else {
+      setSaved(true);
+      setTimeout(() => setSaved(false), 1800);
+    }
+  };
+
+  if (loading) return <div className="flex items-center justify-center py-20"><RingLoader /></div>;
+
   return (
-    <div className="tc-fade-up rounded-3xl border border-border bg-card p-8 shadow-sm">
+    <form onSubmit={onSubmit} className="tc-fade-up rounded-3xl border border-border bg-card p-8 shadow-sm">
       <h1 className="text-2xl font-semibold">Store settings</h1>
-      <p className="mt-3 text-sm text-muted-foreground">Update your store name, WhatsApp number, and branding here.</p>
+      <p className="mt-3 text-sm text-muted-foreground">Update your store name, WhatsApp number, and profile here.</p>
       <div className="mt-8 grid gap-4 md:grid-cols-2">
-        <Input label="Store name" defaultValue="Bloom & Co." />
-        <Input label="WhatsApp number" defaultValue="+1 (555) 123-4567" />
+        <Input label="Store name" value={form.store_name} onChange={(e) => setForm({ ...form, store_name: e.target.value })} required={false} />
+        <Input label="WhatsApp number" value={form.whatsapp_number} onChange={(e) => setForm({ ...form, whatsapp_number: e.target.value })} required={false} />
+        <Input label="Full name" value={form.full_name} onChange={(e) => setForm({ ...form, full_name: e.target.value })} required={false} />
+        <Input label="Username" value={profile?.username ?? ""} prefix="tap-cart.shop/s/" disabled required={false} />
       </div>
-    </div>
+      {error && <div className="mt-4 rounded-2xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">{error}</div>}
+      <div className="mt-6">
+        <button type="submit" disabled={saving} className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground disabled:opacity-60">
+          {saving ? <DotLoader /> : saved ? <><Check className="h-4 w-4" /> Saved</> : <>Save changes <ArrowRight className="h-4 w-4" /></>}
+        </button>
+      </div>
+    </form>
   );
 }
 
@@ -933,34 +1135,102 @@ export function AdminSettingsPage() {
 
 /* --------------------- PUBLIC STORE --------------------- */
 
+type PublicStore = {
+  user_id: string;
+  username: string;
+  store_name: string | null;
+  full_name: string | null;
+  whatsapp_number: string | null;
+};
+type PublicProduct = { id: string; name: string; price: number; description: string | null; image_url: string | null };
+
 export function PublicStorePage() {
   const { username } = useParams();
   const [loading, setLoading] = React.useState(true);
-  React.useEffect(() => {
-    const t = setTimeout(() => setLoading(false), 500);
-    return () => clearTimeout(t);
-  }, []);
+  const [store, setStore] = React.useState<PublicStore | null>(null);
+  const [products, setProducts] = React.useState<PublicProduct[]>([]);
 
-  const items = [
-    { title: "Bouquet", price: "$48" },
-    { title: "Snack box", price: "$22" },
-    { title: "Gift set", price: "$76" },
-  ];
+  React.useEffect(() => {
+    let cancelled = false;
+    async function load() {
+      if (!supabase || !username) {
+        setLoading(false);
+        return;
+      }
+      setLoading(true);
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("id, username, store_name, full_name, whatsapp_number")
+        .eq("username", username)
+        .maybeSingle();
+
+      if (cancelled) return;
+      if (!profile) {
+        setStore(null);
+        setLoading(false);
+        return;
+      }
+      const storeData: PublicStore = {
+        user_id: profile.id,
+        username: profile.username,
+        store_name: profile.store_name,
+        full_name: profile.full_name,
+        whatsapp_number: profile.whatsapp_number,
+      };
+      setStore(storeData);
+
+      const { data: prods } = await supabase
+        .from("products")
+        .select("id, name, price, description, image_url")
+        .eq("user_id", profile.id)
+        .order("created_at", { ascending: false });
+      if (cancelled) return;
+      setProducts((prods as PublicProduct[]) ?? []);
+      setLoading(false);
+
+      // Log a view (RLS allows anonymous inserts).
+      supabase.from("store_views").insert({ user_id: profile.id }).then(() => {});
+    }
+    load();
+    return () => { cancelled = true; };
+  }, [username]);
+
+  if (!loading && !store) {
+    return (
+      <div className="mx-auto max-w-md px-6 py-24 text-center">
+        <EmptyBoxIllustration className="mx-auto h-24 w-24 text-muted-foreground" />
+        <h1 className="mt-6 text-2xl font-semibold">Store not found</h1>
+        <p className="mt-2 text-sm text-muted-foreground">No TapCart store exists at /s/{username}.</p>
+        <Link to="/" className="mt-6 inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground">
+          Go home <ArrowRight className="h-4 w-4" />
+        </Link>
+      </div>
+    );
+  }
+
+  const brand = store?.store_name?.trim() || store?.full_name?.trim() || username || "Store";
+
+  const orderViaWhatsApp = (product: PublicProduct) => {
+    const phone = (store?.whatsapp_number ?? "").replace(/\D/g, "");
+    const text = encodeURIComponent(`Hi ${brand}! I'd like to order: ${product.name} ($${Number(product.price).toFixed(2)}).`);
+    const url = phone ? `https://wa.me/${phone}?text=${text}` : `https://wa.me/?text=${text}`;
+    window.open(url, "_blank");
+  };
 
   return (
     <div className="mx-auto max-w-4xl px-6 py-20">
       <div className="tc-fade-up rounded-3xl border border-border bg-card p-10 shadow-[0_30px_80px_-40px_rgba(0,0,0,0.25)]">
         <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
           <div className="flex items-center gap-4">
-            <GradientAvatar name={username ?? "Store"} size={56} />
+            <GradientAvatar name={brand} size={56} />
             <div>
               <p className="text-xs uppercase tracking-[0.24em] text-muted-foreground">Public store</p>
-              <h1 className="mt-2 text-3xl font-semibold md:text-4xl">{username ?? "Store"} on TapCart</h1>
+              <h1 className="mt-2 text-3xl font-semibold md:text-4xl">{brand}</h1>
             </div>
           </div>
           <div className="inline-flex items-center gap-2 rounded-full bg-secondary px-4 py-2 text-sm text-muted-foreground">
             <Link2 className="h-3.5 w-3.5" />
-            tap-cart.shop/s/{username ?? "username"}
+            tap-cart.shop/s/{username}
           </div>
         </div>
 
@@ -977,13 +1247,29 @@ export function PublicStorePage() {
             </div>
             <div className="flex justify-center pt-6"><DotLoader label="Loading store" /></div>
           </div>
+        ) : products.length === 0 ? (
+          <div className="mt-12 text-center">
+            <EmptyBoxIllustration className="mx-auto h-20 w-20 text-muted-foreground" />
+            <p className="mt-4 text-sm text-muted-foreground">This store hasn't added any products yet.</p>
+          </div>
         ) : (
           <div className="tc-stagger mt-10 grid gap-6 md:grid-cols-3">
-            {items.map((item) => (
-              <div key={item.title} className="tc-lift rounded-3xl border border-border bg-background p-6">
-                <div className="aspect-square rounded-2xl bg-secondary" />
-                <div className="mt-4 text-sm text-muted-foreground">{item.title}</div>
-                <div className="mt-2 text-2xl font-semibold tabular-nums">{item.price}</div>
+            {products.map((item) => (
+              <div key={item.id} className="tc-lift flex flex-col rounded-3xl border border-border bg-background p-6">
+                <div className="aspect-square overflow-hidden rounded-2xl bg-secondary">
+                  {item.image_url ? (
+                    <img src={item.image_url} alt={item.name} className="h-full w-full object-cover" />
+                  ) : null}
+                </div>
+                <div className="mt-4 text-sm text-muted-foreground">{item.name}</div>
+                <div className="mt-2 text-2xl font-semibold tabular-nums">${Number(item.price).toFixed(2)}</div>
+                {item.description && <p className="mt-2 line-clamp-2 text-xs text-muted-foreground">{item.description}</p>}
+                <button
+                  onClick={() => orderViaWhatsApp(item)}
+                  className="mt-4 inline-flex items-center justify-center gap-2 rounded-full bg-[color:var(--whatsapp)] px-4 py-2 text-sm font-medium text-[color:var(--whatsapp-foreground)] transition-transform hover:-translate-y-0.5"
+                >
+                  <MessageCircle className="h-4 w-4" /> Order on WhatsApp
+                </button>
               </div>
             ))}
           </div>
