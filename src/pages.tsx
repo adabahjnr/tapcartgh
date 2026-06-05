@@ -1,13 +1,14 @@
 import React from "react";
 import { Link, Outlet, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import {
-  ArrowRight, BarChart3, Bell, Check, LayoutDashboard, Package,
+  ArrowRight, BarChart3, Bell, Check, LayoutDashboard, Package, Plus, Trash2,
   ShoppingBag, Store, Users, Settings, Sparkles, MessageCircle, Link2,
 } from "lucide-react";
 import { MarketingLayout } from "@/components/marketing/MarketingLayout";
 import { AppShell, dashboardNav } from "@/components/app/AppShell";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth-context";
+import { useProfile, useProducts, useOrders, useStoreViews } from "@/lib/dashboard-data";
 import { Reveal } from "@/components/ui/reveal";
 import { GradientAvatar } from "@/components/ui/gradient-avatar";
 import { DotLoader, RingLoader, SkeletonShimmer } from "@/components/ui/loader";
