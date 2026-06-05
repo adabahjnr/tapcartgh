@@ -1,6 +1,7 @@
-import { Link, useLocation } from "react-router-dom";
-import { LayoutDashboard, Store, Package, ShoppingBag, BarChart3, Settings, ExternalLink } from "lucide-react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { LayoutDashboard, Store, Package, ShoppingBag, BarChart3, Settings, ExternalLink, LogOut } from "lucide-react";
 import type { ComponentType, ReactNode } from "react";
+import { useAuth } from "@/lib/auth-context";
 
 type NavItem = { to: string; label: string; icon: ComponentType<{ className?: string }> };
 
@@ -16,6 +17,14 @@ export function AppShell({
   children?: React.ReactNode;
 }) {
   const pathname = useLocation().pathname;
+  const navigate = useNavigate();
+  const { user, signOut } = useAuth();
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate("/");
+  };
+
   return (
     <div className="flex min-h-screen bg-background">
       <aside className="hidden w-64 shrink-0 border-r border-border bg-sidebar md:flex md:flex-col">
@@ -49,10 +58,26 @@ export function AppShell({
             </Link>
           </div>
         )}
+        <div className="border-t border-sidebar-border p-3">
+          <button
+            onClick={handleSignOut}
+            className="flex w-full items-center justify-between rounded-md px-3 py-2 text-xs text-muted-foreground hover:bg-sidebar-accent hover:text-foreground"
+          >
+            <span className="truncate">{user?.email ?? "Sign out"}</span>
+            <LogOut className="h-3.5 w-3.5 shrink-0" />
+          </button>
+        </div>
       </aside>
       <div className="flex flex-1 flex-col">
-        <header className="border-b border-border px-6 py-4 md:px-10">
+        <header className="flex items-center justify-between border-b border-border px-6 py-4 md:px-10">
           <div className="text-xs text-muted-foreground">{brand}</div>
+          <button
+            onClick={handleSignOut}
+            className="flex items-center gap-2 rounded-full px-3 py-1.5 text-xs text-muted-foreground hover:bg-secondary hover:text-foreground md:hidden"
+          >
+            <LogOut className="h-3.5 w-3.5" />
+            Sign out
+          </button>
         </header>
         <main className="flex-1 px-6 py-10 md:px-10 md:py-14">{children}</main>
       </div>
