@@ -454,7 +454,8 @@ export function AuthPage() {
             {isSignup ? "It's free, forever." : "Sign in to your dashboard."}
           </p>
 
-          {error ? <div className="rounded-2xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">{error}</div> : null}
+          {error ? <div className="mt-4 rounded-2xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">{error}</div> : null}
+          {info ? <div className="mt-4 rounded-2xl border border-border bg-secondary p-3 text-sm text-muted-foreground">{info}</div> : null}
 
           <form className="mt-8 space-y-4" onSubmit={handleSubmit}>
             {isSignup && (
