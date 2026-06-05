@@ -7,6 +7,7 @@ import {
 import { MarketingLayout } from "@/components/marketing/MarketingLayout";
 import { AppShell, dashboardNav } from "@/components/app/AppShell";
 import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/lib/auth-context";
 import { Reveal } from "@/components/ui/reveal";
 import { GradientAvatar } from "@/components/ui/gradient-avatar";
 import { DotLoader, RingLoader, SkeletonShimmer } from "@/components/ui/loader";
