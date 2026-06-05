@@ -83,6 +83,12 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { property: "og:site_name", content: "TapCart" },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
+      { property: "og:title", content: "TapCart" },
+      { name: "twitter:title", content: "TapCart" },
+      { property: "og:description", content: "Your mini store. One link. Orders on WhatsApp." },
+      { name: "twitter:description", content: "Your mini store. One link. Orders on WhatsApp." },
+      { property: "og:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/44e28853-3e8b-4617-8f3e-ac1867dd089b" },
+      { name: "twitter:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/44e28853-3e8b-4617-8f3e-ac1867dd089b" },
     ],
     links: [
       {
