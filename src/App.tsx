@@ -1,4 +1,6 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { AuthProvider } from "./lib/auth-context";
+import { ProtectedRoute } from "./components/auth/ProtectedRoute";
 import {
   AdminAnalyticsPage,
   AdminIndexPage,
