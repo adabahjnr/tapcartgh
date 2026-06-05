@@ -1,6 +1,7 @@
-import { Link, useLocation } from "react-router-dom";
-import { LayoutDashboard, Store, Package, ShoppingBag, BarChart3, Settings, ExternalLink } from "lucide-react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { LayoutDashboard, Store, Package, ShoppingBag, BarChart3, Settings, ExternalLink, LogOut } from "lucide-react";
 import type { ComponentType, ReactNode } from "react";
+import { useAuth } from "@/lib/auth-context";
 
 type NavItem = { to: string; label: string; icon: ComponentType<{ className?: string }> };
 
