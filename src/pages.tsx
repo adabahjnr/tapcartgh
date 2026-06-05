@@ -477,13 +477,28 @@ export function AuthPage() {
 
           <form className="mt-8 space-y-4" onSubmit={handleSubmit}>
             {isSignup && (
-              <Input
-                label="Store username"
-                placeholder="yourname"
-                prefix="tap-cart.shop/s/"
-                value={formState.username}
-                onChange={(event) => setFormState((prev) => ({ ...prev, username: event.target.value }))}
-              />
+              <>
+                <Input
+                  label="Full name"
+                  placeholder="Jane Doe"
+                  value={formState.fullName}
+                  onChange={(event) => setFormState((prev) => ({ ...prev, fullName: event.target.value }))}
+                />
+                <Input
+                  label="Store username"
+                  placeholder="yourname"
+                  prefix="tap-cart.shop/s/"
+                  value={formState.username}
+                  onChange={(event) => setFormState((prev) => ({ ...prev, username: event.target.value }))}
+                />
+                <Input
+                  label="Phone number"
+                  type="tel"
+                  placeholder="+1 555 123 4567"
+                  value={formState.phone}
+                  onChange={(event) => setFormState((prev) => ({ ...prev, phone: event.target.value }))}
+                />
+              </>
             )}
             <Input
               label="Email"
