@@ -1135,34 +1135,102 @@ export function AdminSettingsPage() {
 
 /* --------------------- PUBLIC STORE --------------------- */
 
+type PublicStore = {
+  user_id: string;
+  username: string;
+  store_name: string | null;
+  full_name: string | null;
+  whatsapp_number: string | null;
+};
+type PublicProduct = { id: string; name: string; price: number; description: string | null; image_url: string | null };
+
 export function PublicStorePage() {
   const { username } = useParams();
   const [loading, setLoading] = React.useState(true);
-  React.useEffect(() => {
-    const t = setTimeout(() => setLoading(false), 500);
-    return () => clearTimeout(t);
-  }, []);
+  const [store, setStore] = React.useState<PublicStore | null>(null);
+  const [products, setProducts] = React.useState<PublicProduct[]>([]);
 
-  const items = [
-    { title: "Bouquet", price: "$48" },
-    { title: "Snack box", price: "$22" },
-    { title: "Gift set", price: "$76" },
-  ];
+  React.useEffect(() => {
+    let cancelled = false;
+    async function load() {
+      if (!supabase || !username) {
+        setLoading(false);
+        return;
+      }
+      setLoading(true);
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("id, username, store_name, full_name, whatsapp_number")
+        .eq("username", username)
+        .maybeSingle();
+
+      if (cancelled) return;
+      if (!profile) {
+        setStore(null);
+        setLoading(false);
+        return;
+      }
+      const storeData: PublicStore = {
+        user_id: profile.id,
+        username: profile.username,
+        store_name: profile.store_name,
+        full_name: profile.full_name,
+        whatsapp_number: profile.whatsapp_number,
+      };
+      setStore(storeData);
+
+      const { data: prods } = await supabase
+        .from("products")
+        .select("id, name, price, description, image_url")
+        .eq("user_id", profile.id)
+        .order("created_at", { ascending: false });
+      if (cancelled) return;
+      setProducts((prods as PublicProduct[]) ?? []);
+      setLoading(false);
+
+      // Log a view (RLS allows anonymous inserts).
+      supabase.from("store_views").insert({ user_id: profile.id }).then(() => {});
+    }
+    load();
+    return () => { cancelled = true; };
+  }, [username]);
+
+  if (!loading && !store) {
+    return (
+      <div className="mx-auto max-w-md px-6 py-24 text-center">
+        <EmptyBoxIllustration className="mx-auto h-24 w-24 text-muted-foreground" />
+        <h1 className="mt-6 text-2xl font-semibold">Store not found</h1>
+        <p className="mt-2 text-sm text-muted-foreground">No TapCart store exists at /s/{username}.</p>
+        <Link to="/" className="mt-6 inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground">
+          Go home <ArrowRight className="h-4 w-4" />
+        </Link>
+      </div>
+    );
+  }
+
+  const brand = store?.store_name?.trim() || store?.full_name?.trim() || username || "Store";
+
+  const orderViaWhatsApp = (product: PublicProduct) => {
+    const phone = (store?.whatsapp_number ?? "").replace(/\D/g, "");
+    const text = encodeURIComponent(`Hi ${brand}! I'd like to order: ${product.name} ($${Number(product.price).toFixed(2)}).`);
+    const url = phone ? `https://wa.me/${phone}?text=${text}` : `https://wa.me/?text=${text}`;
+    window.open(url, "_blank");
+  };
 
   return (
     <div className="mx-auto max-w-4xl px-6 py-20">
       <div className="tc-fade-up rounded-3xl border border-border bg-card p-10 shadow-[0_30px_80px_-40px_rgba(0,0,0,0.25)]">
         <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
           <div className="flex items-center gap-4">
-            <GradientAvatar name={username ?? "Store"} size={56} />
+            <GradientAvatar name={brand} size={56} />
             <div>
               <p className="text-xs uppercase tracking-[0.24em] text-muted-foreground">Public store</p>
-              <h1 className="mt-2 text-3xl font-semibold md:text-4xl">{username ?? "Store"} on TapCart</h1>
+              <h1 className="mt-2 text-3xl font-semibold md:text-4xl">{brand}</h1>
             </div>
           </div>
           <div className="inline-flex items-center gap-2 rounded-full bg-secondary px-4 py-2 text-sm text-muted-foreground">
             <Link2 className="h-3.5 w-3.5" />
-            tap-cart.shop/s/{username ?? "username"}
+            tap-cart.shop/s/{username}
           </div>
         </div>
 
@@ -1179,13 +1247,29 @@ export function PublicStorePage() {
             </div>
             <div className="flex justify-center pt-6"><DotLoader label="Loading store" /></div>
           </div>
+        ) : products.length === 0 ? (
+          <div className="mt-12 text-center">
+            <EmptyBoxIllustration className="mx-auto h-20 w-20 text-muted-foreground" />
+            <p className="mt-4 text-sm text-muted-foreground">This store hasn't added any products yet.</p>
+          </div>
         ) : (
           <div className="tc-stagger mt-10 grid gap-6 md:grid-cols-3">
-            {items.map((item) => (
-              <div key={item.title} className="tc-lift rounded-3xl border border-border bg-background p-6">
-                <div className="aspect-square rounded-2xl bg-secondary" />
-                <div className="mt-4 text-sm text-muted-foreground">{item.title}</div>
-                <div className="mt-2 text-2xl font-semibold tabular-nums">{item.price}</div>
+            {products.map((item) => (
+              <div key={item.id} className="tc-lift flex flex-col rounded-3xl border border-border bg-background p-6">
+                <div className="aspect-square overflow-hidden rounded-2xl bg-secondary">
+                  {item.image_url ? (
+                    <img src={item.image_url} alt={item.name} className="h-full w-full object-cover" />
+                  ) : null}
+                </div>
+                <div className="mt-4 text-sm text-muted-foreground">{item.name}</div>
+                <div className="mt-2 text-2xl font-semibold tabular-nums">${Number(item.price).toFixed(2)}</div>
+                {item.description && <p className="mt-2 line-clamp-2 text-xs text-muted-foreground">{item.description}</p>}
+                <button
+                  onClick={() => orderViaWhatsApp(item)}
+                  className="mt-4 inline-flex items-center justify-center gap-2 rounded-full bg-[color:var(--whatsapp)] px-4 py-2 text-sm font-medium text-[color:var(--whatsapp-foreground)] transition-transform hover:-translate-y-0.5"
+                >
+                  <MessageCircle className="h-4 w-4" /> Order on WhatsApp
+                </button>
               </div>
             ))}
           </div>
