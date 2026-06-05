@@ -371,11 +371,18 @@ export function AuthPage() {
   const [formState, setFormState] = React.useState({ username: "", email: "", password: "" });
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
+  const [info, setInfo] = React.useState<string | null>(null);
   const navigate = useNavigate();
+  const { session, loading: authLoading } = useAuth();
+
+  React.useEffect(() => {
+    if (!authLoading && session) navigate("/dashboard", { replace: true });
+  }, [authLoading, session, navigate]);
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setError(null);
+    setInfo(null);
     setLoading(true);
 
     const email = formState.email.trim();
@@ -389,7 +396,8 @@ export function AuthPage() {
     }
 
     if (!supabase) {
-      navigate("/dashboard");
+      setError("Authentication is not configured.");
+      setLoading(false);
       return;
     }
 
@@ -400,18 +408,21 @@ export function AuthPage() {
         return;
       }
 
-      const { error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
           data: { username },
+          emailRedirectTo: `${window.location.origin}/dashboard`,
         },
       });
 
       if (error) {
         setError(error.message);
-      } else {
+      } else if (data.session) {
         navigate("/dashboard");
+      } else {
+        setInfo("Check your email to confirm your account.");
       }
     } else {
       const { data, error } = await supabase.auth.signInWithPassword({
@@ -425,6 +436,7 @@ export function AuthPage() {
         navigate("/dashboard");
       }
     }
+    setLoading(false);
   };
 
   return (
