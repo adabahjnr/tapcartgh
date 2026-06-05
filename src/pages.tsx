@@ -542,13 +542,13 @@ export function AuthPage() {
   );
 }
 
-function Input({ label, prefix, ...rest }: { label: string; prefix?: string } & React.InputHTMLAttributes<HTMLInputElement>) {
+function Input({ label, prefix, required = true, className, ...rest }: { label: string; prefix?: string } & React.InputHTMLAttributes<HTMLInputElement>) {
   return (
     <label className="block">
       <span className="mb-2 block text-xs font-medium uppercase tracking-wider text-muted-foreground">{label}</span>
       <div className="flex items-stretch overflow-hidden rounded-lg border border-border transition-colors focus-within:border-foreground">
         {prefix && <span className="flex items-center bg-secondary px-3 text-xs text-muted-foreground">{prefix}</span>}
-        <input {...rest} required className="w-full bg-background px-4 py-3 text-sm outline-none" />
+        <input {...rest} required={required} className={`w-full bg-background px-4 py-3 text-sm outline-none disabled:opacity-60 ${className ?? ""}`} />
       </div>
     </label>
   );
