@@ -68,7 +68,7 @@ function StorePage() {
       {/* Products */}
       <section className="mx-auto mt-16 max-w-5xl px-6">
         <div className="grid grid-cols-2 gap-5 md:grid-cols-3 md:gap-7">
-          {store.products.map((p) => (
+          {store.products.map((p: Product) => (
             <ProductCard key={p.id} p={p} onAdd={() => { cart.add(store.username, p); setOpen(true); }} />
           ))}
         </div>
