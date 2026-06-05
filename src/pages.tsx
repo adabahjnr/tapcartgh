@@ -369,7 +369,13 @@ export function ContactPage() {
 export function AuthPage() {
   const [searchParams] = useSearchParams();
   const [isSignup, setIsSignup] = React.useState(searchParams.get("mode") === "signup");
-  const [formState, setFormState] = React.useState({ username: "", email: "", password: "" });
+  const [formState, setFormState] = React.useState({
+    fullName: "",
+    username: "",
+    phone: "",
+    email: "",
+    password: "",
+  });
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [info, setInfo] = React.useState<string | null>(null);
@@ -388,7 +394,9 @@ export function AuthPage() {
 
     const email = formState.email.trim();
     const password = formState.password;
-    const username = formState.username.trim();
+    const username = formState.username.trim().toLowerCase();
+    const fullName = formState.fullName.trim();
+    const phone = formState.phone.trim();
 
     if (!email || !password) {
       setError("Please enter both email and password.");
@@ -403,8 +411,18 @@ export function AuthPage() {
     }
 
     if (isSignup) {
-      if (!username) {
-        setError("Please choose a username for your store.");
+      if (!fullName || !username || !phone) {
+        setError("Please fill in your name, username, and phone number.");
+        setLoading(false);
+        return;
+      }
+      if (!/^[a-z0-9_-]{3,30}$/.test(username)) {
+        setError("Username must be 3–30 lowercase letters, numbers, _ or -.");
+        setLoading(false);
+        return;
+      }
+      if (!/^\+?[0-9\s\-()]{7,20}$/.test(phone)) {
+        setError("Please enter a valid phone number.");
         setLoading(false);
         return;
       }
@@ -413,7 +431,7 @@ export function AuthPage() {
         email,
         password,
         options: {
-          data: { username },
+          data: { username, full_name: fullName, phone },
           emailRedirectTo: `${window.location.origin}/dashboard`,
         },
       });
