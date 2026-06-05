@@ -388,6 +388,11 @@ export function AuthPage() {
       return;
     }
 
+    if (!supabase) {
+      navigate("/dashboard");
+      return;
+    }
+
     if (isSignup) {
       if (!username) {
         setError("Please choose a username for your store.");
