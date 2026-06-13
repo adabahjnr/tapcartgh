@@ -749,6 +749,10 @@ export function HostelDetailPage() {
             </Link>
           </aside>
         </div>
+
+        <div className="mt-10">
+          <ReviewsSection hostelId={hostel.id} reviews={reviews} onPosted={refetchReviews} />
+        </div>
       </div>
     </PublicLayout>
   );
