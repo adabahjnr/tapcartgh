@@ -111,9 +111,11 @@
 
 
 @layer base {
-  * { border-color: var(--color-border); }
-  html { -webkit-font-smoothing: antialiased; font-size: 17px; }
-  @media (min-width: 768px) { html { font-size: 18px; } }
+  * { border-color: var(--color-border); min-width: 0; }
+  html, body { max-width: 100%; overflow-x: hidden; }
+  html { -webkit-font-smoothing: antialiased; font-size: 16px; }
+  @media (min-width: 768px) { html { font-size: 17px; } }
+  @media (min-width: 1024px) { html { font-size: 18px; } }
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
@@ -121,11 +123,13 @@
     font-feature-settings: "ss01", "cv11";
     line-height: 1.65;
   }
-  h1 { font-size: clamp(2.4rem, 5vw + 1rem, 4.5rem); line-height: 1.05; letter-spacing: -0.035em; font-weight: 800; }
-  h2 { font-size: clamp(1.85rem, 2.6vw + 1rem, 3.1rem); line-height: 1.12; letter-spacing: -0.03em; font-weight: 800; }
-  h3 { font-size: clamp(1.4rem, 1.4vw + 0.9rem, 2rem); line-height: 1.2; letter-spacing: -0.02em; font-weight: 700; }
-  h4 { font-size: clamp(1.15rem, 0.6vw + 0.95rem, 1.4rem); line-height: 1.25; letter-spacing: -0.015em; font-weight: 700; }
-  p  { line-height: 1.7; }
+  img, video, svg { max-width: 100%; height: auto; }
+  h1, h2, h3, h4 { overflow-wrap: anywhere; word-break: break-word; }
+  h1 { font-size: clamp(2rem, 4.2vw + 0.8rem, 4.25rem); line-height: 1.08; letter-spacing: -0.035em; font-weight: 800; }
+  h2 { font-size: clamp(1.6rem, 2.4vw + 0.8rem, 2.85rem); line-height: 1.15; letter-spacing: -0.03em; font-weight: 800; }
+  h3 { font-size: clamp(1.25rem, 1.2vw + 0.8rem, 1.85rem); line-height: 1.22; letter-spacing: -0.02em; font-weight: 700; }
+  h4 { font-size: clamp(1.05rem, 0.5vw + 0.9rem, 1.3rem); line-height: 1.28; letter-spacing: -0.015em; font-weight: 700; }
+  p  { line-height: 1.7; overflow-wrap: anywhere; }
   section { scroll-margin-top: 5rem; }
   ::selection { background: oklch(0.145 0 0); color: white; }
 }
