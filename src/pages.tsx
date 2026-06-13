@@ -355,7 +355,7 @@ export function HomePage() {
                 <DoodleSquiggle className="absolute -bottom-3 left-0 z-0 h-4 w-full text-primary" />
               </span>
             </h1>
-            <p className="mx-auto mt-5 max-w-lg text-base text-muted-foreground">
+            <p className={`mx-auto mt-5 max-w-lg text-base ${hero.image_url ? "text-white/85" : "text-muted-foreground"}`}>
               Browse verified hostels around campus. Compare. Connect.
             </p>
             <form onSubmit={onSearch} className="mt-8 flex w-full items-center gap-2 rounded-full border border-border bg-card p-2 shadow-lg shadow-primary/5">
