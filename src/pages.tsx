@@ -1251,8 +1251,8 @@ function DashboardShell({ items, title, children }: { items: typeof ownerNav; ti
         <header className="flex items-center justify-between border-b border-border px-4 py-3 md:hidden">
           <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
             <SheetTrigger asChild>
-              <Button size="icon" variant="ghost" aria-label="Open menu">
-                <Menu className="h-5 w-5" />
+              <Button size="icon" variant="outline" className="h-11 w-11 rounded-full border-primary/40 bg-primary/10 text-primary shadow-sm hh-burger-attn" aria-label="Open menu">
+                <Menu className="h-6 w-6" />
               </Button>
             </SheetTrigger>
             <SheetContent side="left" className="flex w-72 flex-col bg-sidebar p-0">
