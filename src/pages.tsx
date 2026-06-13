@@ -116,9 +116,7 @@ export function PublicLayout({ children }: { children: ReactNode }) {
       <header className="sticky top-0 z-40 border-b border-border bg-background/85 backdrop-blur">
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 md:px-6">
           <Link to="/" className="flex items-center gap-2 font-semibold">
-            <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-              <HomeIcon className="h-4 w-4" />
-            </span>
+            <BrandLogo className="h-9 w-9" />
             <span>HostelHub</span>
           </Link>
 
@@ -185,9 +183,7 @@ export function PublicLayout({ children }: { children: ReactNode }) {
               <SheetContent side="right" className="w-72">
                 <SheetHeader>
                   <SheetTitle className="flex items-center gap-2">
-                    <span className="inline-flex h-7 w-7 items-center justify-center rounded-md bg-primary text-primary-foreground">
-                      <HomeIcon className="h-3.5 w-3.5" />
-                    </span>
+                    <BrandLogo className="h-7 w-7" />
                     HostelHub
                   </SheetTitle>
                 </SheetHeader>
@@ -270,9 +266,7 @@ function SiteFooter() {
       <div className="mx-auto grid max-w-6xl gap-8 px-4 py-12 md:grid-cols-4 md:px-6">
         <div>
           <div className="flex items-center gap-2 font-semibold">
-            <span className="inline-flex h-7 w-7 items-center justify-center rounded-md bg-primary text-primary-foreground">
-              <HomeIcon className="h-3.5 w-3.5" />
-            </span>
+            <BrandLogo className="h-7 w-7" />
             HostelHub
           </div>
           <p className="mt-3 text-sm text-muted-foreground">Find verified student hostels around UMaT.</p>
@@ -1536,7 +1530,7 @@ function DashboardShell({ items, title, children }: { items: typeof ownerNav; ti
     <>
       <div className="px-6 py-6">
         <Link to="/" className="flex items-center gap-2 text-lg font-semibold" onClick={onNavigate}>
-          <span className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-primary-foreground"><HomeIcon className="h-4 w-4" /></span>
+          <BrandLogo className="h-9 w-9" />
           HostelHub
         </Link>
         <div className="mt-1 text-sm text-muted-foreground">{title}</div>
@@ -1572,7 +1566,7 @@ function DashboardShell({ items, title, children }: { items: typeof ownerNav; ti
               <SidebarBody onNavigate={() => setMobileOpen(false)} />
             </SheetContent>
           </Sheet>
-          <Link to="/" className="font-semibold">HostelHub</Link>
+          <Link to="/" className="flex items-center gap-2 font-semibold"><BrandLogo className="h-7 w-7" /> HostelHub</Link>
           <Button size="icon" variant="ghost" onClick={async () => { await signOut(); navigate("/"); }} aria-label="Sign out">
             <LogOut className="h-4 w-4" />
           </Button>
