@@ -623,22 +623,30 @@ function FounderSection({ founder }: { founder: FounderSetting }) {
     <section className="relative border-t border-border bg-gradient-to-b from-background to-secondary/30">
       <div className="mx-auto grid max-w-6xl items-center gap-10 px-4 py-16 md:grid-cols-2 md:px-6 md:py-24">
         <div className="relative mx-auto w-full max-w-sm">
-          <div className="absolute -inset-3 -z-10 rounded-[2rem] bg-gradient-to-br from-primary/20 via-[var(--pop-coral)]/20 to-[var(--pop-mint)]/20 blur-2xl" />
-          <div className="relative aspect-[4/5] overflow-hidden rounded-3xl border border-border bg-secondary shadow-xl">
-            {founder.image_url ? (
-              <img
-                src={founder.image_url}
-                alt="Adabah Michael Junior — founder of HostelHub"
-                className="h-full w-full object-cover select-none"
-                style={{ transform: `translate(${ox}%, ${oy}%) scale(${scale})`, transformOrigin: "center" }}
-                draggable={false}
-              />
-            ) : (
-              <div className="flex h-full w-full items-center justify-center p-6 text-center text-sm text-muted-foreground">
-                Founder photo coming soon.
-              </div>
-            )}
+          <div className="absolute -inset-6 -z-10 rounded-[2.5rem] bg-gradient-to-br from-primary/30 via-[var(--pop-coral)]/25 to-[var(--pop-mint)]/25 blur-3xl animate-pulse" />
+          <div className="hh-founder-ring rounded-[2rem] p-[3px] shadow-2xl">
+            <div className="relative aspect-[4/5] overflow-hidden rounded-[1.85rem] bg-secondary">
+              {founder.image_url ? (
+                <img
+                  src={founder.image_url}
+                  alt="Adabah Michael Junior — founder of HostelHub"
+                  className="h-full w-full object-cover select-none transition-transform duration-700 hover:scale-[1.04]"
+                  style={{ transform: `translate(${ox}%, ${oy}%) scale(${scale})`, transformOrigin: "center" }}
+                  draggable={false}
+                />
+              ) : (
+                <div className="flex h-full w-full items-center justify-center p-6 text-center text-sm text-muted-foreground">
+                  Founder photo coming soon.
+                </div>
+              )}
+            </div>
           </div>
+          <span className="pointer-events-none absolute -top-3 -right-3 inline-flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg animate-bounce">
+            <DoodleStar className="h-5 w-5" />
+          </span>
+          <span className="pointer-events-none absolute -bottom-4 -left-4 inline-flex h-9 w-9 items-center justify-center rounded-full bg-[var(--pop-coral)] text-white shadow-lg animate-[tc-float_4s_ease-in-out_infinite]">
+            <DoodleKey className="h-4 w-4" />
+          </span>
         </div>
         <div>
           <span className="hh-chip mb-4"><span className="h-1.5 w-1.5 rounded-full bg-primary" />Meet the founder</span>
