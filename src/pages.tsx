@@ -1052,6 +1052,7 @@ export function HostelDetailPage() {
   const { user } = useAuth();
   const { ids, toggle } = useFavorites();
   const avg = avgRating(reviews);
+  const [lightboxIdx, setLightboxIdx] = useState<number | null>(null);
 
   if (loading) {
     return <PublicLayout><div className="flex h-[60vh] items-center justify-center"><RingLoader /></div></PublicLayout>;
@@ -1063,11 +1064,11 @@ export function HostelDetailPage() {
   const gallery = hostel.gallery ?? [];
   const isFav = ids.includes(hostel.id);
   const allImages = [hostel.cover_image, ...gallery].filter(Boolean) as string[];
-  const [lightboxIdx, setLightboxIdx] = useState<number | null>(null);
   const openLightbox = (src: string) => {
     const i = allImages.indexOf(src);
     setLightboxIdx(i >= 0 ? i : 0);
   };
+
 
   return (
     <PublicLayout>
