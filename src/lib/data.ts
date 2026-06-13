@@ -12,6 +12,8 @@ export type Hostel = {
   price_min: number | null;
   price_max: number | null;
   room_types: string[] | null;
+  room_options: RoomOption[] | null;
+  gender_policy: "boys" | "girls" | "mixed";
   amenities: string[] | null;
   cover_image: string | null;
   gallery: string[] | null;
