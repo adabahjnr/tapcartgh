@@ -634,6 +634,7 @@ export function HostelDetailPage() {
             <div className="flex flex-wrap items-center gap-2">
               {hostel.is_verified && <Badge className="gap-1"><ShieldCheck className="h-3 w-3" /> Verified</Badge>}
               <AvailabilityBadge value={hostel.availability} />
+              <Badge variant="outline" className="gap-1"><Users2 className="h-3 w-3" /> {GENDER_LABEL[hostel.gender_policy ?? "mixed"]}</Badge>
               {avg > 0 && (
                 <Badge variant="secondary" className="gap-1"><Star className="h-3 w-3 fill-amber-400 text-amber-400" /> {avg.toFixed(1)} · {reviews.length} review{reviews.length === 1 ? "" : "s"}</Badge>
               )}
@@ -646,7 +647,19 @@ export function HostelDetailPage() {
 
             <p className="mt-6 whitespace-pre-line text-sm leading-7 text-foreground/90">{hostel.description ?? "No description provided."}</p>
 
-            {hostel.room_types?.length ? (
+            {hostel.room_options?.length ? (
+              <div className="mt-6">
+                <h3 className="text-sm font-semibold">Rooms & prices</h3>
+                <div className="mt-2 divide-y divide-border rounded-lg border border-border">
+                  {hostel.room_options.map((r, i) => (
+                    <div key={i} className="flex items-center justify-between px-4 py-3 text-sm">
+                      <span className="font-medium">{r.name}</span>
+                      <span className="text-muted-foreground">GH₵{r.price.toLocaleString()} <span className="text-xs">{PERIOD_LABEL[r.period]}</span></span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : hostel.room_types?.length ? (
               <div className="mt-6">
                 <h3 className="text-sm font-semibold">Room types</h3>
                 <div className="mt-2 flex flex-wrap gap-2">
