@@ -3320,7 +3320,7 @@ export function AdminUsersPage() {
   );
 }
 
-
+export function NotFoundPage() {
   return (
     <PublicLayout>
       <div className="mx-auto max-w-md px-4 py-24 text-center">
