@@ -81,6 +81,7 @@ import { Sheet, SheetContent, SheetTrigger, SheetTitle, SheetHeader } from "@/co
 import { RingLoader, DotLoader } from "@/components/ui/loader";
 import { Slider } from "@/components/ui/slider";
 import { DoodleHouse, DoodleStar, DoodleSquiggle, DoodleKey, DoodleArrow, DoodleCircle } from "@/components/hh/Doodles";
+import { ThemeToggle } from "@/components/hh/ThemeToggle";
 
 /* ================== LAYOUT ================== */
 
@@ -144,6 +145,7 @@ export function PublicLayout({ children }: { children: ReactNode }) {
           </nav>
 
           <div className="flex items-center gap-2">
+            <ThemeToggle className="hidden md:inline-flex" />
             {user ? (
               <>
                 {isAdmin && (
