@@ -387,6 +387,59 @@ export type FounderSetting = {
   offset_x: number;
   offset_y: number;
 };
+export type LogoSetting = { image_url: string | null };
+
+let _logoCache: string | null | undefined = undefined;
+let _logoPromise: Promise<string | null> | null = null;
+const _logoSubs = new Set<(v: string | null) => void>();
+
+export function useLogoUrl(fallback: string) {
+  const [url, setUrl] = useState<string>(() => {
+    if (_logoCache !== undefined) return _logoCache ?? fallback;
+    if (typeof window !== "undefined") {
+      const cached = window.localStorage.getItem("hh_logo_url");
+      if (cached) return cached;
+    }
+    return fallback;
+  });
+
+  useEffect(() => {
+    const sub = (v: string | null) => setUrl(v ?? fallback);
+    _logoSubs.add(sub);
+
+    if (_logoCache === undefined && !_logoPromise && supabase) {
+      _logoPromise = supabase
+        .from("site_settings")
+        .select("value")
+        .eq("key", "logo")
+        .maybeSingle()
+        .then(({ data }) => {
+          const v = ((data?.value as LogoSetting | null)?.image_url) ?? null;
+          _logoCache = v;
+          if (typeof window !== "undefined") {
+            if (v) window.localStorage.setItem("hh_logo_url", v);
+            else window.localStorage.removeItem("hh_logo_url");
+          }
+          _logoSubs.forEach((f) => f(v));
+          return v;
+        });
+    }
+    return () => {
+      _logoSubs.delete(sub);
+    };
+  }, [fallback]);
+
+  return url;
+}
+
+export function notifyLogoChanged(url: string | null) {
+  _logoCache = url;
+  if (typeof window !== "undefined") {
+    if (url) window.localStorage.setItem("hh_logo_url", url);
+    else window.localStorage.removeItem("hh_logo_url");
+  }
+  _logoSubs.forEach((f) => f(url));
+}
 
 export function useSiteSetting<T = unknown>(key: string, fallback: T) {
   const [value, setValue] = useState<T>(fallback);
