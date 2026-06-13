@@ -3,6 +3,7 @@ import { Toaster } from "sonner";
 import { AuthProvider } from "./lib/auth-context";
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
 import { ThemeToggle } from "./components/hh/ThemeToggle";
+import { AdabahWidget } from "./components/adabah/AdabahWidget";
 import {
   HomePage,
   HostelsPage,
@@ -37,6 +38,7 @@ export default function App() {
       <AuthProvider>
         <Toaster richColors position="top-center" />
         <ThemeToggle />
+        <AdabahWidget />
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/hostels" element={<HostelsPage />} />
