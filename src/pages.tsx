@@ -31,14 +31,20 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import logoAsset from "@/assets/hostelhub-logo.png.asset.json";
+import { useLogoUrl, notifyLogoChanged } from "@/lib/data";
 
 function BrandLogo({ className = "h-8 w-8" }: { className?: string }) {
+  const url = useLogoUrl("/favicon.png");
   return (
     <img
-      src={logoAsset.url}
+      src={url || logoAsset.url}
       alt="HostelHub logo"
       className={`${className} rounded-lg object-contain`}
       loading="eager"
+      onError={(e) => {
+        const img = e.currentTarget;
+        if (img.src.indexOf("/favicon.png") === -1) img.src = "/favicon.png";
+      }}
     />
   );
 }
