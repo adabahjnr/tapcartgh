@@ -62,23 +62,6 @@ export function PublicLayout({ children }: { children: ReactNode }) {
   const { isAdmin, isOwner } = useRoles();
   const navigate = useNavigate();
   const location = useLocation();
-
-  const nav = [
-    { to: "/", label: "Home" },
-    { to: "/hostels", label: "Hostels" },
-    { to: "/community", label: "Community" },
-    { to: "/about", label: "About" },
-  ];
-
-  return (
-    <div className="min-h-screen bg-background text-foreground flex flex-col">
-      <header className="sticky top-0 z-40 border-b border-border bg-background/85 backdrop-blur">
-        <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 md:px-6">
-export function PublicLayout({ children }: { children: ReactNode }) {
-  const { user, signOut } = useAuth();
-  const { isAdmin, isOwner } = useRoles();
-  const navigate = useNavigate();
-  const location = useLocation();
   const [openMenu, setOpenMenu] = useState(false);
 
   const nav = [
