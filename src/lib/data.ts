@@ -2,6 +2,8 @@ import { useCallback, useEffect, useState } from "react";
 import { supabase } from "./supabase";
 import { useAuth } from "./auth-context";
 
+export type RoomOption = { name: string; price: number; period: "year" | "semester" | "month" };
+
 export type Hostel = {
   id: string;
   owner_id: string | null;
@@ -12,6 +14,8 @@ export type Hostel = {
   price_min: number | null;
   price_max: number | null;
   room_types: string[] | null;
+  room_options: RoomOption[] | null;
+  gender_policy: "boys" | "girls" | "mixed";
   amenities: string[] | null;
   cover_image: string | null;
   gallery: string[] | null;

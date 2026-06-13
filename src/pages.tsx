@@ -22,6 +22,10 @@ import {
   Menu,
   User as UserIcon,
   ClipboardCheck,
+  Upload,
+  X,
+  Trash2,
+  Users2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
@@ -39,6 +43,7 @@ import {
   submitOwnerApplication,
   avgRating,
   type Hostel,
+  type RoomOption,
 } from "@/lib/data";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -629,6 +634,7 @@ export function HostelDetailPage() {
             <div className="flex flex-wrap items-center gap-2">
               {hostel.is_verified && <Badge className="gap-1"><ShieldCheck className="h-3 w-3" /> Verified</Badge>}
               <AvailabilityBadge value={hostel.availability} />
+              <Badge variant="outline" className="gap-1"><Users2 className="h-3 w-3" /> {GENDER_LABEL[hostel.gender_policy ?? "mixed"]}</Badge>
               {avg > 0 && (
                 <Badge variant="secondary" className="gap-1"><Star className="h-3 w-3 fill-amber-400 text-amber-400" /> {avg.toFixed(1)} · {reviews.length} review{reviews.length === 1 ? "" : "s"}</Badge>
               )}
@@ -641,7 +647,19 @@ export function HostelDetailPage() {
 
             <p className="mt-6 whitespace-pre-line text-sm leading-7 text-foreground/90">{hostel.description ?? "No description provided."}</p>
 
-            {hostel.room_types?.length ? (
+            {hostel.room_options?.length ? (
+              <div className="mt-6">
+                <h3 className="text-sm font-semibold">Rooms & prices</h3>
+                <div className="mt-2 divide-y divide-border rounded-lg border border-border">
+                  {hostel.room_options.map((r, i) => (
+                    <div key={i} className="flex items-center justify-between px-4 py-3 text-sm">
+                      <span className="font-medium">{r.name}</span>
+                      <span className="text-muted-foreground">GH₵{r.price.toLocaleString()} <span className="text-xs">{PERIOD_LABEL[r.period]}</span></span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : hostel.room_types?.length ? (
               <div className="mt-6">
                 <h3 className="text-sm font-semibold">Room types</h3>
                 <div className="mt-2 flex flex-wrap gap-2">
@@ -1389,6 +1407,153 @@ export function OwnerHostelsPage() {
   );
 }
 
+const GENDER_LABEL: Record<"boys" | "girls" | "mixed", string> = {
+  boys: "Boys only",
+  girls: "Girls only",
+  mixed: "Mixed",
+};
+
+const PERIOD_LABEL: Record<RoomOption["period"], string> = {
+  year: "/ year",
+  semester: "/ semester",
+  month: "/ month",
+};
+
+function PhotoUploader({
+  userId,
+  value,
+  onChange,
+  multiple = false,
+  label,
+}: {
+  userId: string;
+  value: string[];
+  onChange: (next: string[]) => void;
+  multiple?: boolean;
+  label: string;
+}) {
+  const [uploading, setUploading] = useState(false);
+
+  const handleFiles = async (files: FileList | null) => {
+    if (!files || !files.length || !supabase) return;
+    setUploading(true);
+    const uploaded: string[] = [];
+    for (const file of Array.from(files)) {
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error(`${file.name} is larger than 5MB`);
+        continue;
+      }
+      const ext = file.name.split(".").pop()?.toLowerCase() ?? "jpg";
+      const path = `${userId}/${crypto.randomUUID()}.${ext}`;
+      const { error } = await supabase.storage
+        .from("hostel-photos")
+        .upload(path, file, { cacheControl: "3600", upsert: false, contentType: file.type });
+      if (error) {
+        toast.error(error.message);
+        continue;
+      }
+      const { data } = supabase.storage.from("hostel-photos").getPublicUrl(path);
+      uploaded.push(data.publicUrl);
+    }
+    setUploading(false);
+    onChange(multiple ? [...value, ...uploaded] : uploaded.slice(-1));
+  };
+
+  const remove = (url: string) => onChange(value.filter((u) => u !== url));
+
+  return (
+    <div>
+      <Label>{label}</Label>
+      <div className="mt-2 flex flex-wrap gap-3">
+        {value.map((url) => (
+          <div key={url} className="relative h-24 w-24 overflow-hidden rounded-lg border border-border bg-secondary">
+            <img src={url} alt="" className="h-full w-full object-cover" />
+            <button
+              type="button"
+              onClick={() => remove(url)}
+              className="absolute right-1 top-1 rounded-full bg-background/90 p-0.5 text-foreground shadow-sm hover:bg-background"
+              aria-label="Remove photo"
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+          </div>
+        ))}
+        <label className="flex h-24 w-24 cursor-pointer flex-col items-center justify-center gap-1 rounded-lg border border-dashed border-border text-xs text-muted-foreground hover:bg-secondary">
+          <Upload className="h-4 w-4" />
+          {uploading ? "Uploading..." : "Add photo"}
+          <input
+            type="file"
+            accept="image/*"
+            multiple={multiple}
+            className="hidden"
+            disabled={uploading}
+            onChange={(e) => {
+              handleFiles(e.target.files);
+              e.target.value = "";
+            }}
+          />
+        </label>
+      </div>
+      <p className="mt-1 text-xs text-muted-foreground">JPG/PNG, up to 5MB each.</p>
+    </div>
+  );
+}
+
+function RoomOptionsEditor({
+  value,
+  onChange,
+}: {
+  value: RoomOption[];
+  onChange: (next: RoomOption[]) => void;
+}) {
+  const update = (i: number, patch: Partial<RoomOption>) =>
+    onChange(value.map((r, idx) => (idx === i ? { ...r, ...patch } : r)));
+  const remove = (i: number) => onChange(value.filter((_, idx) => idx !== i));
+  const add = () => onChange([...value, { name: "", price: 0, period: "year" }]);
+
+  return (
+    <div>
+      <Label>Room options & prices</Label>
+      <div className="mt-2 space-y-2">
+        {value.length === 0 && (
+          <p className="text-xs text-muted-foreground">Add at least one room type, e.g. “1-in-a-room” for GH₵1000 / year.</p>
+        )}
+        {value.map((r, i) => (
+          <div key={i} className="grid grid-cols-[1fr,110px,130px,auto] gap-2">
+            <Input
+              placeholder="e.g. 1-in-a-room"
+              value={r.name}
+              onChange={(e) => update(i, { name: e.target.value })}
+              maxLength={60}
+            />
+            <Input
+              type="number"
+              min={0}
+              placeholder="Price"
+              value={r.price === 0 ? "" : r.price}
+              onChange={(e) => update(i, { price: Number(e.target.value) || 0 })}
+            />
+            <Select value={r.period} onValueChange={(v) => update(i, { period: v as RoomOption["period"] })}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="year">per year</SelectItem>
+                <SelectItem value="semester">per semester</SelectItem>
+                <SelectItem value="month">per month</SelectItem>
+              </SelectContent>
+            </Select>
+            <Button type="button" variant="ghost" size="icon" onClick={() => remove(i)} aria-label="Remove">
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          </div>
+        ))}
+        <Button type="button" variant="outline" size="sm" onClick={add}>
+          <PlusCircle className="mr-2 h-4 w-4" /> Add room option
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 export function OwnerHostelFormPage() {
   const { user } = useAuth();
   const { id } = useParams();
@@ -1399,12 +1564,13 @@ export function OwnerHostelFormPage() {
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({
     name: "", description: "", location: "", distance_km: "" as number | "",
-    price_min: "" as number | "", price_max: "" as number | "",
-    room_types: "", amenities: "",
-    cover_image: "", gallery: "",
+    amenities: "",
+    cover_image: "",
+    gallery: [] as string[],
     contact_phone: "", contact_email: "", whatsapp: "",
     availability: "available",
-    is_published: false,
+    gender_policy: "mixed" as "boys" | "girls" | "mixed",
+    room_options: [] as RoomOption[],
   });
 
   useEffect(() => {
@@ -1416,17 +1582,15 @@ export function OwnerHostelFormPage() {
           description: data.description ?? "",
           location: data.location ?? "",
           distance_km: data.distance_km ?? "",
-          price_min: data.price_min ?? "",
-          price_max: data.price_max ?? "",
-          room_types: (data.room_types ?? []).join(", "),
           amenities: (data.amenities ?? []).join(", "),
           cover_image: data.cover_image ?? "",
-          gallery: (data.gallery ?? []).join("\n"),
+          gallery: data.gallery ?? [],
           contact_phone: data.contact_phone ?? "",
           contact_email: data.contact_email ?? "",
           whatsapp: data.whatsapp ?? "",
           availability: data.availability ?? "available",
-          is_published: data.is_published ?? false,
+          gender_policy: (data.gender_policy ?? "mixed") as "boys" | "girls" | "mixed",
+          room_options: (data.room_options ?? []) as RoomOption[],
         });
       }
       setLoading(false);
@@ -1438,24 +1602,35 @@ export function OwnerHostelFormPage() {
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!supabase || !user) return;
+    if (form.room_options.length === 0) {
+      toast.error("Add at least one room option with a price.");
+      return;
+    }
+    if (form.room_options.some((r) => !r.name.trim() || r.price <= 0)) {
+      toast.error("Every room option needs a name and a price greater than 0.");
+      return;
+    }
     setSaving(true);
+    const prices = form.room_options.map((r) => r.price);
     const payload = {
       owner_id: user.id,
       name: form.name.trim(),
       description: form.description.trim() || null,
       location: form.location.trim() || null,
       distance_km: form.distance_km === "" ? null : Number(form.distance_km),
-      price_min: form.price_min === "" ? null : Number(form.price_min),
-      price_max: form.price_max === "" ? null : Number(form.price_max),
-      room_types: form.room_types.split(",").map((s) => s.trim()).filter(Boolean),
+      price_min: Math.min(...prices),
+      price_max: Math.max(...prices),
+      room_types: form.room_options.map((r) => r.name.trim()),
+      room_options: form.room_options,
+      gender_policy: form.gender_policy,
       amenities: form.amenities.split(",").map((s) => s.trim()).filter(Boolean),
       cover_image: form.cover_image.trim() || null,
-      gallery: form.gallery.split("\n").map((s) => s.trim()).filter(Boolean),
+      gallery: form.gallery,
       contact_phone: form.contact_phone.trim() || null,
       contact_email: form.contact_email.trim() || null,
       whatsapp: form.whatsapp.trim() || null,
       availability: form.availability,
-      is_published: form.is_published,
+      is_published: true,
     };
     const { error } = editing
       ? await supabase.from("hostels").update(payload).eq("id", id!)
@@ -1463,7 +1638,7 @@ export function OwnerHostelFormPage() {
     setSaving(false);
     if (error) toast.error(error.message);
     else {
-      toast.success(editing ? "Hostel updated" : "Hostel submitted for review");
+      toast.success(editing ? "Hostel updated" : "Hostel published");
       navigate("/owner");
     }
   };
@@ -1472,54 +1647,77 @@ export function OwnerHostelFormPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-semibold">{editing ? "Edit hostel" : "Submit a new hostel"}</h1>
-      <p className="text-sm text-muted-foreground">New submissions enter a review queue before publication.</p>
-      <form onSubmit={submit} className="mt-6 grid max-w-3xl gap-4">
+      <h1 className="text-2xl font-semibold">{editing ? "Edit hostel" : "Add a new hostel"}</h1>
+      <p className="text-sm text-muted-foreground">Your listing goes live immediately — your owner account is already verified.</p>
+      <form onSubmit={submit} className="mt-6 grid max-w-3xl gap-5">
         <div><Label>Hostel name</Label><Input required value={form.name} onChange={(e) => set("name", e.target.value)} maxLength={120} /></div>
         <div><Label>Description</Label><Textarea value={form.description} onChange={(e) => set("description", e.target.value)} maxLength={2000} /></div>
         <div className="grid gap-4 sm:grid-cols-2">
           <div><Label>Location / area</Label><Input value={form.location} onChange={(e) => set("location", e.target.value)} maxLength={120} /></div>
           <div><Label>Distance from campus (km)</Label><Input type="number" step="0.1" value={form.distance_km} onChange={(e) => set("distance_km", e.target.value === "" ? "" : Number(e.target.value))} /></div>
-          <div><Label>Min price (GH₵)</Label><Input type="number" value={form.price_min} onChange={(e) => set("price_min", e.target.value === "" ? "" : Number(e.target.value))} /></div>
-          <div><Label>Max price (GH₵)</Label><Input type="number" value={form.price_max} onChange={(e) => set("price_max", e.target.value === "" ? "" : Number(e.target.value))} /></div>
         </div>
-        <div><Label>Room types (comma separated)</Label><Input value={form.room_types} onChange={(e) => set("room_types", e.target.value)} placeholder="Single, Shared, Self-contained" /></div>
+
+        <div>
+          <Label>Hostel type</Label>
+          <Select value={form.gender_policy} onValueChange={(v) => set("gender_policy", v as "boys" | "girls" | "mixed")}>
+            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="boys">Boys only</SelectItem>
+              <SelectItem value="girls">Girls only</SelectItem>
+              <SelectItem value="mixed">Mixed (boys & girls)</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <RoomOptionsEditor value={form.room_options} onChange={(v) => set("room_options", v)} />
+
         <div><Label>Amenities (comma separated)</Label><Input value={form.amenities} onChange={(e) => set("amenities", e.target.value)} placeholder="WiFi, Water, Generator, Security" /></div>
-        <div><Label>Cover image URL</Label><Input value={form.cover_image} onChange={(e) => set("cover_image", e.target.value)} placeholder="https://..." /></div>
-        <div><Label>Gallery image URLs (one per line)</Label><Textarea value={form.gallery} onChange={(e) => set("gallery", e.target.value)} rows={4} /></div>
+
+        {user && (
+          <>
+            <PhotoUploader
+              userId={user.id}
+              label="Cover photo"
+              value={form.cover_image ? [form.cover_image] : []}
+              onChange={(next) => set("cover_image", next[0] ?? "")}
+            />
+            <PhotoUploader
+              userId={user.id}
+              label="Gallery photos"
+              value={form.gallery}
+              onChange={(next) => set("gallery", next)}
+              multiple
+            />
+          </>
+        )}
+
         <div className="grid gap-4 sm:grid-cols-3">
           <div><Label>Phone</Label><Input value={form.contact_phone} onChange={(e) => set("contact_phone", e.target.value)} maxLength={20} /></div>
           <div><Label>WhatsApp</Label><Input value={form.whatsapp} onChange={(e) => set("whatsapp", e.target.value)} maxLength={20} /></div>
           <div><Label>Email</Label><Input type="email" value={form.contact_email} onChange={(e) => set("contact_email", e.target.value)} maxLength={255} /></div>
         </div>
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div>
-            <Label>Availability</Label>
-            <Select value={form.availability} onValueChange={(v) => set("availability", v)}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="available">Available</SelectItem>
-                <SelectItem value="limited">Limited</SelectItem>
-                <SelectItem value="full">Full</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="flex items-center justify-between rounded-md border border-border p-3">
-            <div>
-              <div className="text-sm font-medium">Published</div>
-              <div className="text-xs text-muted-foreground">Visible publicly once admin approves</div>
-            </div>
-            <Switch checked={form.is_published} onCheckedChange={(v) => set("is_published", v)} />
-          </div>
+
+        <div>
+          <Label>Availability</Label>
+          <Select value={form.availability} onValueChange={(v) => set("availability", v)}>
+            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="available">Available</SelectItem>
+              <SelectItem value="limited">Limited</SelectItem>
+              <SelectItem value="full">Full</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
+
         <div className="flex gap-2 pt-2">
-          <Button type="submit" disabled={saving}>{saving ? "Saving..." : editing ? "Save changes" : "Submit hostel"}</Button>
+          <Button type="submit" disabled={saving}>{saving ? "Saving..." : editing ? "Save changes" : "Publish hostel"}</Button>
           <Button type="button" variant="ghost" onClick={() => navigate("/owner")}>Cancel</Button>
         </div>
       </form>
     </div>
   );
 }
+
 
 /* ================== ADMIN ================== */
 
