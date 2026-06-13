@@ -388,17 +388,20 @@ export function HomePage() {
         </div>
       </section>
 
-      <Section title="Featured" subtitle="Student favorites this week.">
-        <HostelGrid hostels={featured} empty="No featured hostels yet." />
+      <Section
+        title="Available hostels"
+        subtitle="Rooms open right now around campus."
+        action={
+          <Button asChild variant="outline" className="rounded-full">
+            <Link to="/hostels">See more</Link>
+          </Button>
+        }
+      >
+        <HostelGrid hostels={available} empty="No hostels listed yet — be the first." />
       </Section>
 
-      <Section title="Verified" subtitle="Checked and approved.">
-        <HostelGrid hostels={verified} empty="No verified hostels yet." />
-      </Section>
+      <FounderSection founder={founder} />
 
-      <Section title="Fresh listings" subtitle="Just added around campus.">
-        <HostelGrid hostels={recent} empty="No hostels listed yet — be the first." />
-      </Section>
 
       <section className="relative overflow-hidden border-t border-border bg-secondary/40">
         <DoodleArrow className="absolute right-10 top-6 hidden h-16 w-28 text-primary/60 md:block" />
