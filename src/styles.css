@@ -279,3 +279,16 @@
   transition: transform .25s ease, box-shadow .25s ease;
 }
 .hh-fab:hover { transform: translateY(-3px) rotate(-6deg); }
+
+/* Attention-grabbing hamburger */
+@keyframes hh-burger-attn {
+  0%, 60%, 100% { transform: scale(1) rotate(0deg); box-shadow: 0 0 0 0 color-mix(in oklch, var(--primary) 55%, transparent); }
+  10% { transform: scale(1.08) rotate(-6deg); }
+  20% { transform: scale(1.08) rotate(6deg); }
+  30% { transform: scale(1.08) rotate(-4deg); box-shadow: 0 0 0 10px color-mix(in oklch, var(--primary) 0%, transparent); }
+  40% { transform: scale(1) rotate(0deg); }
+}
+.hh-burger-attn {
+  animation: hh-burger-attn 2.6s ease-in-out infinite;
+}
+.hh-burger-attn:hover { animation-play-state: paused; }
