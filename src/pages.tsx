@@ -348,7 +348,7 @@ export function HomePage() {
               <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
               UMaT student housing
             </span>
-            <h1 className="text-4xl font-bold tracking-tight md:text-6xl">
+            <h1 className={`text-4xl font-bold tracking-tight md:text-6xl ${hero.image_url ? "text-white drop-shadow-lg" : ""}`}>
               Your hostel,{" "}
               <span className="relative inline-block">
                 <span className="relative z-10">sorted.</span>
