@@ -1538,10 +1538,12 @@ export function AuthPage() {
                       />
                     </div>
                     <div className="space-y-1.5">
-                      <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Phone (optional)</Label>
+                      <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Phone</Label>
                       <Input
                         value={phone}
                         onChange={(e) => setPhone(e.target.value)}
+                        required
+                        type="tel"
                         maxLength={20}
                         placeholder="+233..."
                         className="h-12 rounded-xl border-border bg-background text-base"
