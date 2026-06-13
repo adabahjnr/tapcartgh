@@ -370,7 +370,7 @@ function buildReply(bot: Bot, userText: string, hostels: Hostel[], history: Msg[
 function bulletFor(h: Hostel, reasons: string[]): string {
   const dist = h.distance_km != null ? ` · ${h.distance_km} km from campus` : "";
   const reasonLine = reasons.length ? `\n   _Why it fits:_ ${reasons.slice(0, 4).join(", ")}` : "";
-  return `🏠 **[${h.name}](/hostels/${h.id})** — ${formatPrice(h)}${dist}${reasonLine}`;
+  return `🏠 [${h.name}](/hostels/${h.id}) — ${formatPrice(h)}${dist}${reasonLine}\n   → [View details](/hostels/${h.id})`;
 }
 
 // ───────────────────────── component ─────────────────────────
