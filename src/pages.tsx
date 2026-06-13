@@ -31,14 +31,20 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import logoAsset from "@/assets/hostelhub-logo.png.asset.json";
+import { useLogoUrl, notifyLogoChanged } from "@/lib/data";
 
 function BrandLogo({ className = "h-8 w-8" }: { className?: string }) {
+  const url = useLogoUrl("/favicon.png");
   return (
     <img
-      src={logoAsset.url}
+      src={url || logoAsset.url}
       alt="HostelHub logo"
       className={`${className} rounded-lg object-contain`}
       loading="eager"
+      onError={(e) => {
+        const img = e.currentTarget;
+        if (img.src.indexOf("/favicon.png") === -1) img.src = "/favicon.png";
+      }}
     />
   );
 }
@@ -1335,43 +1341,172 @@ export function AuthPage() {
 
   return (
     <PublicLayout>
-      <div className="mx-auto max-w-md px-4 py-16 md:px-6">
-        <div className="rounded-2xl border border-border bg-card p-8">
-          <h1 className="text-2xl font-semibold">{mode === "signin" ? "Welcome back" : "Create your account"}</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {mode === "signin" ? "Sign in to save favorites and write reviews." : "Join HostelHub in less than a minute."}
-          </p>
-          <form onSubmit={submit} className="mt-6 space-y-4">
-            {mode === "signup" && (
-              <>
-                <div>
-                  <Label>Full name</Label>
-                  <Input value={name} onChange={(e) => setName(e.target.value)} required maxLength={80} />
-                </div>
-                <div>
-                  <Label>Phone (optional)</Label>
-                  <Input value={phone} onChange={(e) => setPhone(e.target.value)} maxLength={20} placeholder="+233..." />
-                </div>
-              </>
-            )}
-            <div>
-              <Label>Email</Label>
-              <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+      <div className="relative overflow-hidden">
+        {/* Playful background */}
+        <div aria-hidden className="pointer-events-none absolute inset-0 -z-10">
+          <div className="absolute -left-20 -top-20 h-72 w-72 rounded-full bg-primary/25 blur-3xl tc-float-slow" />
+          <div className="absolute -right-24 top-32 h-80 w-80 rounded-full bg-[color:var(--pop-sun)]/30 blur-3xl tc-float" />
+          <div className="absolute bottom-0 left-1/3 h-72 w-72 rounded-full bg-[color:var(--pop-mint)]/40 blur-3xl" />
+          <div className="absolute inset-0 hh-grain opacity-60" />
+        </div>
+
+        <div className="mx-auto grid min-h-[calc(100vh-4rem)] max-w-6xl items-center gap-10 px-4 py-10 md:grid-cols-2 md:gap-16 md:px-6 md:py-16">
+          {/* Left: hype side */}
+          <div className="hidden md:block">
+            <span className="hh-chip">
+              <DoodleStar className="h-3.5 w-3.5" /> For UMaT students
+            </span>
+            <h1 className="mt-5 text-5xl font-extrabold leading-[1.05] tracking-tight md:text-6xl">
+              {mode === "signin" ? (
+                <>Welcome <span className="text-primary">back</span>.<br/>Find your spot.</>
+              ) : (
+                <>Join the <span className="text-primary">HostelHub</span> crew.</>
+              )}
+            </h1>
+            <p className="mt-5 max-w-md text-lg text-muted-foreground">
+              {mode === "signin"
+                ? "Pick up where you left off — your saved hostels, requests and reviews are waiting."
+                : "Create a free account to save favorites, message owners on WhatsApp and post real reviews."}
+            </p>
+
+            <ul className="mt-8 space-y-3 text-base">
+              <li className="flex items-start gap-3"><span className="grid h-7 w-7 place-items-center rounded-full bg-primary/15 text-primary"><ShieldCheck className="h-4 w-4" /></span> Verified hostels with real prices</li>
+              <li className="flex items-start gap-3"><span className="grid h-7 w-7 place-items-center rounded-full bg-[color:var(--pop-coral)]/20 text-[color:var(--pop-coral)]"><Heart className="h-4 w-4" /></span> Save favorites in one tap</li>
+              <li className="flex items-start gap-3"><span className="grid h-7 w-7 place-items-center rounded-full bg-[color:var(--pop-sun)]/30 text-foreground"><MessageSquare className="h-4 w-4" /></span> Chat owners directly on WhatsApp</li>
+            </ul>
+
+            <div className="mt-10 flex items-center gap-3 text-sm text-muted-foreground">
+              <DoodleSquiggle className="h-5 w-16 text-primary hh-wiggle" />
+              <span>Free forever for students.</span>
             </div>
-            <div>
-              <Label>Password</Label>
-              <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} />
+          </div>
+
+          {/* Right: form card */}
+          <div className="relative">
+            <DoodleStar className="absolute -left-3 -top-3 h-8 w-8 text-[color:var(--pop-sun)] hh-spin-slow" />
+            <DoodleKey className="absolute -right-2 top-10 h-9 w-9 text-primary hh-bob hidden md:block" />
+
+            <div className="rounded-[2rem] border border-border bg-card/90 p-7 shadow-[0_30px_80px_-30px_rgba(0,0,0,0.25)] backdrop-blur md:p-9">
+              <div className="flex items-center gap-3">
+                <BrandLogo className="h-10 w-10" />
+                <div>
+                  <div className="text-xs uppercase tracking-[0.18em] text-muted-foreground">HostelHub</div>
+                  <div className="text-sm font-medium">By Adabah</div>
+                </div>
+              </div>
+
+              {/* Mode toggle */}
+              <div className="mt-6 grid grid-cols-2 rounded-full bg-secondary p-1 text-sm font-medium">
+                {(["signin", "signup"] as const).map((m) => (
+                  <button
+                    key={m}
+                    type="button"
+                    onClick={() => setMode(m)}
+                    className={`rounded-full px-4 py-2 transition-all ${
+                      mode === m
+                        ? "bg-background text-foreground shadow"
+                        : "text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    {m === "signin" ? "Sign in" : "Create account"}
+                  </button>
+                ))}
+              </div>
+
+              <h2 className="mt-7 text-3xl font-bold tracking-tight md:text-4xl">
+                {mode === "signin" ? "Hey, welcome 👋" : "Let's get you in 🎉"}
+              </h2>
+              <p className="mt-2 text-sm text-muted-foreground">
+                {mode === "signin"
+                  ? "Sign in with your email & password."
+                  : "It takes less than a minute."}
+              </p>
+
+              <form onSubmit={submit} className="mt-7 space-y-5">
+                {mode === "signup" && (
+                  <>
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Full name</Label>
+                      <Input
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        required
+                        maxLength={80}
+                        placeholder="e.g. Ama Boateng"
+                        className="h-12 rounded-xl border-border bg-background text-base"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Phone (optional)</Label>
+                      <Input
+                        value={phone}
+                        onChange={(e) => setPhone(e.target.value)}
+                        maxLength={20}
+                        placeholder="+233..."
+                        className="h-12 rounded-xl border-border bg-background text-base"
+                      />
+                    </div>
+                  </>
+                )}
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Email</Label>
+                  <Input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                    placeholder="you@umat.edu.gh"
+                    className="h-12 rounded-xl border-border bg-background text-base"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Password</Label>
+                  <Input
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    minLength={6}
+                    placeholder="At least 6 characters"
+                    className="h-12 rounded-xl border-border bg-background text-base"
+                  />
+                </div>
+
+                <Button
+                  type="submit"
+                  disabled={loading}
+                  className="h-12 w-full rounded-xl text-base font-semibold shadow-[0_10px_30px_-10px_hsl(var(--primary)/0.6)]"
+                >
+                  {loading ? (
+                    <DotLoader />
+                  ) : mode === "signin" ? (
+                    <>Sign in <DoodleArrow className="ml-1 h-4 w-6" /></>
+                  ) : (
+                    <>Create my account <DoodleArrow className="ml-1 h-4 w-6" /></>
+                  )}
+                </Button>
+              </form>
+
+              <div className="mt-6 text-center text-sm text-muted-foreground">
+                {mode === "signin" ? (
+                  <>New here?{" "}
+                    <button onClick={() => setMode("signup")} className="font-semibold text-primary underline-offset-4 hover:underline">
+                      Create an account
+                    </button>
+                  </>
+                ) : (
+                  <>Already on HostelHub?{" "}
+                    <button onClick={() => setMode("signin")} className="font-semibold text-primary underline-offset-4 hover:underline">
+                      Sign in
+                    </button>
+                  </>
+                )}
+              </div>
             </div>
-            <Button type="submit" disabled={loading} className="w-full">
-              {loading ? "Please wait..." : mode === "signin" ? "Sign in" : "Create account"}
-            </Button>
-          </form>
-          <div className="mt-4 text-center text-sm text-muted-foreground">
-            {mode === "signin" ? (
-              <>New here? <button onClick={() => setMode("signup")} className="font-medium text-foreground underline-offset-2 hover:underline">Create an account</button></>
-            ) : (
-              <>Already have an account? <button onClick={() => setMode("signin")} className="font-medium text-foreground underline-offset-2 hover:underline">Sign in</button></>
-            )}
+
+            <p className="mt-6 text-center text-xs text-muted-foreground md:text-left">
+              By continuing you agree to our friendly terms — be kind, be honest.
+            </p>
           </div>
         </div>
       </div>
@@ -2571,6 +2706,90 @@ export function AdminAppearancePage() {
       </div>
 
       <FounderEditor />
+      <LogoEditor />
+    </div>
+  );
+}
+
+function LogoEditor() {
+  const { user } = useAuth();
+  const { value: logo, refetch } = useSiteSetting<{ image_url: string | null }>("logo", { image_url: null });
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => { setImageUrl(logo.image_url); }, [logo.image_url]);
+
+  const upload = async (file: File) => {
+    if (!supabase || !user) return;
+    if (file.size > 4 * 1024 * 1024) {
+      toast.error("Logo must be smaller than 4MB");
+      return;
+    }
+    setUploading(true);
+    const ext = file.name.split(".").pop()?.toLowerCase() ?? "png";
+    const path = `logo/${crypto.randomUUID()}.${ext}`;
+    const { error } = await supabase.storage
+      .from("site-assets")
+      .upload(path, file, { cacheControl: "3600", upsert: false, contentType: file.type });
+    if (error) { toast.error(error.message); setUploading(false); return; }
+    const { data } = supabase.storage.from("site-assets").getPublicUrl(path);
+    setImageUrl(data.publicUrl);
+    setUploading(false);
+  };
+
+  const save = async () => {
+    setSaving(true);
+    const { error } = await setSiteSetting("logo", { image_url: imageUrl });
+    setSaving(false);
+    if (error) toast.error(error);
+    else {
+      notifyLogoChanged(imageUrl);
+      toast.success("Logo updated");
+      refetch();
+    }
+  };
+
+  return (
+    <div className="mt-12 border-t border-border pt-10">
+      <h2 className="text-xl font-semibold">Site logo</h2>
+      <p className="text-sm text-muted-foreground">
+        Upload the HostelHub logo. Square PNG with transparent background works best. Appears in the header, footer, dashboards and welcome popup.
+      </p>
+
+      <div className="mt-6 grid max-w-2xl gap-6">
+        <div className="flex items-center gap-6">
+          <div className="grid h-28 w-28 place-items-center rounded-2xl border border-border bg-secondary">
+            {imageUrl ? (
+              <img src={imageUrl} alt="Logo preview" className="h-24 w-24 rounded-xl object-contain" />
+            ) : (
+              <span className="text-xs text-muted-foreground text-center px-2">No custom logo — falling back to favicon.</span>
+            )}
+          </div>
+          <div className="flex flex-col gap-2">
+            <label className="inline-flex cursor-pointer items-center gap-2 rounded-md border border-border px-3 py-2 text-sm hover:bg-secondary">
+              <Upload className="h-4 w-4" />
+              {uploading ? "Uploading..." : imageUrl ? "Replace logo" : "Upload logo"}
+              <input
+                type="file"
+                accept="image/png,image/jpeg,image/webp,image/svg+xml"
+                className="hidden"
+                disabled={uploading}
+                onChange={(e) => { if (e.target.files?.[0]) upload(e.target.files[0]); e.target.value = ""; }}
+              />
+            </label>
+            {imageUrl && (
+              <Button variant="ghost" size="sm" onClick={() => setImageUrl(null)} className="justify-start">
+                <Trash2 className="mr-2 h-4 w-4" /> Remove logo
+              </Button>
+            )}
+          </div>
+        </div>
+
+        <div className="flex gap-2">
+          <Button onClick={save} disabled={saving}>{saving ? "Saving..." : "Save logo"}</Button>
+        </div>
+      </div>
     </div>
   );
 }
