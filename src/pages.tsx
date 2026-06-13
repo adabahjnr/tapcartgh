@@ -2243,6 +2243,150 @@ export function AdminAppearancePage() {
           <Button onClick={save} disabled={saving}>{saving ? "Saving..." : "Save changes"}</Button>
         </div>
       </div>
+
+      <FounderEditor />
+    </div>
+  );
+}
+
+function FounderEditor() {
+  const { user } = useAuth();
+  const { value: founder, refetch } = useSiteSetting<FounderSetting>("founder", {
+    image_url: null,
+    scale: 1,
+    offset_x: 0,
+    offset_y: 0,
+  });
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [scale, setScale] = useState(1);
+  const [ox, setOx] = useState(0);
+  const [oy, setOy] = useState(0);
+  const [uploading, setUploading] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    setImageUrl(founder.image_url);
+    setScale(founder.scale ?? 1);
+    setOx(founder.offset_x ?? 0);
+    setOy(founder.offset_y ?? 0);
+  }, [founder.image_url, founder.scale, founder.offset_x, founder.offset_y]);
+
+  const upload = async (file: File) => {
+    if (!supabase || !user) return;
+    if (file.size > 8 * 1024 * 1024) {
+      toast.error("Image must be smaller than 8MB");
+      return;
+    }
+    setUploading(true);
+    const ext = file.name.split(".").pop()?.toLowerCase() ?? "jpg";
+    const path = `founder/${crypto.randomUUID()}.${ext}`;
+    const { error } = await supabase.storage
+      .from("site-assets")
+      .upload(path, file, { cacheControl: "3600", upsert: false, contentType: file.type });
+    if (error) {
+      toast.error(error.message);
+      setUploading(false);
+      return;
+    }
+    const { data } = supabase.storage.from("site-assets").getPublicUrl(path);
+    setImageUrl(data.publicUrl);
+    setScale(1);
+    setOx(0);
+    setOy(0);
+    setUploading(false);
+  };
+
+  const save = async () => {
+    setSaving(true);
+    const { error } = await setSiteSetting("founder", {
+      image_url: imageUrl,
+      scale,
+      offset_x: ox,
+      offset_y: oy,
+    });
+    setSaving(false);
+    if (error) toast.error(error);
+    else {
+      toast.success("Founder section updated");
+      refetch();
+    }
+  };
+
+  return (
+    <div className="mt-12 border-t border-border pt-10">
+      <h2 className="text-xl font-semibold">Founder photo</h2>
+      <p className="text-sm text-muted-foreground">
+        Upload the founder's photo for the homepage. Zoom and pan to frame it nicely before saving.
+      </p>
+
+      <div className="mt-6 grid max-w-3xl gap-6">
+        <div>
+          <Label>Preview (4:5 frame, same as homepage)</Label>
+          <div className="mt-2 mx-auto w-full max-w-xs">
+            <div className="relative aspect-[4/5] overflow-hidden rounded-3xl border border-border bg-secondary shadow">
+              {imageUrl ? (
+                <img
+                  src={imageUrl}
+                  alt="Founder preview"
+                  className="h-full w-full object-cover select-none"
+                  style={{ transform: `translate(${ox}%, ${oy}%) scale(${scale})`, transformOrigin: "center" }}
+                  draggable={false}
+                />
+              ) : (
+                <div className="flex h-full w-full items-center justify-center text-sm text-muted-foreground">
+                  No founder image yet.
+                </div>
+              )}
+            </div>
+          </div>
+          <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
+            <label className="inline-flex cursor-pointer items-center gap-2 rounded-md border border-border px-3 py-2 text-sm hover:bg-secondary">
+              <Upload className="h-4 w-4" />
+              {uploading ? "Uploading..." : imageUrl ? "Replace photo" : "Upload photo"}
+              <input
+                type="file"
+                accept="image/*"
+                className="hidden"
+                disabled={uploading}
+                onChange={(e) => { if (e.target.files?.[0]) upload(e.target.files[0]); e.target.value = ""; }}
+              />
+            </label>
+            {imageUrl && (
+              <Button variant="ghost" size="sm" onClick={() => setImageUrl(null)}>
+                <Trash2 className="mr-2 h-4 w-4" /> Remove
+              </Button>
+            )}
+          </div>
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-3">
+          <div>
+            <Label>Zoom ({scale.toFixed(2)}x)</Label>
+            <input type="range" min={0.5} max={3} step={0.05} value={scale}
+              onChange={(e) => setScale(Number(e.target.value))}
+              className="mt-2 w-full accent-primary" />
+          </div>
+          <div>
+            <Label>Horizontal ({ox}%)</Label>
+            <input type="range" min={-50} max={50} step={1} value={ox}
+              onChange={(e) => setOx(Number(e.target.value))}
+              className="mt-2 w-full accent-primary" />
+          </div>
+          <div>
+            <Label>Vertical ({oy}%)</Label>
+            <input type="range" min={-50} max={50} step={1} value={oy}
+              onChange={(e) => setOy(Number(e.target.value))}
+              className="mt-2 w-full accent-primary" />
+          </div>
+        </div>
+
+        <div className="flex flex-wrap gap-2">
+          <Button onClick={save} disabled={saving}>{saving ? "Saving..." : "Save founder photo"}</Button>
+          <Button variant="outline" onClick={() => { setScale(1); setOx(0); setOy(0); }}>
+            Reset framing
+          </Button>
+        </div>
+      </div>
     </div>
   );
 }
