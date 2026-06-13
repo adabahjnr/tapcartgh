@@ -622,6 +622,39 @@ export function HostelsPage() {
 
 /* ================== HOSTEL DETAIL ================== */
 
+type RoomChoice = { name: string; price?: number };
+
+function RoomPicker({ hostel, children }: { hostel: any; children: (room: RoomChoice | null) => React.ReactNode }) {
+  const options: RoomChoice[] = hostel.room_options?.length
+    ? hostel.room_options.map((r: any) => ({ name: r.name, price: r.price }))
+    : (hostel.room_types ?? []).map((n: string) => ({ name: n }));
+  const [idx, setIdx] = useState<string>("none");
+  const selected = idx === "none" ? null : options[Number(idx)] ?? null;
+
+  return (
+    <div className="space-y-3">
+      {options.length > 0 && (
+        <div>
+          <Label className="text-xs text-muted-foreground">Room you're interested in</Label>
+          <Select value={idx} onValueChange={setIdx}>
+            <SelectTrigger className="mt-1"><SelectValue placeholder="Choose a room" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none">Not sure yet</SelectItem>
+              {options.map((o, i) => (
+                <SelectItem key={i} value={String(i)}>
+                  {o.name}{o.price ? ` — GH₵${o.price.toLocaleString()}` : ""}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
+      {children(selected)}
+    </div>
+  );
+}
+
+
 export function HostelDetailPage() {
   const { id } = useParams();
   const { hostel, loading } = useHostel(id);
