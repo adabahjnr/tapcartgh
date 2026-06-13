@@ -1186,6 +1186,7 @@ const adminNav = [
   { to: "/admin/requests", label: "Requests", icon: ListChecks },
   { to: "/admin/community", label: "Community", icon: Users },
   { to: "/admin/feedback", label: "Feedback", icon: MessageSquare },
+  { to: "/admin/appearance", label: "Appearance", icon: ImageIcon },
 ];
 
 
