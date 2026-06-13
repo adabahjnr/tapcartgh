@@ -26,6 +26,7 @@ import {
   X,
   Trash2,
   Users2,
+  Image as ImageIcon,
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
