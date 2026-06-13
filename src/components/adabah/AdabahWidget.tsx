@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Sparkles, MessageCircle, X, Send, Plus, Trash2, ChevronLeft } from "lucide-react";
 import { toast } from "sonner";
@@ -38,7 +38,7 @@ const BOT_META: Record<Bot, { title: string; tagline: string; color: string; rin
 function renderMarkdown(text: string, navigate: (to: string) => void) {
   const lines = text.split("\n");
   return lines.map((line, li) => {
-    const parts: (string | JSX.Element)[] = [];
+    const parts: ReactNode[] = [];
     const regex = /\[([^\]]+)\]\(([^)]+)\)|\*\*([^*]+)\*\*|\*([^*]+)\*/g;
     let last = 0;
     let m: RegExpExecArray | null;
