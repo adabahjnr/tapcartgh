@@ -584,6 +584,7 @@ export function HostelsPage() {
   const [availability, setAvailability] = useState<string>("");
   const [verifiedOnly, setVerifiedOnly] = useState(false);
   const [amenity, setAmenity] = useState<string>("");
+  const [open, setOpen] = useState(false);
 
   const filters = useMemo(
     () => ({
@@ -598,8 +599,6 @@ export function HostelsPage() {
   );
   const { hostels, loading } = useHostels(filters);
 
-  const priceLabel = maxPrice === "" ? "Any price" : `≤ GH₵${maxPrice}`;
-  const distanceLabel = maxDistance === "" ? "Any distance" : `≤ ${maxDistance} km`;
   const activeCount = [maxPrice !== "", maxDistance !== "", availability !== "", amenity !== "", verifiedOnly].filter(Boolean).length;
 
   const reset = () => {
@@ -612,61 +611,44 @@ export function HostelsPage() {
         <h1 className="text-3xl font-semibold tracking-tight">Hostels near UMaT</h1>
         <p className="mt-1 text-sm text-muted-foreground">{hostels.length} result{hostels.length === 1 ? "" : "s"}</p>
 
-        <div className="mt-6 flex flex-col gap-3 rounded-2xl border border-border bg-card p-3 sm:flex-row sm:items-center sm:flex-wrap">
+        <div className="mt-6 flex flex-col gap-3 rounded-2xl border border-border bg-card p-3 sm:flex-row sm:items-center">
           <div className="flex flex-1 min-w-[200px] items-center gap-2 rounded-md border border-border bg-background px-3">
             <Search className="h-4 w-4 text-muted-foreground" />
             <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search by name or area" className="w-full bg-transparent py-2 text-sm outline-none" />
           </div>
 
-          <Select value={maxPrice === "" ? "any" : String(maxPrice)} onValueChange={(v) => setMaxPrice(v === "any" ? "" : Number(v))}>
-            <SelectTrigger className="w-auto min-w-[130px]"><SelectValue placeholder="Price">{priceLabel}</SelectValue></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="any">Any price</SelectItem>
-              {[1000, 1500, 2000, 2500, 3000, 4000, 5000, 7500].map((p) => (
-                <SelectItem key={p} value={String(p)}>≤ GH₵{p.toLocaleString()}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
-          <Select value={maxDistance === "" ? "any" : String(maxDistance)} onValueChange={(v) => setMaxDistance(v === "any" ? "" : Number(v))}>
-            <SelectTrigger className="w-auto min-w-[130px]"><SelectValue>{distanceLabel}</SelectValue></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="any">Any distance</SelectItem>
-              {[0.5, 1, 2, 3, 5, 10].map((d) => (
-                <SelectItem key={d} value={String(d)}>≤ {d} km</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
-          <Select value={availability || "any"} onValueChange={(v) => setAvailability(v === "any" ? "" : v)}>
-            <SelectTrigger className="w-auto min-w-[130px]"><SelectValue placeholder="Availability" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="any">Any availability</SelectItem>
-              <SelectItem value="available">Available</SelectItem>
-              <SelectItem value="limited">Limited</SelectItem>
-              <SelectItem value="full">Full</SelectItem>
-            </SelectContent>
-          </Select>
-
-          <Select value={amenity || "any"} onValueChange={(v) => setAmenity(v === "any" ? "" : v)}>
-            <SelectTrigger className="w-auto min-w-[130px]"><SelectValue placeholder="Amenity" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="any">Any amenity</SelectItem>
-              {["WiFi", "Water", "Generator", "Security", "Kitchen", "Furnished", "Parking"].map((a) => (
-                <SelectItem key={a} value={a}>{a}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
-          <label className="flex items-center gap-2 rounded-md border border-border px-3 py-2 text-sm">
-            <Switch checked={verifiedOnly} onCheckedChange={setVerifiedOnly} />
-            <span>Verified</span>
-          </label>
+          <Button
+            onClick={() => setOpen(true)}
+            className="relative group gap-2 transition-transform hover:scale-[1.03] active:scale-95"
+          >
+            <SlidersHorizontal className="h-4 w-4 transition-transform group-hover:rotate-12" />
+            <span>Filters</span>
+            {activeCount > 0 && (
+              <span className="ml-1 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-background px-1.5 text-xs font-semibold text-primary animate-scale-in">
+                {activeCount}
+              </span>
+            )}
+          </Button>
 
           {activeCount > 0 && (
-            <Button variant="ghost" size="sm" onClick={reset}>Clear ({activeCount})</Button>
+            <Button variant="ghost" size="sm" onClick={reset}>Clear all</Button>
           )}
         </div>
+
+        <FiltersModal
+          open={open}
+          onClose={() => setOpen(false)}
+          state={{ maxPrice, maxDistance, availability, amenity, verifiedOnly }}
+          onSave={(s) => {
+            setMaxPrice(s.maxPrice);
+            setMaxDistance(s.maxDistance);
+            setAvailability(s.availability);
+            setAmenity(s.amenity);
+            setVerifiedOnly(s.verifiedOnly);
+            setOpen(false);
+          }}
+          onReset={reset}
+        />
 
         <div className="mt-6">
           {loading ? (
@@ -677,6 +659,192 @@ export function HostelsPage() {
         </div>
       </div>
     </PublicLayout>
+  );
+}
+
+type FilterState = {
+  maxPrice: number | "";
+  maxDistance: number | "";
+  availability: string;
+  amenity: string;
+  verifiedOnly: boolean;
+};
+
+function FiltersModal({
+  open,
+  onClose,
+  state,
+  onSave,
+  onReset,
+}: {
+  open: boolean;
+  onClose: () => void;
+  state: FilterState;
+  onSave: (s: FilterState) => void;
+  onReset: () => void;
+}) {
+  const [draft, setDraft] = useState<FilterState>(state);
+  useEffect(() => {
+    if (open) setDraft(state);
+  }, [open, state]);
+
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
+    document.addEventListener("keydown", onKey);
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      document.body.style.overflow = prev;
+    };
+  }, [open, onClose]);
+
+  if (!open) return null;
+
+  const priceVal = draft.maxPrice === "" ? 20000 : Number(draft.maxPrice);
+  const distVal = draft.maxDistance === "" ? 10 : Number(draft.maxDistance);
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 animate-fade-in">
+      <div
+        className="absolute inset-0 bg-black/50 backdrop-blur-md"
+        onClick={onClose}
+        aria-hidden
+      />
+      <div className="relative z-10 w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-t-3xl sm:rounded-2xl border border-border bg-card p-6 shadow-2xl animate-scale-in">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <SlidersHorizontal className="h-5 w-5 text-primary" />
+            <h2 className="text-lg font-semibold">Filter hostels</h2>
+          </div>
+          <button onClick={onClose} className="rounded-md p-1.5 text-muted-foreground hover:bg-secondary hover:text-foreground transition" aria-label="Close">
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+
+        <div className="mt-6 space-y-6">
+          {/* Price slider */}
+          <div>
+            <div className="flex items-center justify-between">
+              <Label className="text-sm font-medium">Max price (per year)</Label>
+              <span className="text-sm font-semibold text-primary">
+                {draft.maxPrice === "" ? "Any" : `≤ GH₵${priceVal.toLocaleString()}`}
+              </span>
+            </div>
+            <Slider
+              value={[priceVal]}
+              min={200}
+              max={20000}
+              step={100}
+              onValueChange={(v) => setDraft({ ...draft, maxPrice: v[0] >= 20000 ? "" : v[0] })}
+              className="mt-3"
+            />
+            <div className="mt-1 flex justify-between text-xs text-muted-foreground">
+              <span>GH₵200</span>
+              <span>GH₵20,000+</span>
+            </div>
+          </div>
+
+          {/* Distance slider */}
+          <div>
+            <div className="flex items-center justify-between">
+              <Label className="text-sm font-medium">Max distance from UMaT</Label>
+              <span className="text-sm font-semibold text-primary">
+                {draft.maxDistance === "" ? "Any" : `≤ ${distVal} km`}
+              </span>
+            </div>
+            <Slider
+              value={[distVal]}
+              min={0.5}
+              max={10}
+              step={0.5}
+              onValueChange={(v) => setDraft({ ...draft, maxDistance: v[0] >= 10 ? "" : v[0] })}
+              className="mt-3"
+            />
+            <div className="mt-1 flex justify-between text-xs text-muted-foreground">
+              <span>0.5 km</span>
+              <span>10 km+</span>
+            </div>
+          </div>
+
+          {/* Availability chips */}
+          <div>
+            <Label className="text-sm font-medium">Availability</Label>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {[
+                { v: "", l: "Any" },
+                { v: "available", l: "Available" },
+                { v: "limited", l: "Limited" },
+                { v: "full", l: "Full" },
+              ].map((o) => (
+                <button
+                  key={o.l}
+                  type="button"
+                  onClick={() => setDraft({ ...draft, availability: o.v })}
+                  className={`rounded-full border px-3 py-1.5 text-sm transition ${
+                    draft.availability === o.v
+                      ? "border-primary bg-primary text-primary-foreground"
+                      : "border-border bg-background hover:bg-secondary"
+                  }`}
+                >
+                  {o.l}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Amenity chips */}
+          <div>
+            <Label className="text-sm font-medium">Amenity</Label>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {["", "WiFi", "Water", "Generator", "Security", "Kitchen", "Furnished", "Parking"].map((a) => (
+                <button
+                  key={a || "any"}
+                  type="button"
+                  onClick={() => setDraft({ ...draft, amenity: a })}
+                  className={`rounded-full border px-3 py-1.5 text-sm transition ${
+                    draft.amenity === a
+                      ? "border-primary bg-primary text-primary-foreground"
+                      : "border-border bg-background hover:bg-secondary"
+                  }`}
+                >
+                  {a || "Any"}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Verified */}
+          <label className="flex items-center justify-between rounded-xl border border-border bg-background px-4 py-3">
+            <div>
+              <div className="text-sm font-medium">Verified only</div>
+              <div className="text-xs text-muted-foreground">Show hostels confirmed by HostelHub</div>
+            </div>
+            <Switch
+              checked={draft.verifiedOnly}
+              onCheckedChange={(c) => setDraft({ ...draft, verifiedOnly: c })}
+            />
+          </label>
+        </div>
+
+        <div className="mt-8 flex gap-3">
+          <Button
+            variant="outline"
+            className="flex-1"
+            onClick={() => {
+              setDraft({ maxPrice: "", maxDistance: "", availability: "", amenity: "", verifiedOnly: false });
+              onReset();
+            }}
+          >
+            Reset
+          </Button>
+          <Button className="flex-1" onClick={() => onSave(draft)}>
+            Apply filters
+          </Button>
+        </div>
+      </div>
+    </div>
   );
 }
 
