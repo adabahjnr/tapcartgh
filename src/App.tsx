@@ -25,6 +25,7 @@ import {
   AdminCommunityPage,
   AdminFeedbackPage,
   AdminOwnersPage,
+  AdminUsersPage,
   AdminAppearancePage,
   ProfilePage,
   NotFoundPage,
