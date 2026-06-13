@@ -24,6 +24,8 @@ import {
   AdminRequestsPage,
   AdminCommunityPage,
   AdminFeedbackPage,
+  AdminOwnersPage,
+  ProfilePage,
   NotFoundPage,
 } from "./pages";
 
