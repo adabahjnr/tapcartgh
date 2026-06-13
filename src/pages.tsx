@@ -2577,6 +2577,90 @@ export function AdminAppearancePage() {
       </div>
 
       <FounderEditor />
+      <LogoEditor />
+    </div>
+  );
+}
+
+function LogoEditor() {
+  const { user } = useAuth();
+  const { value: logo, refetch } = useSiteSetting<{ image_url: string | null }>("logo", { image_url: null });
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => { setImageUrl(logo.image_url); }, [logo.image_url]);
+
+  const upload = async (file: File) => {
+    if (!supabase || !user) return;
+    if (file.size > 4 * 1024 * 1024) {
+      toast.error("Logo must be smaller than 4MB");
+      return;
+    }
+    setUploading(true);
+    const ext = file.name.split(".").pop()?.toLowerCase() ?? "png";
+    const path = `logo/${crypto.randomUUID()}.${ext}`;
+    const { error } = await supabase.storage
+      .from("site-assets")
+      .upload(path, file, { cacheControl: "3600", upsert: false, contentType: file.type });
+    if (error) { toast.error(error.message); setUploading(false); return; }
+    const { data } = supabase.storage.from("site-assets").getPublicUrl(path);
+    setImageUrl(data.publicUrl);
+    setUploading(false);
+  };
+
+  const save = async () => {
+    setSaving(true);
+    const { error } = await setSiteSetting("logo", { image_url: imageUrl });
+    setSaving(false);
+    if (error) toast.error(error);
+    else {
+      notifyLogoChanged(imageUrl);
+      toast.success("Logo updated");
+      refetch();
+    }
+  };
+
+  return (
+    <div className="mt-12 border-t border-border pt-10">
+      <h2 className="text-xl font-semibold">Site logo</h2>
+      <p className="text-sm text-muted-foreground">
+        Upload the HostelHub logo. Square PNG with transparent background works best. Appears in the header, footer, dashboards and welcome popup.
+      </p>
+
+      <div className="mt-6 grid max-w-2xl gap-6">
+        <div className="flex items-center gap-6">
+          <div className="grid h-28 w-28 place-items-center rounded-2xl border border-border bg-secondary">
+            {imageUrl ? (
+              <img src={imageUrl} alt="Logo preview" className="h-24 w-24 rounded-xl object-contain" />
+            ) : (
+              <span className="text-xs text-muted-foreground text-center px-2">No custom logo — falling back to favicon.</span>
+            )}
+          </div>
+          <div className="flex flex-col gap-2">
+            <label className="inline-flex cursor-pointer items-center gap-2 rounded-md border border-border px-3 py-2 text-sm hover:bg-secondary">
+              <Upload className="h-4 w-4" />
+              {uploading ? "Uploading..." : imageUrl ? "Replace logo" : "Upload logo"}
+              <input
+                type="file"
+                accept="image/png,image/jpeg,image/webp,image/svg+xml"
+                className="hidden"
+                disabled={uploading}
+                onChange={(e) => { if (e.target.files?.[0]) upload(e.target.files[0]); e.target.value = ""; }}
+              />
+            </label>
+            {imageUrl && (
+              <Button variant="ghost" size="sm" onClick={() => setImageUrl(null)} className="justify-start">
+                <Trash2 className="mr-2 h-4 w-4" /> Remove logo
+              </Button>
+            )}
+          </div>
+        </div>
+
+        <div className="flex gap-2">
+          <Button onClick={save} disabled={saving}>{saving ? "Saving..." : "Save logo"}</Button>
+        </div>
+      </div>
     </div>
   );
 }
