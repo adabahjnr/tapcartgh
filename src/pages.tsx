@@ -622,6 +622,39 @@ export function HostelsPage() {
 
 /* ================== HOSTEL DETAIL ================== */
 
+type RoomChoice = { name: string; price?: number };
+
+function RoomPicker({ hostel, children }: { hostel: any; children: (room: RoomChoice | null) => React.ReactNode }) {
+  const options: RoomChoice[] = hostel.room_options?.length
+    ? hostel.room_options.map((r: any) => ({ name: r.name, price: r.price }))
+    : (hostel.room_types ?? []).map((n: string) => ({ name: n }));
+  const [idx, setIdx] = useState<string>("none");
+  const selected = idx === "none" ? null : options[Number(idx)] ?? null;
+
+  return (
+    <div className="space-y-3">
+      {options.length > 0 && (
+        <div>
+          <Label className="text-xs text-muted-foreground">Room you're interested in</Label>
+          <Select value={idx} onValueChange={setIdx}>
+            <SelectTrigger className="mt-1"><SelectValue placeholder="Choose a room" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none">Not sure yet</SelectItem>
+              {options.map((o, i) => (
+                <SelectItem key={i} value={String(i)}>
+                  {o.name}{o.price ? ` — GH₵${o.price.toLocaleString()}` : ""}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
+      {children(selected)}
+    </div>
+  );
+}
+
+
 export function HostelDetailPage() {
   const { id } = useParams();
   const { hostel, loading } = useHostel(id);
@@ -716,35 +749,57 @@ export function HostelDetailPage() {
             
           </div>
 
-          <aside className="space-y-3 rounded-2xl border border-border bg-card p-5 h-fit">
-            <div className="text-sm text-muted-foreground">Price range</div>
-            <div className="text-2xl font-semibold">
-              {hostel.price_min ? `GH₵${hostel.price_min}${hostel.price_max ? `–${hostel.price_max}` : ""}` : "Contact for price"}
+          <aside className="space-y-4 rounded-2xl border border-border bg-gradient-to-br from-card to-secondary/40 p-5 h-fit shadow-sm">
+            <div>
+              <div className="text-xs uppercase tracking-wide text-muted-foreground">Starting from</div>
+              <div className="mt-1 text-3xl font-semibold tracking-tight">
+                {hostel.price_min ? (
+                  <>GH₵{hostel.price_min.toLocaleString()}{hostel.price_max ? <span className="text-muted-foreground text-xl"> – {hostel.price_max.toLocaleString()}</span> : null}</>
+                ) : (
+                  <span className="text-xl">Contact for price</span>
+                )}
+              </div>
+              <div className="text-xs text-muted-foreground">per academic year</div>
             </div>
-            <div className="space-y-2 pt-2">
-              {hostel.contact_phone && (
-                <a href={`tel:${hostel.contact_phone}`} className="flex items-center gap-2 rounded-md border border-border px-3 py-2 text-sm hover:bg-secondary">
-                  <Phone className="h-4 w-4" /> {hostel.contact_phone}
-                </a>
-              )}
-              {hostel.whatsapp && (
-                <a href={`https://wa.me/${hostel.whatsapp.replace(/\D/g, "")}`} target="_blank" rel="noreferrer" className="flex items-center gap-2 rounded-md bg-[color:var(--whatsapp)] px-3 py-2 text-sm text-[color:var(--whatsapp-foreground)] hover:opacity-90">
-                  <MessageSquare className="h-4 w-4" /> Chat on WhatsApp
-                </a>
-              )}
-              {hostel.contact_email && (
-                <a href={`mailto:${hostel.contact_email}`} className="flex items-center gap-2 rounded-md border border-border px-3 py-2 text-sm hover:bg-secondary">
-                  <Mail className="h-4 w-4" /> {hostel.contact_email}
-                </a>
-              )}
-            </div>
+
+            <RoomPicker hostel={hostel}>
+              {(selectedRoom) => {
+                const baseMsg = `Hi! I'm interested in *${hostel.name}*${hostel.location ? ` (${hostel.location})` : ""}.${selectedRoom ? ` I'd like to book the *${selectedRoom.name}* room${selectedRoom.price ? ` at GH₵${selectedRoom.price.toLocaleString()}` : ""}.` : ""} Could you share availability and next steps?\n\n— Sent via HostelHub by Adabah`;
+                const waUrl = hostel.whatsapp ? `https://wa.me/${hostel.whatsapp.replace(/\D/g, "")}?text=${encodeURIComponent(baseMsg)}` : null;
+                return (
+                  <div className="space-y-2">
+                    {waUrl && (
+                      <a href={waUrl} target="_blank" rel="noreferrer" className="flex items-center justify-center gap-2 rounded-lg bg-[color:var(--whatsapp)] px-4 py-3 text-sm font-medium text-[color:var(--whatsapp-foreground)] shadow-sm transition hover:opacity-90">
+                        <MessageSquare className="h-4 w-4" /> Message on WhatsApp
+                      </a>
+                    )}
+                    {hostel.contact_phone && (
+                      <a href={`tel:${hostel.contact_phone}`} className="flex items-center justify-center gap-2 rounded-lg border border-border bg-background px-4 py-2.5 text-sm font-medium hover:bg-secondary">
+                        <Phone className="h-4 w-4" /> Call {hostel.contact_phone}
+                      </a>
+                    )}
+                    {hostel.contact_email && (
+                      <a href={`mailto:${hostel.contact_email}?subject=${encodeURIComponent(`Enquiry about ${hostel.name}`)}&body=${encodeURIComponent(baseMsg)}`} className="flex items-center justify-center gap-2 rounded-lg border border-border bg-background px-4 py-2.5 text-sm font-medium hover:bg-secondary">
+                        <Mail className="h-4 w-4" /> Send email
+                      </a>
+                    )}
+                  </div>
+                );
+              }}
+            </RoomPicker>
+
             {user && (
               <Button variant="outline" className="w-full" onClick={() => toggle(hostel.id)}>
                 <Heart className={`mr-2 h-4 w-4 ${isFav ? "fill-destructive text-destructive" : ""}`} />
-                {isFav ? "Saved" : "Save to favorites"}
+                {isFav ? "Saved to favorites" : "Save to favorites"}
               </Button>
             )}
-            <Link to="/feedback" className="block pt-2 text-center text-xs text-muted-foreground underline-offset-2 hover:underline">
+
+            <div className="rounded-lg border border-dashed border-border bg-background/50 p-3 text-xs text-muted-foreground">
+              Tip: mention you found this hostel on <span className="font-medium text-foreground">HostelHub by Adabah</span> for faster help.
+            </div>
+
+            <Link to="/feedback" className="block text-center text-xs text-muted-foreground underline-offset-2 hover:underline">
               Report inaccurate information
             </Link>
           </aside>
