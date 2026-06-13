@@ -60,6 +60,7 @@ export default function App() {
           <Route path="/admin" element={<AdminLayout />}>
             <Route index element={<AdminIndexPage />} />
             <Route path="owners" element={<AdminOwnersPage />} />
+            <Route path="users" element={<AdminUsersPage />} />
             <Route path="hostels" element={<AdminHostelsPage />} />
             <Route path="reviews" element={<AdminReviewsPage />} />
             <Route path="requests" element={<AdminRequestsPage />} />
