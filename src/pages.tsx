@@ -2008,6 +2008,115 @@ export function AdminFeedbackPage() {
   );
 }
 
+export function AdminAppearancePage() {
+  const { user } = useAuth();
+  const { value: hero, refetch } = useSiteSetting<HeroSetting>("hero", { image_url: null, dim: 0.4 });
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [dim, setDim] = useState(0.4);
+  const [uploading, setUploading] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    setImageUrl(hero.image_url);
+    setDim(hero.dim ?? 0.4);
+  }, [hero.image_url, hero.dim]);
+
+  const upload = async (file: File) => {
+    if (!supabase || !user) return;
+    if (file.size > 8 * 1024 * 1024) {
+      toast.error("Image must be smaller than 8MB");
+      return;
+    }
+    setUploading(true);
+    const ext = file.name.split(".").pop()?.toLowerCase() ?? "jpg";
+    const path = `hero/${crypto.randomUUID()}.${ext}`;
+    const { error } = await supabase.storage
+      .from("site-assets")
+      .upload(path, file, { cacheControl: "3600", upsert: false, contentType: file.type });
+    if (error) {
+      toast.error(error.message);
+      setUploading(false);
+      return;
+    }
+    const { data } = supabase.storage.from("site-assets").getPublicUrl(path);
+    setImageUrl(data.publicUrl);
+    setUploading(false);
+  };
+
+  const save = async () => {
+    setSaving(true);
+    const { error } = await setSiteSetting("hero", { image_url: imageUrl, dim });
+    setSaving(false);
+    if (error) toast.error(error);
+    else {
+      toast.success("Hero updated");
+      refetch();
+    }
+  };
+
+  return (
+    <div>
+      <h1 className="text-2xl font-semibold">Appearance</h1>
+      <p className="text-sm text-muted-foreground">Set a background image for the home page hero and tune the dim overlay.</p>
+
+      <div className="mt-6 grid max-w-3xl gap-6">
+        <div>
+          <Label>Hero background image</Label>
+          <div className="mt-2 overflow-hidden rounded-xl border border-border bg-secondary">
+            {imageUrl ? (
+              <div className="relative">
+                <img src={imageUrl} alt="Hero preview" className="h-56 w-full object-cover" />
+                <div className="absolute inset-0 bg-black" style={{ opacity: dim }} />
+                <div className="absolute inset-0 flex items-center justify-center text-2xl font-bold text-white drop-shadow">
+                  Preview
+                </div>
+              </div>
+            ) : (
+              <div className="flex h-56 items-center justify-center text-sm text-muted-foreground">No hero image set — using default gradient.</div>
+            )}
+          </div>
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <label className="inline-flex cursor-pointer items-center gap-2 rounded-md border border-border px-3 py-2 text-sm hover:bg-secondary">
+              <Upload className="h-4 w-4" />
+              {uploading ? "Uploading..." : imageUrl ? "Replace image" : "Upload image"}
+              <input
+                type="file"
+                accept="image/*"
+                className="hidden"
+                disabled={uploading}
+                onChange={(e) => { if (e.target.files?.[0]) upload(e.target.files[0]); e.target.value = ""; }}
+              />
+            </label>
+            {imageUrl && (
+              <Button variant="ghost" size="sm" onClick={() => setImageUrl(null)}>
+                <Trash2 className="mr-2 h-4 w-4" /> Remove image
+              </Button>
+            )}
+          </div>
+        </div>
+
+        <div>
+          <Label>Dim overlay ({Math.round(dim * 100)}%)</Label>
+          <input
+            type="range"
+            min={0}
+            max={1}
+            step={0.05}
+            value={dim}
+            onChange={(e) => setDim(Number(e.target.value))}
+            className="mt-2 w-full accent-primary"
+          />
+          <p className="mt-1 text-xs text-muted-foreground">Higher values darken the image for better text contrast.</p>
+        </div>
+
+        <div className="flex gap-2">
+          <Button onClick={save} disabled={saving}>{saving ? "Saving..." : "Save changes"}</Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /* ================== PROFILE ================== */
 
 export function ProfilePage() {
