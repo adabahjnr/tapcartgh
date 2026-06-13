@@ -30,6 +30,18 @@ import {
   SlidersHorizontal,
 } from "lucide-react";
 import { toast } from "sonner";
+import logoAsset from "@/assets/hostelhub-logo.png.asset.json";
+
+function BrandLogo({ className = "h-8 w-8" }: { className?: string }) {
+  return (
+    <img
+      src={logoAsset.url}
+      alt="HostelHub logo"
+      className={`${className} rounded-lg object-contain`}
+      loading="eager"
+    />
+  );
+}
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth-context";
 import {
