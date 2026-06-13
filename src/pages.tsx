@@ -1202,35 +1202,133 @@ export function OwnerLayout() {
   return <DashboardShell items={ownerNav} title="Owner dashboard"><Outlet /></DashboardShell>;
 }
 
-function BecomeOwnerGate({ onDone }: { onDone: () => void }) {
+function BecomeOwnerGate({ onDone: _onDone }: { onDone: () => void }) {
   const { user } = useAuth();
-  const [loading, setLoading] = useState(false);
+  const { profile } = useProfile();
+  const { application, loading, refetch } = useMyOwnerApplication();
+  const [fullName, setFullName] = useState("");
+  const [whatsapp, setWhatsapp] = useState("");
+  const [business, setBusiness] = useState("");
+  const [message, setMessage] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (profile && !fullName) setFullName(profile.full_name ?? "");
+    if (profile && !whatsapp) setWhatsapp(profile.whatsapp ?? profile.phone ?? "");
+  }, [profile]);
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user) return;
+    const cleaned = whatsapp.trim();
+    if (!/^\+?\d[\d\s-]{6,18}$/.test(cleaned)) {
+      toast.error("Enter a valid WhatsApp number (with country code).");
+      return;
+    }
+    if (!fullName.trim()) {
+      toast.error("Please enter your full name.");
+      return;
+    }
+    setSaving(true);
+    const { error } = await submitOwnerApplication(user.id, {
+      full_name: fullName.trim(),
+      whatsapp: cleaned,
+      business_name: business.trim(),
+      message: message.trim(),
+    });
+    setSaving(false);
+    if (error) toast.error(error);
+    else {
+      toast.success("Application submitted — pending admin approval.");
+      refetch();
+    }
+  };
+
   return (
     <PublicLayout>
-      <div className="mx-auto max-w-lg px-4 py-16 md:px-6">
-        <div className="rounded-2xl border border-border bg-card p-8 text-center">
-          <Building2 className="mx-auto h-10 w-10 text-primary" />
-          <h1 className="mt-3 text-2xl font-semibold">Become a hostel owner</h1>
-          <p className="mt-2 text-sm text-muted-foreground">Register as an owner to submit and manage hostel listings on HostelHub.</p>
-          <Button
-            className="mt-6"
-            disabled={loading}
-            onClick={async () => {
-              if (!user) return;
-              setLoading(true);
-              const { error } = await becomeOwner(user.id);
-              setLoading(false);
-              if (error) toast.error(error);
-              else { toast.success("You're an owner now"); onDone(); }
-            }}
-          >
-            Register as owner
-          </Button>
-        </div>
+      <div className="mx-auto max-w-lg px-4 py-12 md:px-6">
+        {loading ? (
+          <div className="flex justify-center py-16"><RingLoader /></div>
+        ) : application ? (
+          <div className="rounded-2xl border border-border bg-card p-8 text-center">
+            <ClipboardCheck className="mx-auto h-10 w-10 text-primary" />
+            <h1 className="mt-3 text-2xl font-semibold">
+              {application.status === "pending" && "Application under review"}
+              {application.status === "approved" && "You're approved!"}
+              {application.status === "rejected" && "Application not approved"}
+            </h1>
+            <p className="mt-2 text-sm text-muted-foreground">
+              {application.status === "pending" &&
+                "An admin will review your owner application shortly. You'll get access to the owner dashboard once approved."}
+              {application.status === "approved" &&
+                "Refresh the page to access your owner dashboard."}
+              {application.status === "rejected" &&
+                "Your application was not approved. Please contact support for more information."}
+            </p>
+            <div className="mt-4 rounded-md border border-border bg-secondary/40 p-3 text-left text-xs text-muted-foreground">
+              <div><span className="font-medium text-foreground">Status:</span> {application.status}</div>
+              <div><span className="font-medium text-foreground">WhatsApp:</span> {application.whatsapp}</div>
+              {application.business_name && (
+                <div><span className="font-medium text-foreground">Business:</span> {application.business_name}</div>
+              )}
+            </div>
+            {application.status === "approved" && (
+              <Button className="mt-6 w-full" onClick={() => window.location.reload()}>
+                Open owner dashboard
+              </Button>
+            )}
+          </div>
+        ) : (
+          <div className="rounded-2xl border border-border bg-card p-8">
+            <div className="flex items-center gap-3">
+              <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-primary/15 text-primary">
+                <Building2 className="h-5 w-5" />
+              </span>
+              <div>
+                <h1 className="text-xl font-semibold">Become a hostel owner</h1>
+                <p className="text-xs text-muted-foreground">Apply to list and manage hostels on HostelHub.</p>
+              </div>
+            </div>
+            <form onSubmit={submit} className="mt-6 space-y-4">
+              <div>
+                <Label>Full name</Label>
+                <Input required value={fullName} onChange={(e) => setFullName(e.target.value)} maxLength={80} />
+              </div>
+              <div>
+                <Label>WhatsApp number<span className="text-destructive"> *</span></Label>
+                <Input
+                  required
+                  value={whatsapp}
+                  onChange={(e) => setWhatsapp(e.target.value)}
+                  maxLength={20}
+                  placeholder="+233 24 000 0000"
+                />
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Students will use this to contact you about your hostel.
+                </p>
+              </div>
+              <div>
+                <Label>Business / hostel name (optional)</Label>
+                <Input value={business} onChange={(e) => setBusiness(e.target.value)} maxLength={120} />
+              </div>
+              <div>
+                <Label>Message to admin (optional)</Label>
+                <Textarea value={message} onChange={(e) => setMessage(e.target.value)} maxLength={1000} placeholder="Anything we should know?" />
+              </div>
+              <div className="rounded-md border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900 dark:border-amber-900/40 dark:bg-amber-950/40 dark:text-amber-200">
+                Owner accounts require admin approval. You'll get access to the owner dashboard once approved.
+              </div>
+              <Button type="submit" disabled={saving} className="w-full">
+                {saving ? "Submitting…" : "Submit application"}
+              </Button>
+            </form>
+          </div>
+        )}
       </div>
     </PublicLayout>
   );
 }
+
 
 export function OwnerHostelsPage() {
   const { hostels, loading, refetch } = useMyHostels();
