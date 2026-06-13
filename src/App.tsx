@@ -3,6 +3,7 @@ import { Toaster } from "sonner";
 import { AuthProvider } from "./lib/auth-context";
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
 import { ThemeToggle } from "./components/hh/ThemeToggle";
+import {
   HomePage,
   HostelsPage,
   HostelDetailPage,
