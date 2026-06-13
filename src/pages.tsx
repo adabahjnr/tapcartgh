@@ -19,11 +19,27 @@ import {
   AlertCircle,
   Phone,
   Mail,
+  Menu,
+  User as UserIcon,
+  ClipboardCheck,
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth-context";
-import { useRoles, becomeOwner, useHostels, useHostel, useReviews, useFavorites, useMyHostels, avgRating, type Hostel } from "@/lib/data";
+import {
+  useRoles,
+  useHostels,
+  useHostel,
+  useReviews,
+  useFavorites,
+  useMyHostels,
+  useProfile,
+  useMyOwnerApplication,
+  useOwnerApplications,
+  submitOwnerApplication,
+  avgRating,
+  type Hostel,
+} from "@/lib/data";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -32,6 +48,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
+import { Sheet, SheetContent, SheetTrigger, SheetTitle, SheetHeader } from "@/components/ui/sheet";
 import { RingLoader } from "@/components/ui/loader";
 import { DoodleHouse, DoodleStar, DoodleSquiggle, DoodleKey, DoodleArrow, DoodleCircle } from "@/components/hh/Doodles";
 
