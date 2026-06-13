@@ -1749,7 +1749,227 @@ export function AdminFeedbackPage() {
   );
 }
 
-/* ================== 404 ================== */
+/* ================== PROFILE ================== */
+
+export function ProfilePage() {
+  const { user } = useAuth();
+  const { isAdmin, isOwner } = useRoles();
+  const { profile, loading, save } = useProfile();
+  const { application } = useMyOwnerApplication();
+  const navigate = useNavigate();
+
+  const [fullName, setFullName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [whatsapp, setWhatsapp] = useState("");
+  const [bio, setBio] = useState("");
+  const [avatar, setAvatar] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (profile) {
+      setFullName(profile.full_name ?? "");
+      setPhone(profile.phone ?? "");
+      setWhatsapp(profile.whatsapp ?? "");
+      setBio(profile.bio ?? "");
+      setAvatar(profile.avatar_url ?? "");
+    }
+  }, [profile]);
+
+  if (!user) return <Navigate to="/auth" state={{ from: "/profile" }} replace />;
+
+  const onSave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSaving(true);
+    const { error } = await save({
+      full_name: fullName.trim() || null,
+      phone: phone.trim() || null,
+      whatsapp: whatsapp.trim() || null,
+      bio: bio.trim() || null,
+      avatar_url: avatar.trim() || null,
+    });
+    setSaving(false);
+    if (error) toast.error(error);
+    else toast.success("Profile updated");
+  };
+
+  const initials = (fullName || user.email || "?")
+    .split(/[\s@]+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((s) => s[0]?.toUpperCase())
+    .join("");
+
+  return (
+    <PublicLayout>
+      <div className="mx-auto max-w-3xl px-4 py-10 md:px-6">
+        <div className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-6 md:flex-row md:items-center md:justify-between">
+          <div className="flex items-center gap-4">
+            <div className="relative h-16 w-16 overflow-hidden rounded-full bg-primary/15 text-primary">
+              {avatar ? (
+                <img src={avatar} alt="" className="h-full w-full object-cover" />
+              ) : (
+                <div className="flex h-full w-full items-center justify-center text-lg font-semibold">{initials}</div>
+              )}
+            </div>
+            <div>
+              <div className="text-lg font-semibold">{fullName || "Your profile"}</div>
+              <div className="text-xs text-muted-foreground">{user.email}</div>
+              <div className="mt-1 flex flex-wrap gap-1">
+                <Badge variant="secondary">Student</Badge>
+                {isOwner && <Badge>Owner</Badge>}
+                {isAdmin && <Badge className="bg-primary">Admin</Badge>}
+                {application?.status === "pending" && (
+                  <Badge variant="outline" className="border-amber-400 text-amber-700">
+                    Owner application pending
+                  </Badge>
+                )}
+              </div>
+            </div>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {isAdmin && (
+              <Button variant="outline" onClick={() => navigate("/admin")}>
+                <LayoutDashboard className="mr-1 h-4 w-4" /> Admin
+              </Button>
+            )}
+            {isOwner ? (
+              <Button onClick={() => navigate("/owner")}>
+                <Building2 className="mr-1 h-4 w-4" /> Owner dashboard
+              </Button>
+            ) : (
+              <Button variant="outline" onClick={() => navigate("/owner")}>
+                <Building2 className="mr-1 h-4 w-4" />
+                {application ? "View application" : "Become an owner"}
+              </Button>
+            )}
+          </div>
+        </div>
+
+        {loading ? (
+          <div className="flex justify-center py-16"><RingLoader /></div>
+        ) : (
+          <form onSubmit={onSave} className="mt-6 grid gap-4 rounded-2xl border border-border bg-card p-6">
+            <h2 className="text-lg font-semibold">Personal information</h2>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div>
+                <Label>Full name</Label>
+                <Input value={fullName} onChange={(e) => setFullName(e.target.value)} maxLength={80} />
+              </div>
+              <div>
+                <Label>Phone</Label>
+                <Input value={phone} onChange={(e) => setPhone(e.target.value)} maxLength={20} placeholder="+233..." />
+              </div>
+              <div>
+                <Label>WhatsApp</Label>
+                <Input value={whatsapp} onChange={(e) => setWhatsapp(e.target.value)} maxLength={20} placeholder="+233..." />
+              </div>
+              <div>
+                <Label>Avatar URL</Label>
+                <Input value={avatar} onChange={(e) => setAvatar(e.target.value)} placeholder="https://..." />
+              </div>
+            </div>
+            <div>
+              <Label>Bio</Label>
+              <Textarea value={bio} onChange={(e) => setBio(e.target.value)} maxLength={400} placeholder="A little about you..." />
+            </div>
+            <div className="flex justify-end">
+              <Button type="submit" disabled={saving}>{saving ? "Saving…" : "Save changes"}</Button>
+            </div>
+          </form>
+        )}
+
+        <div className="mt-6 grid gap-3 sm:grid-cols-2">
+          <Link to="/favorites" className="rounded-2xl border border-border bg-card p-5 transition hover:-translate-y-0.5 hover:shadow-md">
+            <div className="flex items-center gap-2 text-sm font-medium"><Heart className="h-4 w-4 text-primary" /> Favorites</div>
+            <p className="mt-1 text-xs text-muted-foreground">Hostels you've saved.</p>
+          </Link>
+          <Link to="/requests" className="rounded-2xl border border-border bg-card p-5 transition hover:-translate-y-0.5 hover:shadow-md">
+            <div className="flex items-center gap-2 text-sm font-medium"><ListChecks className="h-4 w-4 text-primary" /> My requests</div>
+            <p className="mt-1 text-xs text-muted-foreground">Accommodation requests you've submitted.</p>
+          </Link>
+        </div>
+      </div>
+    </PublicLayout>
+  );
+}
+
+/* ================== ADMIN: OWNER APPLICATIONS ================== */
+
+export function AdminOwnersPage() {
+  const { items, loading, setStatus } = useOwnerApplications();
+
+  return (
+    <div>
+      <h1 className="text-2xl font-semibold">Owner applications</h1>
+      <p className="text-sm text-muted-foreground">
+        Approve applicants to grant them access to the owner dashboard.
+      </p>
+      <div className="mt-6 space-y-3">
+        {loading && <RingLoader />}
+        {!loading && items.length === 0 && (
+          <div className="rounded-2xl border border-dashed border-border p-12 text-center text-sm text-muted-foreground">
+            No owner applications yet.
+          </div>
+        )}
+        {items.map((a) => (
+          <Card key={a.id} className="p-5">
+            <div className="flex flex-wrap items-start justify-between gap-4">
+              <div className="min-w-0">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="font-medium">{a.full_name || "Unnamed applicant"}</span>
+                  <Badge
+                    variant={a.status === "approved" ? "default" : a.status === "rejected" ? "destructive" : "secondary"}
+                  >
+                    {a.status}
+                  </Badge>
+                </div>
+                {a.business_name && (
+                  <div className="text-sm text-muted-foreground">Business: {a.business_name}</div>
+                )}
+                <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
+                  <span className="inline-flex items-center gap-1">
+                    <MessageSquare className="h-3 w-3" /> {a.whatsapp}
+                  </span>
+                  <span>Applied {new Date(a.created_at).toLocaleDateString()}</span>
+                </div>
+                {a.message && (
+                  <p className="mt-3 rounded-md border border-border bg-secondary/40 p-3 text-sm">{a.message}</p>
+                )}
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <a
+                  href={`https://wa.me/${a.whatsapp.replace(/\D/g, "")}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-1 rounded-md bg-[color:var(--whatsapp)] px-3 py-2 text-xs text-[color:var(--whatsapp-foreground)] hover:opacity-90"
+                >
+                  <MessageSquare className="h-3 w-3" /> Contact
+                </a>
+                {a.status !== "approved" && (
+                  <Button size="sm" onClick={() => setStatus(a.id, "approved")}>
+                    <CheckCircle2 className="mr-1 h-4 w-4" /> Approve
+                  </Button>
+                )}
+                {a.status !== "rejected" && (
+                  <Button size="sm" variant="outline" onClick={() => setStatus(a.id, "rejected")}>
+                    Reject
+                  </Button>
+                )}
+                {a.status !== "pending" && (
+                  <Button size="sm" variant="ghost" onClick={() => setStatus(a.id, "pending")}>
+                    Reset to pending
+                  </Button>
+                )}
+              </div>
+            </div>
+          </Card>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+
 
 export function NotFoundPage() {
   return (
