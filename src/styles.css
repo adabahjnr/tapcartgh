@@ -299,3 +299,29 @@
   animation: hh-burger-attn 2.6s ease-in-out infinite;
 }
 .hh-burger-attn:hover { animation-play-state: paused; }
+
+/* Animated conic gradient ring for founder portrait */
+@keyframes hh-spin {
+  to { transform: rotate(360deg); }
+}
+.hh-founder-ring {
+  position: relative;
+  background: conic-gradient(
+    from 0deg,
+    var(--primary),
+    var(--pop-coral, #ff6b6b),
+    var(--pop-mint, #4ade80),
+    var(--primary)
+  );
+}
+.hh-founder-ring::before {
+  content: "";
+  position: absolute;
+  inset: -2px;
+  border-radius: inherit;
+  background: inherit;
+  filter: blur(14px);
+  opacity: .55;
+  z-index: -1;
+  animation: hh-spin 10s linear infinite;
+}
