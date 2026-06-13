@@ -72,7 +72,7 @@ import { Card } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle, SheetHeader } from "@/components/ui/sheet";
-import { RingLoader } from "@/components/ui/loader";
+import { RingLoader, DotLoader } from "@/components/ui/loader";
 import { Slider } from "@/components/ui/slider";
 import { DoodleHouse, DoodleStar, DoodleSquiggle, DoodleKey, DoodleArrow, DoodleCircle } from "@/components/hh/Doodles";
 
@@ -255,6 +255,156 @@ export function PublicLayout({ children }: { children: ReactNode }) {
       </header>
       <main className="flex-1">{children}</main>
       <SiteFooter />
+      <WelcomePopup />
+    </div>
+  );
+}
+
+type BIPEvent = Event & { prompt: () => Promise<void>; userChoice: Promise<{ outcome: "accepted" | "dismissed" }> };
+
+function WelcomePopup() {
+  const [open, setOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  const [installEvt, setInstallEvt] = useState<BIPEvent | null>(null);
+  const [installed, setInstalled] = useState(false);
+  const [installing, setInstalling] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const seen = localStorage.getItem("hh_welcome_seen");
+    if (!seen) {
+      const t = setTimeout(() => {
+        setOpen(true);
+        requestAnimationFrame(() => setMounted(true));
+      }, 800);
+      return () => clearTimeout(t);
+    }
+  }, []);
+
+  useEffect(() => {
+    const onBIP = (e: Event) => {
+      e.preventDefault();
+      setInstallEvt(e as BIPEvent);
+    };
+    const onInstalled = () => {
+      setInstalled(true);
+      setInstallEvt(null);
+    };
+    window.addEventListener("beforeinstallprompt", onBIP);
+    window.addEventListener("appinstalled", onInstalled);
+    return () => {
+      window.removeEventListener("beforeinstallprompt", onBIP);
+      window.removeEventListener("appinstalled", onInstalled);
+    };
+  }, []);
+
+  const close = () => {
+    setMounted(false);
+    setTimeout(() => {
+      setOpen(false);
+      localStorage.setItem("hh_welcome_seen", "1");
+    }, 200);
+  };
+
+  const handleInstall = async () => {
+    if (!installEvt) {
+      toast.message("Add to Home Screen", {
+        description:
+          "On iPhone: tap Share, then 'Add to Home Screen'. On Android: open the browser menu and tap 'Install app' or 'Add to Home Screen'.",
+      });
+      return;
+    }
+    try {
+      setInstalling(true);
+      await installEvt.prompt();
+      const choice = await installEvt.userChoice;
+      if (choice.outcome === "accepted") {
+        toast.success("HostelHub added to your home screen 🎉");
+        close();
+      }
+    } finally {
+      setInstalling(false);
+      setInstallEvt(null);
+    }
+  };
+
+  if (!open) return null;
+
+  return (
+    <div
+      className={`fixed inset-0 z-[100] flex items-center justify-center px-4 transition-opacity duration-200 ${
+        mounted ? "opacity-100" : "opacity-0"
+      }`}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="hh-welcome-title"
+    >
+      <button
+        aria-label="Close welcome"
+        onClick={close}
+        className="absolute inset-0 bg-black/50 backdrop-blur-md"
+      />
+      <div
+        className={`relative w-full max-w-md overflow-hidden rounded-3xl border border-border bg-card text-card-foreground shadow-2xl transition-all duration-300 ${
+          mounted ? "translate-y-0 scale-100 opacity-100" : "translate-y-4 scale-95 opacity-0"
+        }`}
+      >
+        <div className="hh-grain absolute inset-0 -z-10 opacity-70" aria-hidden />
+        <button
+          onClick={close}
+          aria-label="Close"
+          className="absolute right-3 top-3 z-10 inline-flex h-9 w-9 items-center justify-center rounded-full bg-background/80 text-muted-foreground backdrop-blur transition hover:bg-background hover:text-foreground"
+        >
+          <X className="h-4 w-4" />
+        </button>
+
+        <div className="flex flex-col items-center gap-3 px-6 pb-2 pt-8 text-center">
+          <div className="relative">
+            <span className="absolute inset-0 -z-10 animate-ping rounded-2xl bg-primary/20" aria-hidden />
+            <div className="rounded-2xl bg-primary/10 p-3">
+              <BrandLogo className="h-12 w-12" />
+            </div>
+          </div>
+          <h2 id="hh-welcome-title" className="text-2xl font-semibold tracking-tight">
+            Welcome to HostelHub 👋
+          </h2>
+          <p className="text-sm text-muted-foreground">
+            Your hostel? Sorted. Discover verified student hostels around UMaT, save favorites, and message owners
+            directly on WhatsApp.
+          </p>
+          <DotLoader className="mt-1" label="Getting things ready" />
+        </div>
+
+        <div className="grid gap-2 px-6 py-5 text-sm">
+          <div className="flex items-start gap-3 rounded-xl bg-secondary/60 p-3">
+            <ShieldCheck className="mt-0.5 h-4 w-4 text-primary" />
+            <span>Browse verified hostels with real photos & prices.</span>
+          </div>
+          <div className="flex items-start gap-3 rounded-xl bg-secondary/60 p-3">
+            <Heart className="mt-0.5 h-4 w-4 text-primary" />
+            <span>Save favorites and pick up where you left off.</span>
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-2 border-t border-border bg-background/60 px-6 py-4">
+          <Button onClick={handleInstall} disabled={installing || installed} className="w-full">
+            {installing ? (
+              <DotLoader />
+            ) : installed ? (
+              <>
+                <CheckCircle2 className="mr-2 h-4 w-4" /> Installed
+              </>
+            ) : (
+              <>
+                <PlusCircle className="mr-2 h-4 w-4" /> Add HostelHub to Home Screen
+              </>
+            )}
+          </Button>
+          <Button variant="ghost" className="w-full" onClick={close}>
+            Maybe later
+          </Button>
+        </div>
+      </div>
     </div>
   );
 }
