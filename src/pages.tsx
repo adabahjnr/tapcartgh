@@ -302,9 +302,13 @@ export function HomePage() {
   const [q, setQ] = useState("");
   const { hostels } = useHostels();
   const { value: hero } = useSiteSetting<HeroSetting>("hero", { image_url: null, dim: 0.4 });
-  const featured = hostels.slice(0, 3);
-  const verified = hostels.filter((h) => h.is_verified).slice(0, 3);
-  const recent = [...hostels].slice(0, 6);
+  const { value: founder } = useSiteSetting<FounderSetting>("founder", {
+    image_url: null,
+    scale: 1,
+    offset_x: 0,
+    offset_y: 0,
+  });
+  const available = hostels.filter((h) => h.availability !== "full").slice(0, 6);
 
   const onSearch = (e: React.FormEvent) => {
     e.preventDefault();
