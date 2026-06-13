@@ -538,69 +538,82 @@ export function HostelsPage() {
   );
   const { hostels, loading } = useHostels(filters);
 
+  const priceLabel = maxPrice === "" ? "Any price" : `≤ GH₵${maxPrice}`;
+  const distanceLabel = maxDistance === "" ? "Any distance" : `≤ ${maxDistance} km`;
+  const activeCount = [maxPrice !== "", maxDistance !== "", availability !== "", amenity !== "", verifiedOnly].filter(Boolean).length;
+
+  const reset = () => {
+    setMaxPrice(""); setMaxDistance(""); setAvailability(""); setAmenity(""); setVerifiedOnly(false);
+  };
+
   return (
     <PublicLayout>
       <div className="mx-auto max-w-6xl px-4 py-10 md:px-6">
         <h1 className="text-3xl font-semibold tracking-tight">Hostels near UMaT</h1>
         <p className="mt-1 text-sm text-muted-foreground">{hostels.length} result{hostels.length === 1 ? "" : "s"}</p>
 
-        <div className="mt-6 grid gap-6 md:grid-cols-[260px,1fr]">
-          <aside className="space-y-5 rounded-2xl border border-border bg-card p-5 h-fit">
-            <div>
-              <Label className="text-xs">Search</Label>
-              <div className="mt-1 flex items-center gap-2 rounded-md border border-border bg-background px-2">
-                <Search className="h-4 w-4 text-muted-foreground" />
-                <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Name or area" className="w-full bg-transparent py-2 text-sm outline-none" />
-              </div>
-            </div>
-            <div>
-              <Label className="text-xs">Max price (GH₵)</Label>
-              <Input type="number" value={maxPrice} onChange={(e) => setMaxPrice(e.target.value === "" ? "" : Number(e.target.value))} placeholder="e.g. 3000" />
-            </div>
-            <div>
-              <Label className="text-xs">Max distance (km)</Label>
-              <Input type="number" value={maxDistance} onChange={(e) => setMaxDistance(e.target.value === "" ? "" : Number(e.target.value))} placeholder="e.g. 2" />
-            </div>
-            <div>
-              <Label className="text-xs">Availability</Label>
-              <Select value={availability || "any"} onValueChange={(v) => setAvailability(v === "any" ? "" : v)}>
-                <SelectTrigger><SelectValue placeholder="Any" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="any">Any</SelectItem>
-                  <SelectItem value="available">Available</SelectItem>
-                  <SelectItem value="limited">Limited</SelectItem>
-                  <SelectItem value="full">Full</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label className="text-xs">Amenity</Label>
-              <Select value={amenity || "any"} onValueChange={(v) => setAmenity(v === "any" ? "" : v)}>
-                <SelectTrigger><SelectValue placeholder="Any" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="any">Any</SelectItem>
-                  {["WiFi", "Water", "Generator", "Security", "Kitchen", "Furnished", "Parking"].map((a) => (
-                    <SelectItem key={a} value={a}>{a}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="flex items-center justify-between rounded-md border border-border p-3">
-              <div>
-                <div className="text-sm font-medium">Verified only</div>
-                <div className="text-xs text-muted-foreground">Trusted listings</div>
-              </div>
-              <Switch checked={verifiedOnly} onCheckedChange={setVerifiedOnly} />
-            </div>
-          </aside>
-
-          <div>
-            {loading ? (
-              <div className="flex h-40 items-center justify-center"><RingLoader /></div>
-            ) : (
-              <HostelGrid hostels={hostels} empty="No hostels match these filters yet." />
-            )}
+        <div className="mt-6 flex flex-col gap-3 rounded-2xl border border-border bg-card p-3 sm:flex-row sm:items-center sm:flex-wrap">
+          <div className="flex flex-1 min-w-[200px] items-center gap-2 rounded-md border border-border bg-background px-3">
+            <Search className="h-4 w-4 text-muted-foreground" />
+            <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search by name or area" className="w-full bg-transparent py-2 text-sm outline-none" />
           </div>
+
+          <Select value={maxPrice === "" ? "any" : String(maxPrice)} onValueChange={(v) => setMaxPrice(v === "any" ? "" : Number(v))}>
+            <SelectTrigger className="w-auto min-w-[130px]"><SelectValue placeholder="Price">{priceLabel}</SelectValue></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="any">Any price</SelectItem>
+              {[1000, 1500, 2000, 2500, 3000, 4000, 5000, 7500].map((p) => (
+                <SelectItem key={p} value={String(p)}>≤ GH₵{p.toLocaleString()}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <Select value={maxDistance === "" ? "any" : String(maxDistance)} onValueChange={(v) => setMaxDistance(v === "any" ? "" : Number(v))}>
+            <SelectTrigger className="w-auto min-w-[130px]"><SelectValue>{distanceLabel}</SelectValue></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="any">Any distance</SelectItem>
+              {[0.5, 1, 2, 3, 5, 10].map((d) => (
+                <SelectItem key={d} value={String(d)}>≤ {d} km</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <Select value={availability || "any"} onValueChange={(v) => setAvailability(v === "any" ? "" : v)}>
+            <SelectTrigger className="w-auto min-w-[130px]"><SelectValue placeholder="Availability" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="any">Any availability</SelectItem>
+              <SelectItem value="available">Available</SelectItem>
+              <SelectItem value="limited">Limited</SelectItem>
+              <SelectItem value="full">Full</SelectItem>
+            </SelectContent>
+          </Select>
+
+          <Select value={amenity || "any"} onValueChange={(v) => setAmenity(v === "any" ? "" : v)}>
+            <SelectTrigger className="w-auto min-w-[130px]"><SelectValue placeholder="Amenity" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="any">Any amenity</SelectItem>
+              {["WiFi", "Water", "Generator", "Security", "Kitchen", "Furnished", "Parking"].map((a) => (
+                <SelectItem key={a} value={a}>{a}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <label className="flex items-center gap-2 rounded-md border border-border px-3 py-2 text-sm">
+            <Switch checked={verifiedOnly} onCheckedChange={setVerifiedOnly} />
+            <span>Verified</span>
+          </label>
+
+          {activeCount > 0 && (
+            <Button variant="ghost" size="sm" onClick={reset}>Clear ({activeCount})</Button>
+          )}
+        </div>
+
+        <div className="mt-6">
+          {loading ? (
+            <div className="flex h-40 items-center justify-center"><RingLoader /></div>
+          ) : (
+            <HostelGrid hostels={hostels} empty="No hostels match these filters yet." />
+          )}
         </div>
       </div>
     </PublicLayout>
