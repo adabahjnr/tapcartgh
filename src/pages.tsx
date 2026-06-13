@@ -74,12 +74,47 @@ export function PublicLayout({ children }: { children: ReactNode }) {
     <div className="min-h-screen bg-background text-foreground flex flex-col">
       <header className="sticky top-0 z-40 border-b border-border bg-background/85 backdrop-blur">
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 md:px-6">
+export function PublicLayout({ children }: { children: ReactNode }) {
+  const { user, signOut } = useAuth();
+  const { isAdmin, isOwner } = useRoles();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const [openMenu, setOpenMenu] = useState(false);
+
+  const nav = [
+    { to: "/", label: "Home" },
+    { to: "/hostels", label: "Hostels" },
+    { to: "/community", label: "Community" },
+    { to: "/about", label: "About" },
+  ];
+
+  const userLinks: { to: string; label: string }[] = user
+    ? [
+        { to: "/profile", label: "Profile" },
+        { to: "/favorites", label: "Favorites" },
+        { to: "/requests", label: "My requests" },
+        ...(isOwner ? [{ to: "/owner", label: "Owner dashboard" }] : [{ to: "/owner", label: "Become an owner" }]),
+        ...(isAdmin ? [{ to: "/admin", label: "Admin dashboard" }] : []),
+      ]
+    : [];
+
+  const handleSignOut = async () => {
+    await signOut();
+    setOpenMenu(false);
+    navigate("/");
+  };
+
+  return (
+    <div className="min-h-screen bg-background text-foreground flex flex-col">
+      <header className="sticky top-0 z-40 border-b border-border bg-background/85 backdrop-blur">
+        <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 md:px-6">
           <Link to="/" className="flex items-center gap-2 font-semibold">
             <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
               <HomeIcon className="h-4 w-4" />
             </span>
             <span>HostelHub</span>
           </Link>
+
           <nav className="hidden items-center gap-1 md:flex">
             {nav.map((i) => (
               <NavLink
@@ -96,38 +131,122 @@ export function PublicLayout({ children }: { children: ReactNode }) {
               </NavLink>
             ))}
           </nav>
+
           <div className="flex items-center gap-2">
             {user ? (
               <>
-                <Link to="/favorites" className="hidden text-sm text-muted-foreground hover:text-foreground md:inline">
-                  Favorites
-                </Link>
-                {isOwner && (
-                  <Link to="/owner" className="hidden text-sm text-muted-foreground hover:text-foreground md:inline">
-                    Owner
-                  </Link>
-                )}
                 {isAdmin && (
-                  <Link to="/admin" className="hidden text-sm text-muted-foreground hover:text-foreground md:inline">
+                  <Link
+                    to="/admin"
+                    className="hidden rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs font-medium text-primary hover:bg-primary/20 md:inline-flex"
+                  >
                     Admin
                   </Link>
                 )}
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={async () => {
-                    await signOut();
-                    navigate("/");
-                  }}
+                {isOwner && (
+                  <Link
+                    to="/owner"
+                    className="hidden text-sm text-muted-foreground hover:text-foreground md:inline"
+                  >
+                    Owner
+                  </Link>
+                )}
+                <Link
+                  to="/profile"
+                  className="hidden h-9 w-9 items-center justify-center rounded-full bg-secondary text-foreground hover:bg-secondary/80 md:inline-flex"
+                  aria-label="Profile"
                 >
+                  <UserIcon className="h-4 w-4" />
+                </Link>
+                <Button variant="ghost" size="sm" className="hidden md:inline-flex" onClick={handleSignOut}>
                   <LogOut className="mr-1 h-4 w-4" /> Sign out
                 </Button>
               </>
             ) : (
-              <Button size="sm" onClick={() => navigate("/auth", { state: { from: location.pathname } })}>
+              <Button size="sm" className="hidden md:inline-flex" onClick={() => navigate("/auth", { state: { from: location.pathname } })}>
                 Sign in
               </Button>
             )}
+
+            {/* Mobile hamburger */}
+            <Sheet open={openMenu} onOpenChange={setOpenMenu}>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="icon" className="md:hidden" aria-label="Open menu">
+                  <Menu className="h-5 w-5" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="right" className="w-72">
+                <SheetHeader>
+                  <SheetTitle className="flex items-center gap-2">
+                    <span className="inline-flex h-7 w-7 items-center justify-center rounded-md bg-primary text-primary-foreground">
+                      <HomeIcon className="h-3.5 w-3.5" />
+                    </span>
+                    HostelHub
+                  </SheetTitle>
+                </SheetHeader>
+
+                <div className="mt-6 flex flex-col gap-1">
+                  {nav.map((i) => (
+                    <NavLink
+                      key={i.to}
+                      to={i.to}
+                      end={i.to === "/"}
+                      onClick={() => setOpenMenu(false)}
+                      className={({ isActive }) =>
+                        `rounded-md px-3 py-2 text-sm transition-colors ${
+                          isActive ? "bg-secondary text-foreground" : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+                        }`
+                      }
+                    >
+                      {i.label}
+                    </NavLink>
+                  ))}
+                </div>
+
+                {user && (
+                  <>
+                    <div className="my-4 border-t border-border" />
+                    <div className="px-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                      Account
+                    </div>
+                    <div className="mt-2 flex flex-col gap-1">
+                      {userLinks.map((i) => (
+                        <NavLink
+                          key={i.to}
+                          to={i.to}
+                          onClick={() => setOpenMenu(false)}
+                          className={({ isActive }) =>
+                            `rounded-md px-3 py-2 text-sm transition-colors ${
+                              isActive ? "bg-secondary text-foreground" : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+                            }`
+                          }
+                        >
+                          {i.label}
+                        </NavLink>
+                      ))}
+                    </div>
+                  </>
+                )}
+
+                <div className="mt-6 border-t border-border pt-4">
+                  {user ? (
+                    <Button variant="outline" className="w-full" onClick={handleSignOut}>
+                      <LogOut className="mr-1 h-4 w-4" /> Sign out
+                    </Button>
+                  ) : (
+                    <Button
+                      className="w-full"
+                      onClick={() => {
+                        setOpenMenu(false);
+                        navigate("/auth", { state: { from: location.pathname } });
+                      }}
+                    >
+                      Sign in
+                    </Button>
+                  )}
+                </div>
+              </SheetContent>
+            </Sheet>
           </div>
         </div>
       </header>
@@ -136,6 +255,7 @@ export function PublicLayout({ children }: { children: ReactNode }) {
     </div>
   );
 }
+
 
 function SiteFooter() {
   return (
