@@ -1,5 +1,6 @@
 import { useSyncExternalStore } from "react";
-import type { Product } from "./mock-data";
+
+type Product = { id: string; name: string; price: number; description?: string; image?: string; stock?: number };
 
 type CartItem = Product & { qty: number };
 type CartState = Record<string, CartItem[]>; // username -> items
