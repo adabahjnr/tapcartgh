@@ -3213,8 +3213,114 @@ export function AdminOwnersPage() {
 }
 
 
+export function AdminUsersPage() {
+  type Row = { id: string; full_name: string | null; phone: string | null; created_at?: string; roles: string[] };
+  const [rows, setRows] = useState<Row[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [query, setQuery] = useState("");
+  const [busy, setBusy] = useState<string | null>(null);
 
-export function NotFoundPage() {
+  const refetch = async () => {
+    if (!supabase) return;
+    setLoading(true);
+    const [{ data: profiles }, { data: roles }] = await Promise.all([
+      supabase.from("profiles").select("id, full_name, phone, created_at").order("created_at", { ascending: false }),
+      supabase.from("user_roles").select("user_id, role"),
+    ]);
+    const roleMap = new Map<string, string[]>();
+    ((roles as { user_id: string; role: string }[]) ?? []).forEach((r) => {
+      const arr = roleMap.get(r.user_id) ?? [];
+      arr.push(r.role);
+      roleMap.set(r.user_id, arr);
+    });
+    setRows(
+      ((profiles as { id: string; full_name: string | null; phone: string | null; created_at?: string }[]) ?? []).map((p) => ({
+        ...p,
+        roles: roleMap.get(p.id) ?? [],
+      })),
+    );
+    setLoading(false);
+  };
+
+  useEffect(() => { refetch(); }, []);
+
+  const setOwner = async (userId: string, makeOwner: boolean) => {
+    if (!supabase) return;
+    setBusy(userId);
+    if (makeOwner) {
+      const { error } = await supabase.from("user_roles").insert({ user_id: userId, role: "owner" });
+      if (error) toast.error(error.message); else toast.success("Promoted to owner");
+    } else {
+      const { error } = await supabase.from("user_roles").delete().eq("user_id", userId).eq("role", "owner");
+      if (error) toast.error(error.message); else toast.success("Owner access revoked");
+    }
+    setBusy(null);
+    refetch();
+  };
+
+  const filtered = rows.filter((r) => {
+    const q = query.trim().toLowerCase();
+    if (!q) return true;
+    return (r.full_name ?? "").toLowerCase().includes(q) || (r.phone ?? "").toLowerCase().includes(q) || r.id.toLowerCase().includes(q);
+  });
+
+  return (
+    <div>
+      <h1 className="text-2xl font-semibold">All users</h1>
+      <p className="text-sm text-muted-foreground">View every registered user and promote students to owner accounts.</p>
+
+      <div className="mt-4 max-w-sm">
+        <Input placeholder="Search by name, phone, or ID" value={query} onChange={(e) => setQuery(e.target.value)} />
+      </div>
+
+      <div className="mt-6 space-y-3">
+        {loading && <RingLoader />}
+        {!loading && filtered.length === 0 && (
+          <div className="rounded-2xl border border-dashed border-border p-12 text-center text-sm text-muted-foreground">
+            No users found.
+          </div>
+        )}
+        {filtered.map((u) => {
+          const isAdmin = u.roles.includes("admin");
+          const isOwner = u.roles.includes("owner");
+          return (
+            <Card key={u.id} className="p-4">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="font-medium">{u.full_name || "Unnamed user"}</span>
+                    {isAdmin && <Badge>Admin</Badge>}
+                    {isOwner ? <Badge variant="secondary">Owner</Badge> : <Badge variant="outline">Student</Badge>}
+                  </div>
+                  <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
+                    {u.phone && <span>{u.phone}</span>}
+                    <span className="font-mono truncate max-w-[18rem]">{u.id}</span>
+                    {u.created_at && <span>Joined {new Date(u.created_at).toLocaleDateString()}</span>}
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  {isAdmin ? (
+                    <span className="text-xs text-muted-foreground">Admin role managed in DB</span>
+                  ) : isOwner ? (
+                    <Button size="sm" variant="outline" disabled={busy === u.id} onClick={() => setOwner(u.id, false)}>
+                      Revoke owner
+                    </Button>
+                  ) : (
+                    <Button size="sm" disabled={busy === u.id} onClick={() => setOwner(u.id, true)}>
+                      <CheckCircle2 className="mr-1 h-4 w-4" /> Make owner
+                    </Button>
+                  )}
+                </div>
+              </div>
+            </Card>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+
   return (
     <PublicLayout>
       <div className="mx-auto max-w-md px-4 py-24 text-center">
