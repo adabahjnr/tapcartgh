@@ -240,3 +240,42 @@
   }
   .tc-stagger > * { opacity: 1; }
 }
+
+/* HostelHub doodles + extras */
+@keyframes hh-wiggle { 0%,100%{transform:rotate(-3deg)} 50%{transform:rotate(3deg)} }
+@keyframes hh-bob { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
+@keyframes hh-draw { to { stroke-dashoffset: 0; } }
+@keyframes hh-spin-slow { to { transform: rotate(360deg); } }
+@keyframes hh-pop-in { 0%{opacity:0;transform:scale(.9)} 100%{opacity:1;transform:scale(1)} }
+
+.hh-wiggle { animation: hh-wiggle 4s ease-in-out infinite; transform-origin: center; }
+.hh-bob { animation: hh-bob 5s ease-in-out infinite; }
+.hh-spin-slow { animation: hh-spin-slow 18s linear infinite; }
+.hh-pop { animation: hh-pop-in .6s cubic-bezier(.2,.8,.2,1.2) both; }
+.hh-draw path { stroke-dasharray: 400; stroke-dashoffset: 400; animation: hh-draw 2s ease forwards; }
+
+.hh-grain {
+  background-image:
+    radial-gradient(circle at 20% 10%, color-mix(in oklch, var(--primary) 18%, transparent), transparent 40%),
+    radial-gradient(circle at 80% 30%, color-mix(in oklch, var(--pop-sun) 22%, transparent), transparent 45%),
+    radial-gradient(circle at 50% 90%, color-mix(in oklch, var(--pop-mint) 22%, transparent), transparent 50%);
+}
+
+.hh-chip {
+  display: inline-flex; align-items: center; gap: .4rem;
+  padding: .35rem .7rem; border-radius: 9999px;
+  font-size: .72rem; font-weight: 600;
+  background: color-mix(in oklch, var(--primary) 14%, transparent);
+  color: var(--primary);
+  border: 1px solid color-mix(in oklch, var(--primary) 30%, transparent);
+}
+
+.hh-fab {
+  position: fixed; right: 1.1rem; bottom: 1.1rem; z-index: 50;
+  height: 3rem; width: 3rem; border-radius: 9999px;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: var(--foreground); color: var(--background);
+  box-shadow: 0 14px 40px -10px rgba(0,0,0,.35);
+  transition: transform .25s ease, box-shadow .25s ease;
+}
+.hh-fab:hover { transform: translateY(-3px) rotate(-6deg); }
