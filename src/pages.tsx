@@ -314,8 +314,26 @@ export function HomePage() {
   return (
     <PublicLayout>
       <section className="relative overflow-hidden">
-        <div className="absolute inset-0 -z-10 hh-grain opacity-80" />
-        <div className="absolute inset-0 -z-10 bg-gradient-to-b from-transparent via-background/40 to-background" />
+        {hero.image_url && (
+          <>
+            <div
+              className="absolute inset-0 -z-20 bg-cover bg-center"
+              style={{ backgroundImage: `url(${hero.image_url})` }}
+              aria-hidden
+            />
+            <div
+              className="absolute inset-0 -z-10 bg-black"
+              style={{ opacity: Math.max(0, Math.min(1, hero.dim ?? 0.4)) }}
+              aria-hidden
+            />
+          </>
+        )}
+        {!hero.image_url && (
+          <>
+            <div className="absolute inset-0 -z-10 hh-grain opacity-80" />
+            <div className="absolute inset-0 -z-10 bg-gradient-to-b from-transparent via-background/40 to-background" />
+          </>
+        )}
 
         {/* Floating doodles */}
         <DoodleStar className="absolute left-6 top-10 h-10 w-10 text-[var(--pop-sun)] hh-wiggle" />
