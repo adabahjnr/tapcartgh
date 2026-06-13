@@ -381,6 +381,12 @@ export function avgRating(reviews: Review[]) {
 /* ================== SITE SETTINGS ================== */
 
 export type HeroSetting = { image_url: string | null; dim: number };
+export type FounderSetting = {
+  image_url: string | null;
+  scale: number;
+  offset_x: number;
+  offset_y: number;
+};
 
 export function useSiteSetting<T = unknown>(key: string, fallback: T) {
   const [value, setValue] = useState<T>(fallback);
