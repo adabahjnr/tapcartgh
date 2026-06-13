@@ -96,11 +96,134 @@ export function useRoles() {
   return { roles, isAdmin, isOwner, loading, refetch };
 }
 
-export async function becomeOwner(userId: string) {
+export type Profile = {
+  id: string;
+  full_name: string | null;
+  phone: string | null;
+  whatsapp: string | null;
+  avatar_url: string | null;
+  bio: string | null;
+  created_at?: string;
+  updated_at?: string;
+};
+
+export type OwnerApplication = {
+  id: string;
+  user_id: string;
+  full_name: string | null;
+  whatsapp: string;
+  business_name: string | null;
+  message: string | null;
+  status: "pending" | "approved" | "rejected";
+  reviewed_at: string | null;
+  created_at: string;
+};
+
+export function useProfile() {
+  const { user } = useAuth();
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  const refetch = useCallback(async () => {
+    if (!supabase || !user) {
+      setProfile(null);
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    const { data } = await supabase.from("profiles").select("*").eq("id", user.id).maybeSingle();
+    setProfile((data as Profile) ?? null);
+    setLoading(false);
+  }, [user]);
+
+  useEffect(() => {
+    refetch();
+  }, [refetch]);
+
+  const save = async (patch: Partial<Profile>) => {
+    if (!supabase || !user) return { error: "Not signed in" };
+    const { error } = await supabase
+      .from("profiles")
+      .upsert({ id: user.id, ...patch, updated_at: new Date().toISOString() });
+    if (!error) refetch();
+    return { error: error?.message };
+  };
+
+  return { profile, loading, refetch, save };
+}
+
+export function useMyOwnerApplication() {
+  const { user } = useAuth();
+  const [application, setApplication] = useState<OwnerApplication | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  const refetch = useCallback(async () => {
+    if (!supabase || !user) {
+      setApplication(null);
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    const { data } = await supabase
+      .from("owner_applications")
+      .select("*")
+      .eq("user_id", user.id)
+      .maybeSingle();
+    setApplication((data as OwnerApplication) ?? null);
+    setLoading(false);
+  }, [user]);
+
+  useEffect(() => {
+    refetch();
+  }, [refetch]);
+
+  return { application, loading, refetch };
+}
+
+export async function submitOwnerApplication(
+  userId: string,
+  payload: { full_name: string; whatsapp: string; business_name?: string; message?: string },
+) {
   if (!supabase) return { error: "Not configured" };
-  const { error } = await supabase.from("user_roles").insert({ user_id: userId, role: "owner" });
+  const { error } = await supabase.from("owner_applications").insert({
+    user_id: userId,
+    full_name: payload.full_name,
+    whatsapp: payload.whatsapp,
+    business_name: payload.business_name || null,
+    message: payload.message || null,
+    status: "pending",
+  });
   return { error: error?.message };
 }
+
+export function useOwnerApplications() {
+  const [items, setItems] = useState<(OwnerApplication & { profile?: Profile | null })[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const refetch = useCallback(async () => {
+    if (!supabase) return;
+    setLoading(true);
+    const { data } = await supabase
+      .from("owner_applications")
+      .select("*")
+      .order("created_at", { ascending: false });
+    setItems((data as OwnerApplication[]) ?? []);
+    setLoading(false);
+  }, []);
+
+  useEffect(() => {
+    refetch();
+  }, [refetch]);
+
+  const setStatus = async (id: string, status: OwnerApplication["status"]) => {
+    if (!supabase) return;
+    await supabase.from("owner_applications").update({ status }).eq("id", id);
+    refetch();
+  };
+
+  return { items, loading, refetch, setStatus };
+}
+
 
 export function useHostels(filters?: {
   search?: string;
