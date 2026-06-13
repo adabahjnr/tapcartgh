@@ -241,35 +241,12 @@ export function HowItWorksPage() {
 /* --------------------- EXAMPLES --------------------- */
 
 export function ExamplesPage() {
-  const examples = [
-    { name: "Bloom & Co.", description: "A flower shop built for WhatsApp orders.", tag: "Florist" },
-    { name: "Chai House", description: "A local cafe showcasing daily specials.", tag: "Cafe" },
-    { name: "Local Market", description: "A small grocery store with easy ordering.", tag: "Grocery" },
-    { name: "Olive & Oak", description: "A neighborhood deli built around regulars.", tag: "Deli" },
-    { name: "Rosewater", description: "A skincare studio with a tiny, careful catalog.", tag: "Beauty" },
-    { name: "North & Co.", description: "Hand-thrown ceramics, sold one piece at a time.", tag: "Goods" },
-  ];
   return (
     <MarketingLayout>
-      <PageHero eyebrow="Examples" title="Live store examples" sub="A small look at what sellers are building on TapCart." />
+      <PageHero eyebrow="Examples" title="Live store examples" sub="Real stores will appear here as sellers join TapCart." />
       <section className="mx-auto max-w-5xl px-6 pb-24">
-        <div className="tc-stagger grid gap-6 md:grid-cols-3">
-          {examples.map((example) => (
-            <Card key={example.name} className="group">
-              <div className="flex items-center gap-3">
-                <GradientAvatar name={example.name} size={36} />
-                <div>
-                  <h3 className="text-lg font-semibold">{example.name}</h3>
-                  <div className="text-[0.7rem] uppercase tracking-[0.18em] text-muted-foreground">{example.tag}</div>
-                </div>
-              </div>
-              <p className="mt-5 text-sm text-muted-foreground">{example.description}</p>
-              <div className="mt-6 inline-flex items-center gap-2 text-sm tc-link-underline text-foreground/80">
-                Visit store
-                <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-1" />
-              </div>
-            </Card>
-          ))}
+        <div className="rounded-3xl border border-dashed border-border bg-card/40 p-16 text-center">
+          <p className="text-sm text-muted-foreground">No example stores yet. Check back soon.</p>
         </div>
       </section>
     </MarketingLayout>
