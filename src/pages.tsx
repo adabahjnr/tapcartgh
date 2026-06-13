@@ -342,7 +342,7 @@ export function HomePage() {
         <DoodleKey className="absolute right-12 bottom-10 h-12 w-12 text-[var(--pop-mint)] hh-wiggle" />
         <DoodleCircle className="absolute left-1/2 top-24 hidden h-40 w-40 -translate-x-1/2 text-primary/15 md:block hh-spin-slow" />
 
-        <div className="mx-auto max-w-5xl px-4 py-20 md:px-6 md:py-28">
+        <div className="relative z-10 mx-auto max-w-5xl px-4 py-20 md:px-6 md:py-28">
           <div className="mx-auto max-w-3xl text-center hh-pop">
             <span className="hh-chip mb-5">
               <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
