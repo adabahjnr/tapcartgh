@@ -24,6 +24,8 @@ import {
   AdminRequestsPage,
   AdminCommunityPage,
   AdminFeedbackPage,
+  AdminOwnersPage,
+  ProfilePage,
   NotFoundPage,
 } from "./pages";
 
@@ -42,6 +44,7 @@ export default function App() {
           <Route path="/about" element={<AboutPage />} />
           <Route path="/auth" element={<AuthPage />} />
 
+          <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
           <Route path="/favorites" element={<ProtectedRoute><FavoritesPage /></ProtectedRoute>} />
           <Route path="/requests" element={<ProtectedRoute><MyRequestsPage /></ProtectedRoute>} />
           <Route path="/requests/new" element={<ProtectedRoute><NewRequestPage /></ProtectedRoute>} />
@@ -54,6 +57,7 @@ export default function App() {
 
           <Route path="/admin" element={<AdminLayout />}>
             <Route index element={<AdminIndexPage />} />
+            <Route path="owners" element={<AdminOwnersPage />} />
             <Route path="hostels" element={<AdminHostelsPage />} />
             <Route path="reviews" element={<AdminReviewsPage />} />
             <Route path="requests" element={<AdminRequestsPage />} />

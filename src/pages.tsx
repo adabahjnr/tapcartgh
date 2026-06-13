@@ -19,11 +19,27 @@ import {
   AlertCircle,
   Phone,
   Mail,
+  Menu,
+  User as UserIcon,
+  ClipboardCheck,
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth-context";
-import { useRoles, becomeOwner, useHostels, useHostel, useReviews, useFavorites, useMyHostels, avgRating, type Hostel } from "@/lib/data";
+import {
+  useRoles,
+  useHostels,
+  useHostel,
+  useReviews,
+  useFavorites,
+  useMyHostels,
+  useProfile,
+  useMyOwnerApplication,
+  useOwnerApplications,
+  submitOwnerApplication,
+  avgRating,
+  type Hostel,
+} from "@/lib/data";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -32,6 +48,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
+import { Sheet, SheetContent, SheetTrigger, SheetTitle, SheetHeader } from "@/components/ui/sheet";
 import { RingLoader } from "@/components/ui/loader";
 import { DoodleHouse, DoodleStar, DoodleSquiggle, DoodleKey, DoodleArrow, DoodleCircle } from "@/components/hh/Doodles";
 
@@ -45,6 +62,7 @@ export function PublicLayout({ children }: { children: ReactNode }) {
   const { isAdmin, isOwner } = useRoles();
   const navigate = useNavigate();
   const location = useLocation();
+  const [openMenu, setOpenMenu] = useState(false);
 
   const nav = [
     { to: "/", label: "Home" },
@@ -52,6 +70,22 @@ export function PublicLayout({ children }: { children: ReactNode }) {
     { to: "/community", label: "Community" },
     { to: "/about", label: "About" },
   ];
+
+  const userLinks: { to: string; label: string }[] = user
+    ? [
+        { to: "/profile", label: "Profile" },
+        { to: "/favorites", label: "Favorites" },
+        { to: "/requests", label: "My requests" },
+        ...(isOwner ? [{ to: "/owner", label: "Owner dashboard" }] : [{ to: "/owner", label: "Become an owner" }]),
+        ...(isAdmin ? [{ to: "/admin", label: "Admin dashboard" }] : []),
+      ]
+    : [];
+
+  const handleSignOut = async () => {
+    await signOut();
+    setOpenMenu(false);
+    navigate("/");
+  };
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col">
@@ -63,6 +97,7 @@ export function PublicLayout({ children }: { children: ReactNode }) {
             </span>
             <span>HostelHub</span>
           </Link>
+
           <nav className="hidden items-center gap-1 md:flex">
             {nav.map((i) => (
               <NavLink
@@ -79,38 +114,122 @@ export function PublicLayout({ children }: { children: ReactNode }) {
               </NavLink>
             ))}
           </nav>
+
           <div className="flex items-center gap-2">
             {user ? (
               <>
-                <Link to="/favorites" className="hidden text-sm text-muted-foreground hover:text-foreground md:inline">
-                  Favorites
-                </Link>
-                {isOwner && (
-                  <Link to="/owner" className="hidden text-sm text-muted-foreground hover:text-foreground md:inline">
-                    Owner
-                  </Link>
-                )}
                 {isAdmin && (
-                  <Link to="/admin" className="hidden text-sm text-muted-foreground hover:text-foreground md:inline">
+                  <Link
+                    to="/admin"
+                    className="hidden rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs font-medium text-primary hover:bg-primary/20 md:inline-flex"
+                  >
                     Admin
                   </Link>
                 )}
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={async () => {
-                    await signOut();
-                    navigate("/");
-                  }}
+                {isOwner && (
+                  <Link
+                    to="/owner"
+                    className="hidden text-sm text-muted-foreground hover:text-foreground md:inline"
+                  >
+                    Owner
+                  </Link>
+                )}
+                <Link
+                  to="/profile"
+                  className="hidden h-9 w-9 items-center justify-center rounded-full bg-secondary text-foreground hover:bg-secondary/80 md:inline-flex"
+                  aria-label="Profile"
                 >
+                  <UserIcon className="h-4 w-4" />
+                </Link>
+                <Button variant="ghost" size="sm" className="hidden md:inline-flex" onClick={handleSignOut}>
                   <LogOut className="mr-1 h-4 w-4" /> Sign out
                 </Button>
               </>
             ) : (
-              <Button size="sm" onClick={() => navigate("/auth", { state: { from: location.pathname } })}>
+              <Button size="sm" className="hidden md:inline-flex" onClick={() => navigate("/auth", { state: { from: location.pathname } })}>
                 Sign in
               </Button>
             )}
+
+            {/* Mobile hamburger */}
+            <Sheet open={openMenu} onOpenChange={setOpenMenu}>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="icon" className="md:hidden" aria-label="Open menu">
+                  <Menu className="h-5 w-5" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="right" className="w-72">
+                <SheetHeader>
+                  <SheetTitle className="flex items-center gap-2">
+                    <span className="inline-flex h-7 w-7 items-center justify-center rounded-md bg-primary text-primary-foreground">
+                      <HomeIcon className="h-3.5 w-3.5" />
+                    </span>
+                    HostelHub
+                  </SheetTitle>
+                </SheetHeader>
+
+                <div className="mt-6 flex flex-col gap-1">
+                  {nav.map((i) => (
+                    <NavLink
+                      key={i.to}
+                      to={i.to}
+                      end={i.to === "/"}
+                      onClick={() => setOpenMenu(false)}
+                      className={({ isActive }) =>
+                        `rounded-md px-3 py-2 text-sm transition-colors ${
+                          isActive ? "bg-secondary text-foreground" : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+                        }`
+                      }
+                    >
+                      {i.label}
+                    </NavLink>
+                  ))}
+                </div>
+
+                {user && (
+                  <>
+                    <div className="my-4 border-t border-border" />
+                    <div className="px-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                      Account
+                    </div>
+                    <div className="mt-2 flex flex-col gap-1">
+                      {userLinks.map((i) => (
+                        <NavLink
+                          key={i.to}
+                          to={i.to}
+                          onClick={() => setOpenMenu(false)}
+                          className={({ isActive }) =>
+                            `rounded-md px-3 py-2 text-sm transition-colors ${
+                              isActive ? "bg-secondary text-foreground" : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+                            }`
+                          }
+                        >
+                          {i.label}
+                        </NavLink>
+                      ))}
+                    </div>
+                  </>
+                )}
+
+                <div className="mt-6 border-t border-border pt-4">
+                  {user ? (
+                    <Button variant="outline" className="w-full" onClick={handleSignOut}>
+                      <LogOut className="mr-1 h-4 w-4" /> Sign out
+                    </Button>
+                  ) : (
+                    <Button
+                      className="w-full"
+                      onClick={() => {
+                        setOpenMenu(false);
+                        navigate("/auth", { state: { from: location.pathname } });
+                      }}
+                    >
+                      Sign in
+                    </Button>
+                  )}
+                </div>
+              </SheetContent>
+            </Sheet>
           </div>
         </div>
       </header>
@@ -119,6 +238,7 @@ export function PublicLayout({ children }: { children: ReactNode }) {
     </div>
   );
 }
+
 
 function SiteFooter() {
   return (
@@ -1019,12 +1139,14 @@ const ownerNav = [
 
 const adminNav = [
   { to: "/admin", label: "Overview", icon: LayoutDashboard },
+  { to: "/admin/owners", label: "Owner applications", icon: ClipboardCheck },
   { to: "/admin/hostels", label: "Hostels", icon: Building2 },
   { to: "/admin/reviews", label: "Reviews", icon: Star },
   { to: "/admin/requests", label: "Requests", icon: ListChecks },
   { to: "/admin/community", label: "Community", icon: Users },
   { to: "/admin/feedback", label: "Feedback", icon: MessageSquare },
 ];
+
 
 function DashboardShell({ items, title, children }: { items: typeof ownerNav; title: string; children: ReactNode }) {
   const { signOut, user } = useAuth();
@@ -1082,35 +1204,133 @@ export function OwnerLayout() {
   return <DashboardShell items={ownerNav} title="Owner dashboard"><Outlet /></DashboardShell>;
 }
 
-function BecomeOwnerGate({ onDone }: { onDone: () => void }) {
+function BecomeOwnerGate({ onDone: _onDone }: { onDone: () => void }) {
   const { user } = useAuth();
-  const [loading, setLoading] = useState(false);
+  const { profile } = useProfile();
+  const { application, loading, refetch } = useMyOwnerApplication();
+  const [fullName, setFullName] = useState("");
+  const [whatsapp, setWhatsapp] = useState("");
+  const [business, setBusiness] = useState("");
+  const [message, setMessage] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (profile && !fullName) setFullName(profile.full_name ?? "");
+    if (profile && !whatsapp) setWhatsapp(profile.whatsapp ?? profile.phone ?? "");
+  }, [profile]);
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user) return;
+    const cleaned = whatsapp.trim();
+    if (!/^\+?\d[\d\s-]{6,18}$/.test(cleaned)) {
+      toast.error("Enter a valid WhatsApp number (with country code).");
+      return;
+    }
+    if (!fullName.trim()) {
+      toast.error("Please enter your full name.");
+      return;
+    }
+    setSaving(true);
+    const { error } = await submitOwnerApplication(user.id, {
+      full_name: fullName.trim(),
+      whatsapp: cleaned,
+      business_name: business.trim(),
+      message: message.trim(),
+    });
+    setSaving(false);
+    if (error) toast.error(error);
+    else {
+      toast.success("Application submitted — pending admin approval.");
+      refetch();
+    }
+  };
+
   return (
     <PublicLayout>
-      <div className="mx-auto max-w-lg px-4 py-16 md:px-6">
-        <div className="rounded-2xl border border-border bg-card p-8 text-center">
-          <Building2 className="mx-auto h-10 w-10 text-primary" />
-          <h1 className="mt-3 text-2xl font-semibold">Become a hostel owner</h1>
-          <p className="mt-2 text-sm text-muted-foreground">Register as an owner to submit and manage hostel listings on HostelHub.</p>
-          <Button
-            className="mt-6"
-            disabled={loading}
-            onClick={async () => {
-              if (!user) return;
-              setLoading(true);
-              const { error } = await becomeOwner(user.id);
-              setLoading(false);
-              if (error) toast.error(error);
-              else { toast.success("You're an owner now"); onDone(); }
-            }}
-          >
-            Register as owner
-          </Button>
-        </div>
+      <div className="mx-auto max-w-lg px-4 py-12 md:px-6">
+        {loading ? (
+          <div className="flex justify-center py-16"><RingLoader /></div>
+        ) : application ? (
+          <div className="rounded-2xl border border-border bg-card p-8 text-center">
+            <ClipboardCheck className="mx-auto h-10 w-10 text-primary" />
+            <h1 className="mt-3 text-2xl font-semibold">
+              {application.status === "pending" && "Application under review"}
+              {application.status === "approved" && "You're approved!"}
+              {application.status === "rejected" && "Application not approved"}
+            </h1>
+            <p className="mt-2 text-sm text-muted-foreground">
+              {application.status === "pending" &&
+                "An admin will review your owner application shortly. You'll get access to the owner dashboard once approved."}
+              {application.status === "approved" &&
+                "Refresh the page to access your owner dashboard."}
+              {application.status === "rejected" &&
+                "Your application was not approved. Please contact support for more information."}
+            </p>
+            <div className="mt-4 rounded-md border border-border bg-secondary/40 p-3 text-left text-xs text-muted-foreground">
+              <div><span className="font-medium text-foreground">Status:</span> {application.status}</div>
+              <div><span className="font-medium text-foreground">WhatsApp:</span> {application.whatsapp}</div>
+              {application.business_name && (
+                <div><span className="font-medium text-foreground">Business:</span> {application.business_name}</div>
+              )}
+            </div>
+            {application.status === "approved" && (
+              <Button className="mt-6 w-full" onClick={() => window.location.reload()}>
+                Open owner dashboard
+              </Button>
+            )}
+          </div>
+        ) : (
+          <div className="rounded-2xl border border-border bg-card p-8">
+            <div className="flex items-center gap-3">
+              <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-primary/15 text-primary">
+                <Building2 className="h-5 w-5" />
+              </span>
+              <div>
+                <h1 className="text-xl font-semibold">Become a hostel owner</h1>
+                <p className="text-xs text-muted-foreground">Apply to list and manage hostels on HostelHub.</p>
+              </div>
+            </div>
+            <form onSubmit={submit} className="mt-6 space-y-4">
+              <div>
+                <Label>Full name</Label>
+                <Input required value={fullName} onChange={(e) => setFullName(e.target.value)} maxLength={80} />
+              </div>
+              <div>
+                <Label>WhatsApp number<span className="text-destructive"> *</span></Label>
+                <Input
+                  required
+                  value={whatsapp}
+                  onChange={(e) => setWhatsapp(e.target.value)}
+                  maxLength={20}
+                  placeholder="+233 24 000 0000"
+                />
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Students will use this to contact you about your hostel.
+                </p>
+              </div>
+              <div>
+                <Label>Business / hostel name (optional)</Label>
+                <Input value={business} onChange={(e) => setBusiness(e.target.value)} maxLength={120} />
+              </div>
+              <div>
+                <Label>Message to admin (optional)</Label>
+                <Textarea value={message} onChange={(e) => setMessage(e.target.value)} maxLength={1000} placeholder="Anything we should know?" />
+              </div>
+              <div className="rounded-md border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900 dark:border-amber-900/40 dark:bg-amber-950/40 dark:text-amber-200">
+                Owner accounts require admin approval. You'll get access to the owner dashboard once approved.
+              </div>
+              <Button type="submit" disabled={saving} className="w-full">
+                {saving ? "Submitting…" : "Submit application"}
+              </Button>
+            </form>
+          </div>
+        )}
       </div>
     </PublicLayout>
   );
 }
+
 
 export function OwnerHostelsPage() {
   const { hostels, loading, refetch } = useMyHostels();
@@ -1529,7 +1749,227 @@ export function AdminFeedbackPage() {
   );
 }
 
-/* ================== 404 ================== */
+/* ================== PROFILE ================== */
+
+export function ProfilePage() {
+  const { user } = useAuth();
+  const { isAdmin, isOwner } = useRoles();
+  const { profile, loading, save } = useProfile();
+  const { application } = useMyOwnerApplication();
+  const navigate = useNavigate();
+
+  const [fullName, setFullName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [whatsapp, setWhatsapp] = useState("");
+  const [bio, setBio] = useState("");
+  const [avatar, setAvatar] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (profile) {
+      setFullName(profile.full_name ?? "");
+      setPhone(profile.phone ?? "");
+      setWhatsapp(profile.whatsapp ?? "");
+      setBio(profile.bio ?? "");
+      setAvatar(profile.avatar_url ?? "");
+    }
+  }, [profile]);
+
+  if (!user) return <Navigate to="/auth" state={{ from: "/profile" }} replace />;
+
+  const onSave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSaving(true);
+    const { error } = await save({
+      full_name: fullName.trim() || null,
+      phone: phone.trim() || null,
+      whatsapp: whatsapp.trim() || null,
+      bio: bio.trim() || null,
+      avatar_url: avatar.trim() || null,
+    });
+    setSaving(false);
+    if (error) toast.error(error);
+    else toast.success("Profile updated");
+  };
+
+  const initials = (fullName || user.email || "?")
+    .split(/[\s@]+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((s) => s[0]?.toUpperCase())
+    .join("");
+
+  return (
+    <PublicLayout>
+      <div className="mx-auto max-w-3xl px-4 py-10 md:px-6">
+        <div className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-6 md:flex-row md:items-center md:justify-between">
+          <div className="flex items-center gap-4">
+            <div className="relative h-16 w-16 overflow-hidden rounded-full bg-primary/15 text-primary">
+              {avatar ? (
+                <img src={avatar} alt="" className="h-full w-full object-cover" />
+              ) : (
+                <div className="flex h-full w-full items-center justify-center text-lg font-semibold">{initials}</div>
+              )}
+            </div>
+            <div>
+              <div className="text-lg font-semibold">{fullName || "Your profile"}</div>
+              <div className="text-xs text-muted-foreground">{user.email}</div>
+              <div className="mt-1 flex flex-wrap gap-1">
+                <Badge variant="secondary">Student</Badge>
+                {isOwner && <Badge>Owner</Badge>}
+                {isAdmin && <Badge className="bg-primary">Admin</Badge>}
+                {application?.status === "pending" && (
+                  <Badge variant="outline" className="border-amber-400 text-amber-700">
+                    Owner application pending
+                  </Badge>
+                )}
+              </div>
+            </div>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {isAdmin && (
+              <Button variant="outline" onClick={() => navigate("/admin")}>
+                <LayoutDashboard className="mr-1 h-4 w-4" /> Admin
+              </Button>
+            )}
+            {isOwner ? (
+              <Button onClick={() => navigate("/owner")}>
+                <Building2 className="mr-1 h-4 w-4" /> Owner dashboard
+              </Button>
+            ) : (
+              <Button variant="outline" onClick={() => navigate("/owner")}>
+                <Building2 className="mr-1 h-4 w-4" />
+                {application ? "View application" : "Become an owner"}
+              </Button>
+            )}
+          </div>
+        </div>
+
+        {loading ? (
+          <div className="flex justify-center py-16"><RingLoader /></div>
+        ) : (
+          <form onSubmit={onSave} className="mt-6 grid gap-4 rounded-2xl border border-border bg-card p-6">
+            <h2 className="text-lg font-semibold">Personal information</h2>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div>
+                <Label>Full name</Label>
+                <Input value={fullName} onChange={(e) => setFullName(e.target.value)} maxLength={80} />
+              </div>
+              <div>
+                <Label>Phone</Label>
+                <Input value={phone} onChange={(e) => setPhone(e.target.value)} maxLength={20} placeholder="+233..." />
+              </div>
+              <div>
+                <Label>WhatsApp</Label>
+                <Input value={whatsapp} onChange={(e) => setWhatsapp(e.target.value)} maxLength={20} placeholder="+233..." />
+              </div>
+              <div>
+                <Label>Avatar URL</Label>
+                <Input value={avatar} onChange={(e) => setAvatar(e.target.value)} placeholder="https://..." />
+              </div>
+            </div>
+            <div>
+              <Label>Bio</Label>
+              <Textarea value={bio} onChange={(e) => setBio(e.target.value)} maxLength={400} placeholder="A little about you..." />
+            </div>
+            <div className="flex justify-end">
+              <Button type="submit" disabled={saving}>{saving ? "Saving…" : "Save changes"}</Button>
+            </div>
+          </form>
+        )}
+
+        <div className="mt-6 grid gap-3 sm:grid-cols-2">
+          <Link to="/favorites" className="rounded-2xl border border-border bg-card p-5 transition hover:-translate-y-0.5 hover:shadow-md">
+            <div className="flex items-center gap-2 text-sm font-medium"><Heart className="h-4 w-4 text-primary" /> Favorites</div>
+            <p className="mt-1 text-xs text-muted-foreground">Hostels you've saved.</p>
+          </Link>
+          <Link to="/requests" className="rounded-2xl border border-border bg-card p-5 transition hover:-translate-y-0.5 hover:shadow-md">
+            <div className="flex items-center gap-2 text-sm font-medium"><ListChecks className="h-4 w-4 text-primary" /> My requests</div>
+            <p className="mt-1 text-xs text-muted-foreground">Accommodation requests you've submitted.</p>
+          </Link>
+        </div>
+      </div>
+    </PublicLayout>
+  );
+}
+
+/* ================== ADMIN: OWNER APPLICATIONS ================== */
+
+export function AdminOwnersPage() {
+  const { items, loading, setStatus } = useOwnerApplications();
+
+  return (
+    <div>
+      <h1 className="text-2xl font-semibold">Owner applications</h1>
+      <p className="text-sm text-muted-foreground">
+        Approve applicants to grant them access to the owner dashboard.
+      </p>
+      <div className="mt-6 space-y-3">
+        {loading && <RingLoader />}
+        {!loading && items.length === 0 && (
+          <div className="rounded-2xl border border-dashed border-border p-12 text-center text-sm text-muted-foreground">
+            No owner applications yet.
+          </div>
+        )}
+        {items.map((a) => (
+          <Card key={a.id} className="p-5">
+            <div className="flex flex-wrap items-start justify-between gap-4">
+              <div className="min-w-0">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="font-medium">{a.full_name || "Unnamed applicant"}</span>
+                  <Badge
+                    variant={a.status === "approved" ? "default" : a.status === "rejected" ? "destructive" : "secondary"}
+                  >
+                    {a.status}
+                  </Badge>
+                </div>
+                {a.business_name && (
+                  <div className="text-sm text-muted-foreground">Business: {a.business_name}</div>
+                )}
+                <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
+                  <span className="inline-flex items-center gap-1">
+                    <MessageSquare className="h-3 w-3" /> {a.whatsapp}
+                  </span>
+                  <span>Applied {new Date(a.created_at).toLocaleDateString()}</span>
+                </div>
+                {a.message && (
+                  <p className="mt-3 rounded-md border border-border bg-secondary/40 p-3 text-sm">{a.message}</p>
+                )}
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <a
+                  href={`https://wa.me/${a.whatsapp.replace(/\D/g, "")}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-1 rounded-md bg-[color:var(--whatsapp)] px-3 py-2 text-xs text-[color:var(--whatsapp-foreground)] hover:opacity-90"
+                >
+                  <MessageSquare className="h-3 w-3" /> Contact
+                </a>
+                {a.status !== "approved" && (
+                  <Button size="sm" onClick={() => setStatus(a.id, "approved")}>
+                    <CheckCircle2 className="mr-1 h-4 w-4" /> Approve
+                  </Button>
+                )}
+                {a.status !== "rejected" && (
+                  <Button size="sm" variant="outline" onClick={() => setStatus(a.id, "rejected")}>
+                    Reject
+                  </Button>
+                )}
+                {a.status !== "pending" && (
+                  <Button size="sm" variant="ghost" onClick={() => setStatus(a.id, "pending")}>
+                    Reset to pending
+                  </Button>
+                )}
+              </div>
+            </div>
+          </Card>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+
 
 export function NotFoundPage() {
   return (
