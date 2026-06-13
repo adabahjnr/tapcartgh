@@ -1,1239 +1,1521 @@
-import React from "react";
-import { Link, Outlet, useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { Link, NavLink, Navigate, Outlet, useLocation, useNavigate, useParams } from "react-router-dom";
 import {
-  ArrowRight, BarChart3, Bell, Check, LayoutDashboard, Package, Plus, Trash2,
-  ShoppingBag, Store, Users, Settings, Sparkles, MessageCircle, Link2,
+  Search,
+  MapPin,
+  Star,
+  Heart,
+  ShieldCheck,
+  Home as HomeIcon,
+  Building2,
+  Users,
+  LayoutDashboard,
+  ListChecks,
+  MessageSquare,
+  Send,
+  LogOut,
+  PlusCircle,
+  CheckCircle2,
+  AlertCircle,
+  Phone,
+  Mail,
 } from "lucide-react";
-import { MarketingLayout } from "@/components/marketing/MarketingLayout";
-import { AppShell, dashboardNav } from "@/components/app/AppShell";
+import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth-context";
-import { useProfile, useProducts, useOrders, useStoreViews } from "@/lib/dashboard-data";
-import { Reveal } from "@/components/ui/reveal";
-import { GradientAvatar } from "@/components/ui/gradient-avatar";
-import { DotLoader, RingLoader, SkeletonShimmer } from "@/components/ui/loader";
-import {
-  PhoneChatIllustration, RouteIllustration, EmptyBoxIllustration,
-  LogoTicker, Sparkle,
-} from "@/components/illustrations";
+import { useRoles, becomeOwner, useHostels, useHostel, useReviews, useFavorites, useMyHostels, avgRating, type Hostel } from "@/lib/data";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import { Card } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
+import { RingLoader } from "@/components/ui/loader";
 
-/* ------------------------- HOME ------------------------- */
+/* ================== LAYOUT ================== */
 
-export function HomePage() {
+const CREATOR_NAME = "Adabah Michael Junior";
+const CREATOR_URL = "#";
+
+export function PublicLayout({ children }: { children: ReactNode }) {
+  const { user, signOut } = useAuth();
+  const { isAdmin, isOwner } = useRoles();
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  const nav = [
+    { to: "/", label: "Home" },
+    { to: "/hostels", label: "Hostels" },
+    { to: "/community", label: "Community" },
+    { to: "/about", label: "About" },
+  ];
+
   return (
-    <MarketingLayout>
-      {/* Hero */}
-      <section className="relative overflow-hidden">
-        <div className="tc-grid-bg pointer-events-none absolute inset-0 opacity-60" aria-hidden />
-        <div className="pointer-events-none absolute -top-24 left-1/2 h-72 w-[42rem] -translate-x-1/2 rounded-full bg-secondary/70 blur-3xl" aria-hidden />
-        <div className="relative mx-auto grid max-w-6xl items-center gap-12 px-6 pb-20 pt-24 md:grid-cols-[1.1fr_0.9fr] md:pb-28 md:pt-32">
-          <div>
-            <div className="tc-fade-up mb-6 inline-flex items-center gap-2 rounded-full border border-border bg-background/80 px-3 py-1 text-xs text-muted-foreground backdrop-blur">
-              <span className="relative inline-flex h-1.5 w-1.5">
-                <span className="absolute inset-0 rounded-full bg-[color:var(--whatsapp)]" />
-                <span className="absolute -inset-1 rounded-full tc-pulse-ring" />
-              </span>
-              Free for everyone, forever
-            </div>
-            <h1 className="tc-fade-up text-5xl font-semibold tracking-tight md:text-7xl" style={{ animationDelay: "60ms" }}>
-              Your mini store. <br />
-              One link.{" "}
-              <span className="relative inline-block">
-                Orders on
-                <Sparkle className="absolute -right-7 -top-3 h-5 w-5 text-foreground/40 tc-float" />
-              </span>{" "}
-              <span className="relative whitespace-nowrap">
-                WhatsApp.
-                <svg viewBox="0 0 220 12" className="absolute -bottom-2 left-0 h-3 w-full text-foreground/30" aria-hidden>
-                  <path d="M2 8 Q 60 -2 110 6 T 218 4" stroke="currentColor" strokeWidth="1.5" fill="none" />
-                </svg>
-              </span>
-            </h1>
-            <p className="tc-fade-up mt-7 max-w-xl text-lg text-muted-foreground" style={{ animationDelay: "140ms" }}>
-              TapCart gives small businesses and creators a beautiful storefront in minutes.
-              Customers browse, add to cart, and tap one button to send the order straight to your WhatsApp.
-            </p>
-            <div className="tc-fade-up mt-10 flex flex-col items-start gap-3 sm:flex-row" style={{ animationDelay: "220ms" }}>
-              <Link to="/auth?mode=signup" className="group inline-flex items-center justify-center gap-2 rounded-full bg-primary px-6 py-3 text-sm font-medium text-primary-foreground transition-transform hover:-translate-y-0.5 hover:shadow-[0_18px_40px_-18px_rgba(0,0,0,0.5)]">
-                Create your store
-                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-              </Link>
-              <Link to="/examples" className="inline-flex items-center justify-center rounded-full border border-border bg-background px-6 py-3 text-sm font-medium transition-colors hover:bg-secondary">
-                See live examples
-              </Link>
-            </div>
-            <p className="tc-fade-up mt-6 text-xs text-muted-foreground" style={{ animationDelay: "300ms" }}>
-              No credit card. No fees. No paid tiers.
-            </p>
-          </div>
-
-          <div className="relative mx-auto w-full max-w-sm">
-            <div className="pointer-events-none absolute -inset-6 -z-10 rounded-[2rem] bg-gradient-to-br from-secondary via-background to-secondary tc-blob-morph" aria-hidden />
-            <PhoneChatIllustration className="mx-auto w-full max-w-[280px]" />
-          </div>
-        </div>
-      </section>
-
-      <LogoTicker />
-
-      {/* Showcase */}
-      <Reveal className="mx-auto max-w-5xl px-6 py-20">
-        <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-[0_30px_80px_-40px_rgba(0,0,0,0.25)]">
-          <div className="flex items-center gap-2 border-b border-border bg-secondary/40 px-4 py-3">
-            <span className="h-2.5 w-2.5 rounded-full bg-border" />
-            <span className="h-2.5 w-2.5 rounded-full bg-border" />
-            <span className="h-2.5 w-2.5 rounded-full bg-border" />
-            <span className="ml-3 text-xs text-muted-foreground">tap-cart.shop/s/bloom</span>
-          </div>
-          <div className="tc-stagger grid gap-0 md:grid-cols-3">
-            {[
-              { name: "Garden Rose Bouquet", price: "$48", img: "https://images.unsplash.com/photo-1561181286-d3fee7d55364?w=600&h=600&fit=crop" },
-              { name: "Wildflower Mix", price: "$36", img: "https://images.unsplash.com/photo-1508610048659-a06b669e3321?w=600&h=600&fit=crop" },
-              { name: "White Peony Bundle", price: "$62", img: "https://images.unsplash.com/photo-1469259943454-aa100abba749?w=600&h=600&fit=crop" },
-            ].map((product) => (
-              <div key={product.name} className="group border-border p-6 md:border-l first:md:border-l-0">
-                <div className="aspect-square overflow-hidden rounded-lg bg-secondary">
-                  <img
-                    src={product.img}
-                    alt={product.name}
-                    loading="lazy"
-                    className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
-                  />
-                </div>
-                <div className="mt-4 flex items-baseline justify-between">
-                  <div className="text-sm font-medium">{product.name}</div>
-                  <div className="text-sm text-muted-foreground">{product.price}</div>
-                </div>
-              </div>
+    <div className="min-h-screen bg-background text-foreground flex flex-col">
+      <header className="sticky top-0 z-40 border-b border-border bg-background/85 backdrop-blur">
+        <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 md:px-6">
+          <Link to="/" className="flex items-center gap-2 font-semibold">
+            <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+              <HomeIcon className="h-4 w-4" />
+            </span>
+            <span>HostelHub</span>
+          </Link>
+          <nav className="hidden items-center gap-1 md:flex">
+            {nav.map((i) => (
+              <NavLink
+                key={i.to}
+                to={i.to}
+                end={i.to === "/"}
+                className={({ isActive }) =>
+                  `rounded-md px-3 py-2 text-sm transition-colors ${
+                    isActive ? "bg-secondary text-foreground" : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+                  }`
+                }
+              >
+                {i.label}
+              </NavLink>
             ))}
+          </nav>
+          <div className="flex items-center gap-2">
+            {user ? (
+              <>
+                <Link to="/favorites" className="hidden text-sm text-muted-foreground hover:text-foreground md:inline">
+                  Favorites
+                </Link>
+                {isOwner && (
+                  <Link to="/owner" className="hidden text-sm text-muted-foreground hover:text-foreground md:inline">
+                    Owner
+                  </Link>
+                )}
+                {isAdmin && (
+                  <Link to="/admin" className="hidden text-sm text-muted-foreground hover:text-foreground md:inline">
+                    Admin
+                  </Link>
+                )}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={async () => {
+                    await signOut();
+                    navigate("/");
+                  }}
+                >
+                  <LogOut className="mr-1 h-4 w-4" /> Sign out
+                </Button>
+              </>
+            ) : (
+              <Button size="sm" onClick={() => navigate("/auth", { state: { from: location.pathname } })}>
+                Sign in
+              </Button>
+            )}
           </div>
         </div>
-      </Reveal>
-
-      {/* Features */}
-      <section className="mx-auto max-w-5xl px-6 py-20">
-        <div className="tc-stagger grid gap-10 md:grid-cols-3">
-          {[
-            { icon: Sparkles, title: "Set up in minutes", description: "Add your products, logo, and WhatsApp number. Share your link. Done." },
-            { icon: Store, title: "Designed to feel premium", description: "Calm typography, generous spacing, and a storefront customers trust." },
-            { icon: MessageCircle, title: "Orders where you already are", description: "Every order arrives as a clean, pre-filled WhatsApp message." },
-          ].map((feature) => {
-            const Icon = feature.icon;
-            return (
-              <div key={feature.title} className="group">
-                <div className="mb-5 inline-flex h-10 w-10 items-center justify-center rounded-full border border-border bg-card transition-transform group-hover:-rotate-6">
-                  <Icon className="h-4 w-4" />
-                </div>
-                <div className="text-base font-medium">{feature.title}</div>
-                <p className="mt-2 text-sm text-muted-foreground">{feature.description}</p>
-              </div>
-            );
-          })}
-        </div>
-      </section>
-
-      {/* CTA */}
-      <Reveal className="mx-auto max-w-4xl px-6 pb-32 pt-12 text-center">
-        <div className="relative overflow-hidden rounded-3xl border border-border bg-card p-12">
-          <div className="tc-dot-bg pointer-events-none absolute inset-0 opacity-70" aria-hidden />
-          <div className="relative">
-            <h2 className="text-3xl font-semibold tracking-tight md:text-4xl">Start selling today.</h2>
-            <p className="mx-auto mt-4 max-w-xl text-muted-foreground">It's free. It always will be.</p>
-            <Link to="/auth?mode=signup" className="group mt-8 inline-flex items-center gap-2 rounded-full bg-primary px-6 py-3 text-sm font-medium text-primary-foreground transition-transform hover:-translate-y-0.5">
-              Create your store
-              <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-            </Link>
-          </div>
-        </div>
-      </Reveal>
-    </MarketingLayout>
+      </header>
+      <main className="flex-1">{children}</main>
+      <SiteFooter />
+    </div>
   );
 }
 
-/* ------------------- Marketing helpers ------------------- */
-
-function PageHero({ eyebrow, title, sub }: { eyebrow?: string; title: string; sub?: string }) {
+function SiteFooter() {
   return (
-    <section className="relative overflow-hidden">
-      <div className="tc-grid-bg pointer-events-none absolute inset-0 opacity-50" aria-hidden />
-      <div className="relative mx-auto max-w-4xl px-6 pb-12 pt-24 text-center md:pb-20 md:pt-32">
-        {eyebrow && (
-          <div className="tc-fade-up mb-5 text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">{eyebrow}</div>
-        )}
-        <h1 className="tc-fade-up text-4xl font-semibold tracking-tight md:text-6xl" style={{ animationDelay: "60ms" }}>{title}</h1>
-        {sub && <p className="tc-fade-up mx-auto mt-6 max-w-2xl text-lg text-muted-foreground" style={{ animationDelay: "140ms" }}>{sub}</p>}
+    <footer className="border-t border-border bg-secondary/30">
+      <div className="mx-auto grid max-w-6xl gap-8 px-4 py-12 md:grid-cols-4 md:px-6">
+        <div>
+          <div className="flex items-center gap-2 font-semibold">
+            <span className="inline-flex h-7 w-7 items-center justify-center rounded-md bg-primary text-primary-foreground">
+              <HomeIcon className="h-3.5 w-3.5" />
+            </span>
+            HostelHub
+          </div>
+          <p className="mt-3 text-sm text-muted-foreground">Find verified student hostels around UMaT.</p>
+        </div>
+        <div>
+          <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Explore</div>
+          <ul className="mt-3 space-y-2 text-sm">
+            <li><Link className="hover:text-foreground text-muted-foreground" to="/hostels">All hostels</Link></li>
+            <li><Link className="hover:text-foreground text-muted-foreground" to="/community">Student community</Link></li>
+            <li><Link className="hover:text-foreground text-muted-foreground" to="/feedback">Send feedback</Link></li>
+          </ul>
+        </div>
+        <div>
+          <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">For owners</div>
+          <ul className="mt-3 space-y-2 text-sm">
+            <li><Link className="hover:text-foreground text-muted-foreground" to="/owner">Owner dashboard</Link></li>
+            <li><Link className="hover:text-foreground text-muted-foreground" to="/owner/new">Submit a hostel</Link></li>
+          </ul>
+        </div>
+        <div>
+          <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">About</div>
+          <p className="mt-3 text-sm text-muted-foreground">
+            Built by{" "}
+            <a href={CREATOR_URL} className="font-medium text-foreground underline-offset-2 hover:underline">
+              {CREATOR_NAME}
+            </a>
+            .
+          </p>
+        </div>
       </div>
+      <div className="border-t border-border py-4 text-center text-xs text-muted-foreground">
+        © {new Date().getFullYear()} HostelHub. Made for UMaT students.
+      </div>
+    </footer>
+  );
+}
+
+/* ================== HOME ================== */
+
+export function HomePage() {
+  const navigate = useNavigate();
+  const [q, setQ] = useState("");
+  const { hostels } = useHostels();
+  const featured = hostels.slice(0, 3);
+  const verified = hostels.filter((h) => h.is_verified).slice(0, 3);
+  const recent = [...hostels].slice(0, 6);
+
+  const onSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    navigate(`/hostels${q ? `?q=${encodeURIComponent(q)}` : ""}`);
+  };
+
+  return (
+    <PublicLayout>
+      <section className="relative overflow-hidden">
+        <div className="absolute inset-0 -z-10 bg-gradient-to-b from-accent/30 via-background to-background" />
+        <div className="mx-auto max-w-6xl px-4 py-16 md:px-6 md:py-24">
+          <div className="mx-auto max-w-3xl text-center">
+            <Badge variant="secondary" className="mb-4">For UMaT students</Badge>
+            <h1 className="text-4xl font-semibold tracking-tight md:text-6xl">Find Your Next Hostel Near UMaT</h1>
+            <p className="mt-5 text-base text-muted-foreground md:text-lg">
+              Browse verified hostels, compare prices, view photos, and connect directly with hostel managers.
+            </p>
+            <form onSubmit={onSearch} className="mt-8 flex w-full items-center gap-2 rounded-2xl border border-border bg-card p-2 shadow-sm">
+              <Search className="ml-2 h-5 w-5 text-muted-foreground" />
+              <input
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+                placeholder="Search hostel name, area, or amenity..."
+                className="flex-1 bg-transparent px-2 py-2 text-sm outline-none placeholder:text-muted-foreground"
+              />
+              <Button type="submit">Search</Button>
+            </form>
+            <div className="mt-4 flex flex-wrap items-center justify-center gap-2 text-xs text-muted-foreground">
+              <span>Popular:</span>
+              {["Tarkwa", "Brahabebome", "T-Polo", "Cyanide", "Akoon"].map((p) => (
+                <Link key={p} to={`/hostels?q=${encodeURIComponent(p)}`} className="rounded-full border border-border bg-background px-3 py-1 hover:bg-secondary">
+                  {p}
+                </Link>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <Section title="Featured hostels" subtitle="Popular picks among UMaT students.">
+        <HostelGrid hostels={featured} empty="No featured hostels yet." />
+      </Section>
+
+      <Section title="Verified hostels" subtitle="Reviewed and approved by HostelHub.">
+        <HostelGrid hostels={verified} empty="No verified hostels yet." />
+      </Section>
+
+      <Section title="Recently added" subtitle="Fresh listings around campus.">
+        <HostelGrid hostels={recent} empty="No hostels listed yet — be the first to submit one." />
+      </Section>
+
+      <section className="border-t border-border bg-secondary/30">
+        <div className="mx-auto grid max-w-6xl gap-8 px-4 py-16 md:grid-cols-2 md:px-6">
+          <div>
+            <h2 className="text-3xl font-semibold tracking-tight">Join the student community</h2>
+            <p className="mt-3 text-muted-foreground">
+              Get updates on new hostel listings, accommodation opportunities, and campus events — straight to your inbox.
+            </p>
+            <Button asChild className="mt-6">
+              <Link to="/community">Join now</Link>
+            </Button>
+          </div>
+          <div className="rounded-2xl border border-border bg-card p-6">
+            <h3 className="text-lg font-semibold">Need help finding a place?</h3>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Tell us your budget and preferred area — we'll match you with suitable hostels.
+            </p>
+            <Button asChild variant="outline" className="mt-4">
+              <Link to="/requests/new">Submit a request</Link>
+            </Button>
+          </div>
+        </div>
+      </section>
+    </PublicLayout>
+  );
+}
+
+function Section({ title, subtitle, children }: { title: string; subtitle?: string; children: ReactNode }) {
+  return (
+    <section className="mx-auto max-w-6xl px-4 py-12 md:px-6">
+      <div className="mb-6 flex items-end justify-between gap-4">
+        <div>
+          <h2 className="text-2xl font-semibold tracking-tight md:text-3xl">{title}</h2>
+          {subtitle && <p className="mt-1 text-sm text-muted-foreground">{subtitle}</p>}
+        </div>
+      </div>
+      {children}
     </section>
   );
 }
 
-function Card({ children, className = "" }: { children: React.ReactNode; className?: string }) {
-  return (
-    <div className={`tc-lift rounded-3xl border border-border bg-card p-8 shadow-sm ${className}`}>
-      {children}
-    </div>
-  );
-}
+/* ================== HOSTEL CARD / GRID ================== */
 
-/* --------------------- FEATURES --------------------- */
-
-export function FeaturesPage() {
-  const items = [
-    { icon: Store, title: "Beautiful storefronts", description: "Publish a clean, modern shop page that looks great on mobile and desktop." },
-    { icon: MessageCircle, title: "Ready-made checkout", description: "Customers add items and send orders directly through WhatsApp without friction." },
-    { icon: Sparkles, title: "Fast setup", description: "Launch a full store from scratch in under ten minutes." },
-    { icon: Package, title: "Simple catalog", description: "Add products, photos, and prices in a calm, distraction-free editor." },
-    { icon: BarChart3, title: "Quiet analytics", description: "See what's selling without dashboards that scream at you." },
-    { icon: Link2, title: "One shareable link", description: "Drop it in bio, posts, and stories. Same link, every channel." },
-  ];
-  return (
-    <MarketingLayout>
-      <PageHero eyebrow="Features" title="Powerful features for every storefront" sub="Everything you need to start, sell, and grow — nothing you don't." />
-      <section className="mx-auto max-w-5xl px-6 pb-24">
-        <div className="tc-stagger grid gap-6 md:grid-cols-3">
-          {items.map((item) => {
-            const Icon = item.icon;
-            return (
-              <Card key={item.title}>
-                <div className="mb-5 inline-flex h-10 w-10 items-center justify-center rounded-full border border-border bg-background">
-                  <Icon className="h-4 w-4" />
-                </div>
-                <h3 className="text-lg font-semibold">{item.title}</h3>
-                <p className="mt-3 text-sm text-muted-foreground">{item.description}</p>
-              </Card>
-            );
-          })}
-        </div>
-      </section>
-    </MarketingLayout>
-  );
-}
-
-/* --------------------- HOW IT WORKS --------------------- */
-
-export function HowItWorksPage() {
-  const steps = [
-    { step: "01", title: "Create your storefront", description: "Add your logo, product catalog, and WhatsApp number." },
-    { step: "02", title: "Share a single link", description: "Your customers open a polished store from one URL." },
-    { step: "03", title: "Receive orders in WhatsApp", description: "Every order lands as a ready-to-send WhatsApp message." },
-  ];
-  return (
-    <MarketingLayout>
-      <PageHero eyebrow="How it works" title="Three quiet steps" sub="No theme picking. No setup wizards. Just your store, online." />
-      <section className="mx-auto max-w-4xl px-6 pb-12">
-        <RouteIllustration className="mx-auto h-12 w-full max-w-2xl text-foreground/40" />
-      </section>
-      <section className="mx-auto max-w-5xl px-6 pb-24">
-        <div className="tc-stagger grid gap-6 md:grid-cols-3">
-          {steps.map((item) => (
-            <Card key={item.step}>
-              <div className="text-xs font-medium uppercase tracking-[0.22em] text-muted-foreground">{item.step}</div>
-              <h3 className="mt-4 text-xl font-semibold">{item.title}</h3>
-              <p className="mt-3 text-sm text-muted-foreground">{item.description}</p>
-            </Card>
-          ))}
-        </div>
-      </section>
-    </MarketingLayout>
-  );
-}
-
-/* --------------------- EXAMPLES --------------------- */
-
-export function ExamplesPage() {
-  return (
-    <MarketingLayout>
-      <PageHero eyebrow="Examples" title="Live store examples" sub="Real stores will appear here as sellers join TapCart." />
-      <section className="mx-auto max-w-5xl px-6 pb-24">
-        <div className="rounded-3xl border border-dashed border-border bg-card/40 p-16 text-center">
-          <p className="text-sm text-muted-foreground">No example stores yet. Check back soon.</p>
-        </div>
-      </section>
-    </MarketingLayout>
-  );
-}
-
-/* --------------------- FAQ --------------------- */
-
-export function FaqPage() {
-  const items = [
-    { q: "Can I use TapCart for free?", a: "Yes. TapCart is built to stay simple and accessible for every seller." },
-    { q: "Do customers pay through WhatsApp?", a: "No. Orders are sent as WhatsApp messages so you can confirm payment directly." },
-    { q: "Can I customize my store?", a: "You can add your logo, product details, and custom description to make it feel like your brand." },
-    { q: "Will my store work on mobile?", a: "Every TapCart store is mobile-first by default and looks great on any device." },
-  ];
-  return (
-    <MarketingLayout>
-      <PageHero eyebrow="FAQ" title="Frequently asked questions" />
-      <section className="mx-auto max-w-3xl px-6 pb-24">
-        <div className="tc-stagger space-y-4">
-          {items.map((item, i) => (
-            <FaqItem key={i} q={item.q} a={item.a} />
-          ))}
-        </div>
-      </section>
-    </MarketingLayout>
-  );
-}
-
-function FaqItem({ q, a }: { q: string; a: string }) {
-  const [open, setOpen] = React.useState(false);
-  return (
-    <div className="overflow-hidden rounded-3xl border border-border bg-card">
-      <button
-        onClick={() => setOpen((v) => !v)}
-        className="flex w-full items-center justify-between gap-6 px-7 py-6 text-left transition-colors hover:bg-secondary/40"
-      >
-        <span className="text-base font-medium">{q}</span>
-        <span className={`inline-flex h-7 w-7 items-center justify-center rounded-full border border-border text-sm transition-transform ${open ? "rotate-45" : ""}`}>
-          +
-        </span>
-      </button>
-      <div
-        className="grid transition-[grid-template-rows] duration-300 ease-out"
-        style={{ gridTemplateRows: open ? "1fr" : "0fr" }}
-      >
-        <div className="overflow-hidden">
-          <p className="px-7 pb-6 text-sm text-muted-foreground">{a}</p>
-        </div>
+function HostelGrid({ hostels, empty }: { hostels: Hostel[]; empty?: string }) {
+  if (!hostels.length) {
+    return (
+      <div className="rounded-2xl border border-dashed border-border bg-card/40 p-12 text-center text-sm text-muted-foreground">
+        {empty ?? "Nothing here yet."}
       </div>
-    </div>
-  );
-}
-
-/* --------------------- CONTACT --------------------- */
-
-export function ContactPage() {
-  const [sent, setSent] = React.useState(false);
-  return (
-    <MarketingLayout>
-      <PageHero eyebrow="Contact" title="Say hello" sub="Have questions or need help launching your store? We'll get back to you quickly." />
-      <section className="mx-auto grid max-w-5xl gap-8 px-6 pb-24 md:grid-cols-[1fr_1.1fr]">
-        <Reveal>
-          <Card className="h-full">
-            <h2 className="text-lg font-semibold">Reach us directly</h2>
-            <ul className="mt-6 space-y-5 text-sm">
-              <li className="flex items-start gap-3"><MessageCircle className="mt-0.5 h-4 w-4 text-muted-foreground" /><span>support@tap-cart.shop</span></li>
-              <li className="flex items-start gap-3"><span className="relative mt-0.5 inline-flex h-2 w-2"><span className="absolute inset-0 rounded-full bg-[color:var(--whatsapp)]" /><span className="absolute -inset-1 rounded-full tc-pulse-ring" /></span><span>+1 (555) 123-4567 — WhatsApp</span></li>
-            </ul>
-          </Card>
-        </Reveal>
-        <Reveal delay={120}>
-          <Card>
-            <h2 className="text-lg font-semibold">Send a note</h2>
-            <form
-              className="mt-6 space-y-4"
-              onSubmit={(e) => { e.preventDefault(); setSent(true); }}
-            >
-              <Input label="Your name" placeholder="Amina" />
-              <Input label="Email" type="email" placeholder="you@example.com" />
-              <label className="block">
-                <span className="mb-2 block text-xs font-medium uppercase tracking-wider text-muted-foreground">Message</span>
-                <textarea required rows={4} className="w-full rounded-lg border border-border bg-background px-4 py-3 text-sm outline-none focus:border-foreground" placeholder="Tell us a bit about your store..." />
-              </label>
-              <button className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition-transform hover:-translate-y-0.5">
-                {sent ? <><Check className="h-4 w-4" /> Sent</> : <>Send message <ArrowRight className="h-4 w-4" /></>}
-              </button>
-            </form>
-          </Card>
-        </Reveal>
-      </section>
-    </MarketingLayout>
-  );
-}
-
-/* --------------------- AUTH --------------------- */
-
-export function AuthPage() {
-  const [searchParams] = useSearchParams();
-  const [isSignup, setIsSignup] = React.useState(searchParams.get("mode") === "signup");
-  const [formState, setFormState] = React.useState({
-    fullName: "",
-    username: "",
-    phone: "",
-    email: "",
-    password: "",
-  });
-  const [loading, setLoading] = React.useState(false);
-  const [error, setError] = React.useState<string | null>(null);
-  const [info, setInfo] = React.useState<string | null>(null);
-  const navigate = useNavigate();
-  const { session, loading: authLoading } = useAuth();
-
-  React.useEffect(() => {
-    if (!authLoading && session) navigate("/dashboard", { replace: true });
-  }, [authLoading, session, navigate]);
-
-  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    setError(null);
-    setInfo(null);
-    setLoading(true);
-
-    const email = formState.email.trim();
-    const password = formState.password;
-    const username = formState.username.trim().toLowerCase();
-    const fullName = formState.fullName.trim();
-    const phone = formState.phone.trim();
-
-    if (!email || !password) {
-      setError("Please enter both email and password.");
-      setLoading(false);
-      return;
-    }
-
-    if (!supabase) {
-      setError("Authentication is not configured.");
-      setLoading(false);
-      return;
-    }
-
-    if (isSignup) {
-      if (!fullName || !username || !phone) {
-        setError("Please fill in your name, username, and phone number.");
-        setLoading(false);
-        return;
-      }
-      if (!/^[a-z0-9_-]{3,30}$/.test(username)) {
-        setError("Username must be 3–30 lowercase letters, numbers, _ or -.");
-        setLoading(false);
-        return;
-      }
-      if (!/^\+?[0-9\s\-()]{7,20}$/.test(phone)) {
-        setError("Please enter a valid phone number.");
-        setLoading(false);
-        return;
-      }
-
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: { username, full_name: fullName, phone },
-          emailRedirectTo: `${window.location.origin}/dashboard`,
-        },
-      });
-
-      if (error) {
-        setError(error.message);
-      } else if (data.session) {
-        navigate("/dashboard");
-      } else {
-        setInfo("Check your email to confirm your account.");
-      }
-    } else {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
-      if (error) {
-        setError(error.message);
-      } else if (data.session) {
-        navigate("/dashboard");
-      }
-    }
-    setLoading(false);
-  };
-
-  return (
-    <div className="flex min-h-screen flex-col bg-background">
-      <div className="mx-auto w-full max-w-6xl px-6 py-6">
-        <Link to="/" className="text-base font-semibold tracking-tight">
-          TapCart
-        </Link>
-      </div>
-      <div className="relative flex flex-1 items-center justify-center px-6 pb-20">
-        <div className="tc-fade-up w-full max-w-sm rounded-3xl border border-border bg-card p-10 shadow-[0_30px_80px_-40px_rgba(0,0,0,0.25)]">
-          <h1 className="text-3xl font-semibold tracking-tight">{isSignup ? "Create your store" : "Welcome back"}</h1>
-          <p className="mt-2 text-sm text-muted-foreground">
-            {isSignup ? "It's free, forever." : "Sign in to your dashboard."}
-          </p>
-
-          {error ? <div className="mt-4 rounded-2xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">{error}</div> : null}
-          {info ? <div className="mt-4 rounded-2xl border border-border bg-secondary p-3 text-sm text-muted-foreground">{info}</div> : null}
-
-          <form className="mt-8 space-y-4" onSubmit={handleSubmit}>
-            {isSignup && (
-              <>
-                <Input
-                  label="Full name"
-                  placeholder="Jane Doe"
-                  value={formState.fullName}
-                  onChange={(event) => setFormState((prev) => ({ ...prev, fullName: event.target.value }))}
-                />
-                <Input
-                  label="Store username"
-                  placeholder="yourname"
-                  prefix="tap-cart.shop/s/"
-                  value={formState.username}
-                  onChange={(event) => setFormState((prev) => ({ ...prev, username: event.target.value }))}
-                />
-                <Input
-                  label="Phone number"
-                  type="tel"
-                  placeholder="+1 555 123 4567"
-                  value={formState.phone}
-                  onChange={(event) => setFormState((prev) => ({ ...prev, phone: event.target.value }))}
-                />
-              </>
-            )}
-            <Input
-              label="Email"
-              type="email"
-              placeholder="you@example.com"
-              value={formState.email}
-              onChange={(event) => setFormState((prev) => ({ ...prev, email: event.target.value }))}
-            />
-            <Input
-              label="Password"
-              type="password"
-              placeholder="••••••••"
-              value={formState.password}
-              onChange={(event) => setFormState((prev) => ({ ...prev, password: event.target.value }))}
-            />
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full rounded-full bg-primary px-6 py-3 text-sm font-medium text-primary-foreground hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              {loading ? <DotLoader /> : isSignup ? "Create account" : "Sign in"}
-            </button>
-          </form>
-          <p className="mt-6 text-center text-sm text-muted-foreground">
-            {isSignup ? "Already have an account? " : "New to TapCart? "}
-            <button
-              type="button"
-              onClick={() => {
-                setIsSignup(!isSignup);
-                setError(null);
-              }}
-              className="text-foreground underline-offset-4 hover:underline"
-            >
-              {isSignup ? "Sign in" : "Create one"}
-            </button>
-          </p>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function Input({ label, prefix, required = true, className, ...rest }: { label: string; prefix?: string } & React.InputHTMLAttributes<HTMLInputElement>) {
-  return (
-    <label className="block">
-      <span className="mb-2 block text-xs font-medium uppercase tracking-wider text-muted-foreground">{label}</span>
-      <div className="flex items-stretch overflow-hidden rounded-lg border border-border transition-colors focus-within:border-foreground">
-        {prefix && <span className="flex items-center bg-secondary px-3 text-xs text-muted-foreground">{prefix}</span>}
-        <input {...rest} required={required} className={`w-full bg-background px-4 py-3 text-sm outline-none disabled:opacity-60 ${className ?? ""}`} />
-      </div>
-    </label>
-  );
-}
-
-/* --------------------- DASHBOARD --------------------- */
-
-export function DashboardLayout() {
-  const { profile } = useProfile();
-  const brand = profile?.store_name?.trim() || profile?.full_name?.trim() || profile?.username || "Your store";
-  return (
-    <AppShell items={dashboardNav} brand={brand} storeLink={profile?.username ?? undefined}>
-      <Outlet />
-    </AppShell>
-  );
-}
-
-function useCountUp(target: number, duration = 900) {
-  const [value, setValue] = React.useState(0);
-  React.useEffect(() => {
-    let raf = 0;
-    const start = performance.now();
-    const tick = (t: number) => {
-      const p = Math.min(1, (t - start) / duration);
-      const eased = 1 - Math.pow(1 - p, 3);
-      setValue(Math.round(target * eased));
-      if (p < 1) raf = requestAnimationFrame(tick);
-    };
-    raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
-  }, [target, duration]);
-  return value;
-}
-
-function Stat({ label, value, prefix = "", suffix = "" }: { label: string; value: number; prefix?: string; suffix?: string }) {
-  const v = useCountUp(value);
-  return (
-    <div className="tc-lift rounded-3xl border border-border bg-background p-6">
-      <p className="text-sm text-muted-foreground">{label}</p>
-      <p className="mt-3 text-3xl font-semibold tabular-nums">{prefix}{v.toLocaleString()}{suffix}</p>
-    </div>
-  );
-}
-
-function EmptyState({ title, body, action }: { title: string; body: string; action?: React.ReactNode }) {
-  return (
-    <div className="tc-fade-up flex flex-col items-center rounded-3xl border border-dashed border-border bg-card p-10 text-center">
-      <EmptyBoxIllustration className="h-24 w-24 text-muted-foreground" />
-      <h3 className="mt-6 text-lg font-semibold">{title}</h3>
-      <p className="mt-2 max-w-sm text-sm text-muted-foreground">{body}</p>
-      {action && <div className="mt-6">{action}</div>}
-    </div>
-  );
-}
-
-export function DashboardIndexPage() {
-  const { profile, loading: profileLoading } = useProfile();
-  const { products } = useProducts();
-  const { orders } = useOrders();
-  const { count: views } = useStoreViews();
-
-  const totalSales = orders.reduce((sum, o) => sum + Number(o.total ?? 0), 0);
-  const firstName = (profile?.full_name?.split(" ")[0]) || profile?.username || "there";
-
-  return (
-    <div className="space-y-8">
-      <div className="tc-fade-up rounded-3xl border border-border bg-card p-8 shadow-sm">
-        <div className="flex items-center justify-between gap-4">
-          <div>
-            <p className="text-xs uppercase tracking-[0.24em] text-muted-foreground">Overview</p>
-            <h1 className="mt-3 text-3xl font-semibold">
-              {profileLoading ? "Welcome" : `Welcome, ${firstName}`}
-            </h1>
-            {profile?.username && (
-              <p className="mt-2 text-sm text-muted-foreground">tap-cart.shop/s/{profile.username}</p>
-            )}
-          </div>
-          <span className="inline-flex items-center gap-2 rounded-full bg-secondary px-3 py-1.5 text-xs text-muted-foreground">
-            <span className="relative inline-flex h-1.5 w-1.5">
-              <span className="absolute inset-0 rounded-full bg-[color:var(--whatsapp)]" />
-              <span className="absolute -inset-1 rounded-full tc-pulse-ring" />
-            </span>
-            Live
-          </span>
-        </div>
-        <div className="tc-stagger mt-8 grid gap-4 md:grid-cols-3">
-          <Stat label="Orders" value={orders.length} />
-          <Stat label="Sales" value={Math.round(totalSales)} prefix="$" />
-          <Stat label="Store views" value={views} />
-        </div>
-      </div>
-
-      {products.length === 0 && orders.length === 0 ? (
-        <EmptyState
-          title="Let's set up your store"
-          body="Add your first product to start sharing your TapCart link and accepting WhatsApp orders."
-          action={
-            <Link to="/dashboard/products" className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground">
-              <Plus className="h-4 w-4" /> Add a product
-            </Link>
-          }
-        />
-      ) : (
-        <Reveal className="rounded-3xl border border-border bg-card p-8 shadow-sm">
-          <h2 className="text-xl font-semibold">Quick actions</h2>
-          <div className="tc-stagger mt-6 grid gap-4 md:grid-cols-3">
-            {[
-              { label: "Manage products", to: "/dashboard/products", icon: Package },
-              { label: "View orders", to: "/dashboard/orders", icon: ShoppingBag },
-              { label: "Open store page", to: "/dashboard/store", icon: Store },
-            ].map((item) => {
-              const Icon = item.icon;
-              return (
-                <Link key={item.to} to={item.to} className="tc-lift group flex items-center justify-between rounded-3xl border border-border bg-background px-5 py-6 text-sm font-medium">
-                  <span className="flex items-center gap-3"><Icon className="h-4 w-4 text-muted-foreground" />{item.label}</span>
-                  <ArrowRight className="h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-1" />
-                </Link>
-              );
-            })}
-          </div>
-        </Reveal>
-      )}
-    </div>
-  );
-}
-
-export function DashboardStorePage() {
-  const { profile, loading } = useProfile();
-  const [copied, setCopied] = React.useState(false);
-
-  if (loading) {
-    return <div className="flex items-center justify-center py-20"><RingLoader /></div>;
+    );
   }
-  if (!profile?.username) {
-    return <EmptyState title="No store yet" body="Finish setting up your profile to get a public store link." />;
-  }
-
-  const url = `${window.location.origin}/s/${profile.username}`;
-  const brand = profile.store_name?.trim() || profile.full_name?.trim() || profile.username;
-
   return (
-    <div className="grid gap-8 md:grid-cols-2">
-      <Reveal>
-        <div className="tc-lift rounded-3xl border border-border bg-card p-8 shadow-sm">
-          <div className="flex items-center gap-3">
-            <GradientAvatar name={brand} size={44} />
-            <div>
-              <h2 className="text-xl font-semibold">{brand}</h2>
-              <p className="text-xs text-muted-foreground">tap-cart.shop/s/{profile.username}</p>
-            </div>
-          </div>
-          <p className="mt-6 text-sm text-muted-foreground">Your public store is live and ready to receive WhatsApp orders.</p>
-        </div>
-      </Reveal>
-      <Reveal delay={120}>
-        <div className="tc-lift rounded-3xl border border-border bg-card p-8 shadow-sm">
-          <h2 className="text-xl font-semibold">Share your link</h2>
-          <p className="mt-3 text-sm text-muted-foreground">Copy the link and share it in socials, WhatsApp, or email.</p>
-          <div className="mt-6 flex items-center gap-2 rounded-full border border-border bg-background px-4 py-2 text-sm">
-            <Link2 className="h-4 w-4 text-muted-foreground" />
-            <span className="flex-1 truncate text-muted-foreground">{url}</span>
-            <button
-              onClick={() => {
-                navigator.clipboard?.writeText(url);
-                setCopied(true);
-                setTimeout(() => setCopied(false), 1500);
-              }}
-              className="rounded-full bg-primary px-3 py-1 text-xs text-primary-foreground transition-transform hover:-translate-y-0.5"
-            >
-              {copied ? "Copied" : "Copy"}
-            </button>
-          </div>
-        </div>
-      </Reveal>
-    </div>
-  );
-}
-
-export function DashboardProductsPage() {
-  const { products, loading, create, remove } = useProducts();
-  const [showForm, setShowForm] = React.useState(false);
-  const [form, setForm] = React.useState({ name: "", price: "", description: "", image_url: "", stock: "" });
-  const [submitting, setSubmitting] = React.useState(false);
-  const [error, setError] = React.useState<string | null>(null);
-
-  const onSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
-    const price = Number(form.price);
-    if (!form.name.trim() || !Number.isFinite(price) || price < 0) {
-      setError("Please enter a name and a valid price.");
-      return;
-    }
-    setSubmitting(true);
-    const { error } = await create({
-      name: form.name.trim(),
-      price,
-      description: form.description.trim() || undefined,
-      image_url: form.image_url.trim() || undefined,
-      stock: form.stock ? Number(form.stock) : undefined,
-    });
-    setSubmitting(false);
-    if (error) {
-      setError(error);
-    } else {
-      setForm({ name: "", price: "", description: "", image_url: "", stock: "" });
-      setShowForm(false);
-    }
-  };
-
-  return (
-    <div className="space-y-6">
-      <div className="tc-fade-up flex items-center justify-between rounded-3xl border border-border bg-card p-8 shadow-sm">
-        <div>
-          <h2 className="text-xl font-semibold">Products</h2>
-          <p className="mt-2 text-sm text-muted-foreground">Add and manage the items you sell in your store.</p>
-        </div>
-        <button
-          onClick={() => setShowForm((v) => !v)}
-          className="inline-flex items-center gap-2 rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground"
-        >
-          <Plus className="h-4 w-4" /> {showForm ? "Cancel" : "Add product"}
-        </button>
-      </div>
-
-      {showForm && (
-        <form onSubmit={onSubmit} className="tc-fade-up grid gap-4 rounded-3xl border border-border bg-card p-6 md:grid-cols-2">
-          <Input label="Name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
-          <Input label="Price (USD)" type="number" step="0.01" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} />
-          <Input label="Image URL" value={form.image_url} onChange={(e) => setForm({ ...form, image_url: e.target.value })} required={false} />
-          <Input label="Stock" type="number" value={form.stock} onChange={(e) => setForm({ ...form, stock: e.target.value })} required={false} />
-          <label className="md:col-span-2 block">
-            <span className="mb-2 block text-xs font-medium uppercase tracking-wider text-muted-foreground">Description</span>
-            <textarea rows={3} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} className="w-full rounded-lg border border-border bg-background px-4 py-3 text-sm outline-none focus:border-foreground" />
-          </label>
-          {error && <div className="md:col-span-2 rounded-2xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">{error}</div>}
-          <div className="md:col-span-2">
-            <button type="submit" disabled={submitting} className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground disabled:opacity-60">
-              {submitting ? <DotLoader /> : <>Save product <ArrowRight className="h-4 w-4" /></>}
-            </button>
-          </div>
-        </form>
-      )}
-
-      {loading ? (
-        <div className="grid gap-4 md:grid-cols-3">
-          {[0, 1, 2].map((i) => <SkeletonShimmer key={i} className="h-36 rounded-3xl" />)}
-        </div>
-      ) : products.length === 0 ? (
-        <EmptyState
-          title="No products yet"
-          body="Add your first product to make your storefront ready for orders."
-          action={
-            <button onClick={() => setShowForm(true)} className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground">
-              <Plus className="h-4 w-4" /> Add product
-            </button>
-          }
-        />
-      ) : (
-        <div className="tc-stagger grid gap-4 md:grid-cols-3">
-          {products.map((product) => (
-            <div key={product.id} className="tc-lift relative rounded-3xl border border-border bg-background p-6">
-              <button
-                onClick={() => remove(product.id)}
-                aria-label="Delete"
-                className="absolute right-4 top-4 rounded-full p-1.5 text-muted-foreground hover:bg-secondary hover:text-foreground"
-              >
-                <Trash2 className="h-4 w-4" />
-              </button>
-              <div className="flex items-center gap-3">
-                <GradientAvatar name={product.name} size={32} />
-                <div className="text-sm text-muted-foreground">{product.name}</div>
-              </div>
-              <div className="mt-4 text-2xl font-semibold tabular-nums">${Number(product.price).toFixed(2)}</div>
-              {product.description && (
-                <p className="mt-2 line-clamp-2 text-xs text-muted-foreground">{product.description}</p>
-              )}
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
-export function DashboardOrdersPage() {
-  const { orders, loading } = useOrders();
-  return (
-    <div className="space-y-6">
-      <div className="tc-fade-up rounded-3xl border border-border bg-card p-8 shadow-sm">
-        <h2 className="text-xl font-semibold">Recent orders</h2>
-        <p className="mt-2 text-sm text-muted-foreground">Orders arrive as WhatsApp-ready messages, so you can confirm details instantly.</p>
-      </div>
-      {loading ? (
-        <div className="grid gap-4 md:grid-cols-3">
-          {[0, 1, 2].map((i) => <SkeletonShimmer key={i} className="h-28 rounded-3xl" />)}
-        </div>
-      ) : orders.length === 0 ? (
-        <EmptyState
-          title="No orders yet"
-          body="When buyers place an order from your TapCart link, you'll see it here."
-        />
-      ) : (
-        <div className="tc-stagger grid gap-4 md:grid-cols-3">
-          {orders.map((order) => (
-            <div key={order.id} className="tc-lift rounded-3xl border border-border bg-card p-5">
-              <div className="flex items-center justify-between">
-                <span className="text-xs uppercase tracking-[0.18em] text-muted-foreground">#{order.id.slice(0, 6)}</span>
-                <span className="inline-flex h-2 w-2 rounded-full bg-[color:var(--whatsapp)]" />
-              </div>
-              <div className="mt-3 flex items-center gap-3">
-                <GradientAvatar name={order.customer_name} size={32} />
-                <div>
-                  <div className="font-medium">{order.customer_name}</div>
-                  <div className="text-xs text-muted-foreground tabular-nums">${Number(order.total).toFixed(2)} · {order.items_count} items</div>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
-function MiniBars({ data }: { data: number[] }) {
-  const max = Math.max(...data, 1);
-  return (
-    <div className="flex h-32 items-end gap-2">
-      {data.map((v, i) => (
-        <div
-          key={i}
-          className="flex-1 rounded-md bg-foreground/80 transition-all"
-          style={{ height: `${(v / max) * 100}%`, animation: `tc-fade-up 0.6s ease ${i * 60}ms both` }}
-        />
+    <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+      {hostels.map((h) => (
+        <HostelCard key={h.id} hostel={h} />
       ))}
     </div>
   );
 }
 
-export function DashboardAnalyticsPage() {
-  const { orders } = useOrders();
-  const { count: views } = useStoreViews();
-  const revenue = orders.reduce((s, o) => s + Number(o.total ?? 0), 0);
-  const conversion = views > 0 ? Math.round((orders.length / views) * 100) : 0;
-
-  const buckets = React.useMemo(() => {
-    const days = Array.from({ length: 14 }, (_, i) => {
-      const d = new Date();
-      d.setDate(d.getDate() - (13 - i));
-      return d.toISOString().slice(0, 10);
-    });
-    return days.map((day) => orders.filter((o) => o.created_at?.slice(0, 10) === day).length);
-  }, [orders]);
-
-  const hasData = orders.length > 0 || views > 0;
-
+function HostelCard({ hostel }: { hostel: Hostel }) {
+  const { user } = useAuth();
+  const { ids, toggle } = useFavorites();
+  const isFav = ids.includes(hostel.id);
   return (
-    <div className="tc-fade-up rounded-3xl border border-border bg-card p-8 shadow-sm">
-      <div className="flex items-center justify-between gap-4">
-        <div>
-          <p className="text-xs uppercase tracking-[0.24em] text-muted-foreground">Analytics</p>
-          <h1 className="mt-3 text-3xl font-semibold">Performance</h1>
+    <Link to={`/hostels/${hostel.id}`} className="group block overflow-hidden rounded-2xl border border-border bg-card transition hover:shadow-md">
+      <div className="relative aspect-[4/3] w-full overflow-hidden bg-secondary">
+        {hostel.cover_image ? (
+          <img src={hostel.cover_image} alt={hostel.name} className="h-full w-full object-cover transition group-hover:scale-105" loading="lazy" />
+        ) : (
+          <div className="flex h-full items-center justify-center text-muted-foreground">No image</div>
+        )}
+        <div className="absolute left-3 top-3 flex gap-2">
+          {hostel.is_verified && (
+            <Badge className="gap-1 bg-primary/90"><ShieldCheck className="h-3 w-3" /> Verified</Badge>
+          )}
+          <AvailabilityBadge value={hostel.availability} />
+        </div>
+        {user && (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.preventDefault();
+              toggle(hostel.id);
+            }}
+            className="absolute right-3 top-3 inline-flex h-9 w-9 items-center justify-center rounded-full bg-background/90 text-foreground shadow hover:bg-background"
+            aria-label="Save"
+          >
+            <Heart className={`h-4 w-4 ${isFav ? "fill-destructive text-destructive" : ""}`} />
+          </button>
+        )}
+      </div>
+      <div className="p-4">
+        <div className="flex items-start justify-between gap-2">
+          <h3 className="font-semibold leading-tight">{hostel.name}</h3>
+          <div className="shrink-0 text-sm font-medium">
+            {hostel.price_min ? `GH₵${hostel.price_min}${hostel.price_max ? `–${hostel.price_max}` : ""}` : "—"}
+          </div>
+        </div>
+        <div className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
+          <MapPin className="h-3 w-3" />
+          {hostel.location ?? "Location not set"}
+          {hostel.distance_km != null && <span> · {hostel.distance_km} km from campus</span>}
         </div>
       </div>
-      <div className="tc-stagger mt-8 grid gap-6 md:grid-cols-3">
-        <Stat label="Revenue" value={Math.round(revenue)} prefix="$" />
-        <Stat label="Conversion" value={conversion} suffix="%" />
-        <Stat label="Store views" value={views} />
+    </Link>
+  );
+}
+
+function AvailabilityBadge({ value }: { value: Hostel["availability"] }) {
+  const map = {
+    available: { label: "Available", className: "bg-green-600" },
+    limited: { label: "Limited", className: "bg-amber-500" },
+    full: { label: "Full", className: "bg-muted-foreground" },
+  } as const;
+  const v = map[value] ?? map.available;
+  return <Badge className={v.className}>{v.label}</Badge>;
+}
+
+/* ================== HOSTELS LIST ================== */
+
+export function HostelsPage() {
+  const params = new URLSearchParams(useLocation().search);
+  const [search, setSearch] = useState(params.get("q") ?? "");
+  const [maxPrice, setMaxPrice] = useState<number | "">("");
+  const [maxDistance, setMaxDistance] = useState<number | "">("");
+  const [availability, setAvailability] = useState<string>("");
+  const [verifiedOnly, setVerifiedOnly] = useState(false);
+  const [amenity, setAmenity] = useState<string>("");
+
+  const filters = useMemo(
+    () => ({
+      search: search || undefined,
+      maxPrice: maxPrice === "" ? undefined : Number(maxPrice),
+      maxDistance: maxDistance === "" ? undefined : Number(maxDistance),
+      availability: availability || undefined,
+      verifiedOnly: verifiedOnly || undefined,
+      amenity: amenity || undefined,
+    }),
+    [search, maxPrice, maxDistance, availability, verifiedOnly, amenity],
+  );
+  const { hostels, loading } = useHostels(filters);
+
+  return (
+    <PublicLayout>
+      <div className="mx-auto max-w-6xl px-4 py-10 md:px-6">
+        <h1 className="text-3xl font-semibold tracking-tight">Hostels near UMaT</h1>
+        <p className="mt-1 text-sm text-muted-foreground">{hostels.length} result{hostels.length === 1 ? "" : "s"}</p>
+
+        <div className="mt-6 grid gap-6 md:grid-cols-[260px,1fr]">
+          <aside className="space-y-5 rounded-2xl border border-border bg-card p-5 h-fit">
+            <div>
+              <Label className="text-xs">Search</Label>
+              <div className="mt-1 flex items-center gap-2 rounded-md border border-border bg-background px-2">
+                <Search className="h-4 w-4 text-muted-foreground" />
+                <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Name or area" className="w-full bg-transparent py-2 text-sm outline-none" />
+              </div>
+            </div>
+            <div>
+              <Label className="text-xs">Max price (GH₵)</Label>
+              <Input type="number" value={maxPrice} onChange={(e) => setMaxPrice(e.target.value === "" ? "" : Number(e.target.value))} placeholder="e.g. 3000" />
+            </div>
+            <div>
+              <Label className="text-xs">Max distance (km)</Label>
+              <Input type="number" value={maxDistance} onChange={(e) => setMaxDistance(e.target.value === "" ? "" : Number(e.target.value))} placeholder="e.g. 2" />
+            </div>
+            <div>
+              <Label className="text-xs">Availability</Label>
+              <Select value={availability || "any"} onValueChange={(v) => setAvailability(v === "any" ? "" : v)}>
+                <SelectTrigger><SelectValue placeholder="Any" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="any">Any</SelectItem>
+                  <SelectItem value="available">Available</SelectItem>
+                  <SelectItem value="limited">Limited</SelectItem>
+                  <SelectItem value="full">Full</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label className="text-xs">Amenity</Label>
+              <Select value={amenity || "any"} onValueChange={(v) => setAmenity(v === "any" ? "" : v)}>
+                <SelectTrigger><SelectValue placeholder="Any" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="any">Any</SelectItem>
+                  {["WiFi", "Water", "Generator", "Security", "Kitchen", "Furnished", "Parking"].map((a) => (
+                    <SelectItem key={a} value={a}>{a}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex items-center justify-between rounded-md border border-border p-3">
+              <div>
+                <div className="text-sm font-medium">Verified only</div>
+                <div className="text-xs text-muted-foreground">Trusted listings</div>
+              </div>
+              <Switch checked={verifiedOnly} onCheckedChange={setVerifiedOnly} />
+            </div>
+          </aside>
+
+          <div>
+            {loading ? (
+              <div className="flex h-40 items-center justify-center"><RingLoader /></div>
+            ) : (
+              <HostelGrid hostels={hostels} empty="No hostels match these filters yet." />
+            )}
+          </div>
+        </div>
       </div>
-      <Reveal className="mt-8 rounded-3xl border border-border bg-background p-6">
-        <div className="mb-4 text-xs uppercase tracking-[0.18em] text-muted-foreground">Last 14 days</div>
-        {hasData ? (
-          <MiniBars data={buckets} />
-        ) : (
-          <p className="py-8 text-center text-sm text-muted-foreground">No activity yet. Share your store link to start collecting data.</p>
-        )}
-      </Reveal>
+    </PublicLayout>
+  );
+}
+
+/* ================== HOSTEL DETAIL ================== */
+
+export function HostelDetailPage() {
+  const { id } = useParams();
+  const { hostel, loading } = useHostel(id);
+  const { reviews, refetch: refetchReviews } = useReviews(id);
+  const { user } = useAuth();
+  const { ids, toggle } = useFavorites();
+  const avg = avgRating(reviews);
+
+  if (loading) {
+    return <PublicLayout><div className="flex h-[60vh] items-center justify-center"><RingLoader /></div></PublicLayout>;
+  }
+  if (!hostel) {
+    return <PublicLayout><div className="mx-auto max-w-3xl px-6 py-24 text-center text-muted-foreground">Hostel not found.</div></PublicLayout>;
+  }
+
+  const gallery = hostel.gallery ?? [];
+  const isFav = ids.includes(hostel.id);
+
+  return (
+    <PublicLayout>
+      <div className="mx-auto max-w-6xl px-4 py-8 md:px-6">
+        <div className="grid gap-4 md:grid-cols-3">
+          <div className="md:col-span-2 aspect-[16/10] overflow-hidden rounded-2xl bg-secondary">
+            {hostel.cover_image ? (
+              <img src={hostel.cover_image} alt={hostel.name} className="h-full w-full object-cover" />
+            ) : (
+              <div className="flex h-full items-center justify-center text-muted-foreground">No cover image</div>
+            )}
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            {gallery.slice(0, 4).map((src, i) => (
+              <div key={i} className="aspect-square overflow-hidden rounded-xl bg-secondary">
+                <img src={src} alt="" className="h-full w-full object-cover" />
+              </div>
+            ))}
+            {gallery.length === 0 && (
+              <div className="col-span-2 flex aspect-[2/1] items-center justify-center rounded-xl border border-dashed border-border text-xs text-muted-foreground">
+                No gallery photos
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="mt-8 grid gap-8 md:grid-cols-[1fr,320px]">
+          <div>
+            <div className="flex flex-wrap items-center gap-2">
+              {hostel.is_verified && <Badge className="gap-1"><ShieldCheck className="h-3 w-3" /> Verified</Badge>}
+              <AvailabilityBadge value={hostel.availability} />
+              {avg > 0 && (
+                <Badge variant="secondary" className="gap-1"><Star className="h-3 w-3 fill-amber-400 text-amber-400" /> {avg.toFixed(1)} · {reviews.length} review{reviews.length === 1 ? "" : "s"}</Badge>
+              )}
+            </div>
+            <h1 className="mt-3 text-3xl font-semibold tracking-tight">{hostel.name}</h1>
+            <div className="mt-1 flex items-center gap-1 text-sm text-muted-foreground">
+              <MapPin className="h-4 w-4" /> {hostel.location ?? "Location not set"}
+              {hostel.distance_km != null && <span> · {hostel.distance_km} km from campus</span>}
+            </div>
+
+            <p className="mt-6 whitespace-pre-line text-sm leading-7 text-foreground/90">{hostel.description ?? "No description provided."}</p>
+
+            {hostel.room_types?.length ? (
+              <div className="mt-6">
+                <h3 className="text-sm font-semibold">Room types</h3>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {hostel.room_types.map((r) => <Badge key={r} variant="secondary">{r}</Badge>)}
+                </div>
+              </div>
+            ) : null}
+
+            {hostel.amenities?.length ? (
+              <div className="mt-6">
+                <h3 className="text-sm font-semibold">Amenities</h3>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {hostel.amenities.map((a) => <Badge key={a} variant="outline">{a}</Badge>)}
+                </div>
+              </div>
+            ) : null}
+
+            <ReviewsSection hostelId={hostel.id} reviews={reviews} onPosted={refetchReviews} />
+          </div>
+
+          <aside className="space-y-3 rounded-2xl border border-border bg-card p-5 h-fit">
+            <div className="text-sm text-muted-foreground">Price range</div>
+            <div className="text-2xl font-semibold">
+              {hostel.price_min ? `GH₵${hostel.price_min}${hostel.price_max ? `–${hostel.price_max}` : ""}` : "Contact for price"}
+            </div>
+            <div className="space-y-2 pt-2">
+              {hostel.contact_phone && (
+                <a href={`tel:${hostel.contact_phone}`} className="flex items-center gap-2 rounded-md border border-border px-3 py-2 text-sm hover:bg-secondary">
+                  <Phone className="h-4 w-4" /> {hostel.contact_phone}
+                </a>
+              )}
+              {hostel.whatsapp && (
+                <a href={`https://wa.me/${hostel.whatsapp.replace(/\D/g, "")}`} target="_blank" rel="noreferrer" className="flex items-center gap-2 rounded-md bg-[color:var(--whatsapp)] px-3 py-2 text-sm text-[color:var(--whatsapp-foreground)] hover:opacity-90">
+                  <MessageSquare className="h-4 w-4" /> Chat on WhatsApp
+                </a>
+              )}
+              {hostel.contact_email && (
+                <a href={`mailto:${hostel.contact_email}`} className="flex items-center gap-2 rounded-md border border-border px-3 py-2 text-sm hover:bg-secondary">
+                  <Mail className="h-4 w-4" /> {hostel.contact_email}
+                </a>
+              )}
+            </div>
+            {user && (
+              <Button variant="outline" className="w-full" onClick={() => toggle(hostel.id)}>
+                <Heart className={`mr-2 h-4 w-4 ${isFav ? "fill-destructive text-destructive" : ""}`} />
+                {isFav ? "Saved" : "Save to favorites"}
+              </Button>
+            )}
+            <Link to="/feedback" className="block pt-2 text-center text-xs text-muted-foreground underline-offset-2 hover:underline">
+              Report inaccurate information
+            </Link>
+          </aside>
+        </div>
+      </div>
+    </PublicLayout>
+  );
+}
+
+function ReviewsSection({ hostelId, reviews, onPosted }: { hostelId: string; reviews: ReturnType<typeof useReviews>["reviews"]; onPosted: () => void }) {
+  const { user } = useAuth();
+  const [rating, setRating] = useState(5);
+  const [comment, setComment] = useState("");
+  const [cleanliness, setCleanliness] = useState(5);
+  const [security, setSecurity] = useState(5);
+  const [water, setWater] = useState(5);
+  const [noise, setNoise] = useState(5);
+  const [internet, setInternet] = useState(5);
+  const [submitting, setSubmitting] = useState(false);
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!supabase || !user) return;
+    setSubmitting(true);
+    const { error } = await supabase.from("reviews").insert({
+      hostel_id: hostelId, user_id: user.id, rating, comment: comment.trim() || null,
+      cleanliness, security, water, noise, internet,
+    });
+    setSubmitting(false);
+    if (error) toast.error(error.message);
+    else {
+      toast.success("Review posted");
+      setComment("");
+      onPosted();
+    }
+  };
+
+  return (
+    <div className="mt-10">
+      <h3 className="text-lg font-semibold">Reviews</h3>
+      <div className="mt-4 space-y-4">
+        {reviews.length === 0 && <p className="text-sm text-muted-foreground">No reviews yet.</p>}
+        {reviews.map((r) => (
+          <div key={r.id} className="rounded-xl border border-border bg-card p-4">
+            <div className="flex items-center gap-2">
+              <div className="flex">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <Star key={i} className={`h-4 w-4 ${i < r.rating ? "fill-amber-400 text-amber-400" : "text-muted-foreground/40"}`} />
+                ))}
+              </div>
+              <span className="text-xs text-muted-foreground">{new Date(r.created_at).toLocaleDateString()}</span>
+            </div>
+            {r.comment && <p className="mt-2 text-sm">{r.comment}</p>}
+            <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
+              {r.cleanliness != null && <span>Cleanliness {r.cleanliness}/5</span>}
+              {r.security != null && <span>Security {r.security}/5</span>}
+              {r.water != null && <span>Water {r.water}/5</span>}
+              {r.noise != null && <span>Noise {r.noise}/5</span>}
+              {r.internet != null && <span>Internet {r.internet}/5</span>}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {user ? (
+        <form onSubmit={submit} className="mt-6 rounded-xl border border-border bg-card p-5">
+          <h4 className="font-semibold">Write a review</h4>
+          <div className="mt-4 grid gap-4 sm:grid-cols-2">
+            <RatingPicker label="Overall" value={rating} onChange={setRating} />
+            <RatingPicker label="Cleanliness" value={cleanliness} onChange={setCleanliness} />
+            <RatingPicker label="Security" value={security} onChange={setSecurity} />
+            <RatingPicker label="Water" value={water} onChange={setWater} />
+            <RatingPicker label="Noise" value={noise} onChange={setNoise} />
+            <RatingPicker label="Internet" value={internet} onChange={setInternet} />
+          </div>
+          <div className="mt-4">
+            <Label className="text-xs">Comment</Label>
+            <Textarea value={comment} onChange={(e) => setComment(e.target.value)} placeholder="Share your experience..." maxLength={1000} />
+          </div>
+          <Button type="submit" disabled={submitting} className="mt-4"><Send className="mr-2 h-4 w-4" /> Post review</Button>
+        </form>
+      ) : (
+        <div className="mt-6 rounded-xl border border-dashed border-border p-5 text-sm text-muted-foreground">
+          <Link to="/auth" className="underline">Sign in</Link> to leave a review.
+        </div>
+      )}
     </div>
   );
 }
 
-export function DashboardSettingsPage() {
-  const { profile, loading, update } = useProfile();
-  const [form, setForm] = React.useState({ store_name: "", whatsapp_number: "", full_name: "" });
-  const [saving, setSaving] = React.useState(false);
-  const [saved, setSaved] = React.useState(false);
-  const [error, setError] = React.useState<string | null>(null);
-
-  React.useEffect(() => {
-    if (profile) {
-      setForm({
-        store_name: profile.store_name ?? "",
-        whatsapp_number: profile.whatsapp_number ?? profile.phone ?? "",
-        full_name: profile.full_name ?? "",
-      });
-    }
-  }, [profile]);
-
-  const onSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setSaving(true);
-    setError(null);
-    const { error } = await update({
-      store_name: form.store_name.trim() || null,
-      whatsapp_number: form.whatsapp_number.trim() || null,
-      full_name: form.full_name.trim() || null,
-    });
-    setSaving(false);
-    if (error) setError(error);
-    else {
-      setSaved(true);
-      setTimeout(() => setSaved(false), 1800);
-    }
-  };
-
-  if (loading) return <div className="flex items-center justify-center py-20"><RingLoader /></div>;
-
+function RatingPicker({ label, value, onChange }: { label: string; value: number; onChange: (n: number) => void }) {
   return (
-    <form onSubmit={onSubmit} className="tc-fade-up rounded-3xl border border-border bg-card p-8 shadow-sm">
-      <h1 className="text-2xl font-semibold">Store settings</h1>
-      <p className="mt-3 text-sm text-muted-foreground">Update your store name, WhatsApp number, and profile here.</p>
-      <div className="mt-8 grid gap-4 md:grid-cols-2">
-        <Input label="Store name" value={form.store_name} onChange={(e) => setForm({ ...form, store_name: e.target.value })} required={false} />
-        <Input label="WhatsApp number" value={form.whatsapp_number} onChange={(e) => setForm({ ...form, whatsapp_number: e.target.value })} required={false} />
-        <Input label="Full name" value={form.full_name} onChange={(e) => setForm({ ...form, full_name: e.target.value })} required={false} />
-        <Input label="Username" value={profile?.username ?? ""} prefix="tap-cart.shop/s/" disabled required={false} />
+    <div>
+      <Label className="text-xs">{label}</Label>
+      <div className="mt-1 flex gap-1">
+        {Array.from({ length: 5 }).map((_, i) => (
+          <button key={i} type="button" onClick={() => onChange(i + 1)}>
+            <Star className={`h-6 w-6 ${i < value ? "fill-amber-400 text-amber-400" : "text-muted-foreground/40"}`} />
+          </button>
+        ))}
       </div>
-      {error && <div className="mt-4 rounded-2xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">{error}</div>}
-      <div className="mt-6">
-        <button type="submit" disabled={saving} className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground disabled:opacity-60">
-          {saving ? <DotLoader /> : saved ? <><Check className="h-4 w-4" /> Saved</> : <>Save changes <ArrowRight className="h-4 w-4" /></>}
-        </button>
-      </div>
-    </form>
+    </div>
   );
 }
 
-/* --------------------- ADMIN --------------------- */
+/* ================== AUTH ================== */
+
+export function AuthPage() {
+  const [mode, setMode] = useState<"signin" | "signup">("signin");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { session } = useAuth();
+  const from = (location.state as { from?: string } | null)?.from ?? "/";
+
+  useEffect(() => {
+    if (session) navigate(from, { replace: true });
+  }, [session, from, navigate]);
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!supabase) {
+      toast.error("Authentication is not configured.");
+      return;
+    }
+    setLoading(true);
+    if (mode === "signup") {
+      const { error } = await supabase.auth.signUp({
+        email, password,
+        options: { emailRedirectTo: window.location.origin, data: { full_name: name, phone } },
+      });
+      setLoading(false);
+      if (error) toast.error(error.message);
+      else toast.success("Check your email to confirm your account.");
+    } else {
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      setLoading(false);
+      if (error) toast.error(error.message);
+    }
+  };
+
+  return (
+    <PublicLayout>
+      <div className="mx-auto max-w-md px-4 py-16 md:px-6">
+        <div className="rounded-2xl border border-border bg-card p-8">
+          <h1 className="text-2xl font-semibold">{mode === "signin" ? "Welcome back" : "Create your account"}</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {mode === "signin" ? "Sign in to save favorites and write reviews." : "Join HostelHub in less than a minute."}
+          </p>
+          <form onSubmit={submit} className="mt-6 space-y-4">
+            {mode === "signup" && (
+              <>
+                <div>
+                  <Label>Full name</Label>
+                  <Input value={name} onChange={(e) => setName(e.target.value)} required maxLength={80} />
+                </div>
+                <div>
+                  <Label>Phone (optional)</Label>
+                  <Input value={phone} onChange={(e) => setPhone(e.target.value)} maxLength={20} placeholder="+233..." />
+                </div>
+              </>
+            )}
+            <div>
+              <Label>Email</Label>
+              <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+            </div>
+            <div>
+              <Label>Password</Label>
+              <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} />
+            </div>
+            <Button type="submit" disabled={loading} className="w-full">
+              {loading ? "Please wait..." : mode === "signin" ? "Sign in" : "Create account"}
+            </Button>
+          </form>
+          <div className="mt-4 text-center text-sm text-muted-foreground">
+            {mode === "signin" ? (
+              <>New here? <button onClick={() => setMode("signup")} className="font-medium text-foreground underline-offset-2 hover:underline">Create an account</button></>
+            ) : (
+              <>Already have an account? <button onClick={() => setMode("signin")} className="font-medium text-foreground underline-offset-2 hover:underline">Sign in</button></>
+            )}
+          </div>
+        </div>
+      </div>
+    </PublicLayout>
+  );
+}
+
+/* ================== FAVORITES ================== */
+
+export function FavoritesPage() {
+  const { ids, loading } = useFavorites();
+  const [hostels, setHostels] = useState<Hostel[]>([]);
+  const [fetching, setFetching] = useState(false);
+
+  useEffect(() => {
+    if (!supabase || ids.length === 0) {
+      setHostels([]);
+      return;
+    }
+    setFetching(true);
+    supabase.from("hostels").select("*").in("id", ids).then(({ data }) => {
+      setHostels((data as Hostel[]) ?? []);
+      setFetching(false);
+    });
+  }, [ids]);
+
+  return (
+    <PublicLayout>
+      <div className="mx-auto max-w-6xl px-4 py-10 md:px-6">
+        <h1 className="text-3xl font-semibold tracking-tight">Your favorites</h1>
+        <p className="mt-1 text-sm text-muted-foreground">Hostels you've saved.</p>
+        <div className="mt-8">
+          {loading || fetching ? <RingLoader /> : <HostelGrid hostels={hostels} empty="You haven't saved any hostels yet." />}
+        </div>
+      </div>
+    </PublicLayout>
+  );
+}
+
+/* ================== ACCOMMODATION REQUESTS ================== */
+
+export function NewRequestPage() {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const [budget, setBudget] = useState<number | "">("");
+  const [area, setArea] = useState("");
+  const [roomType, setRoomType] = useState("");
+  const [notes, setNotes] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  if (!user) return <Navigate to="/auth" state={{ from: "/requests/new" }} replace />;
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!supabase) return;
+    setLoading(true);
+    const { error } = await supabase.from("accommodation_requests").insert({
+      user_id: user.id,
+      budget_max: budget === "" ? null : Number(budget),
+      preferred_area: area || null,
+      room_type: roomType || null,
+      notes: notes || null,
+    });
+    setLoading(false);
+    if (error) toast.error(error.message);
+    else {
+      toast.success("Request submitted");
+      navigate("/requests");
+    }
+  };
+
+  return (
+    <PublicLayout>
+      <div className="mx-auto max-w-xl px-4 py-12 md:px-6">
+        <h1 className="text-3xl font-semibold tracking-tight">Submit an accommodation request</h1>
+        <p className="mt-1 text-sm text-muted-foreground">Tell us what you're looking for and we'll try to match you.</p>
+        <form onSubmit={submit} className="mt-8 space-y-4 rounded-2xl border border-border bg-card p-6">
+          <div><Label>Max budget (GH₵)</Label><Input type="number" value={budget} onChange={(e) => setBudget(e.target.value === "" ? "" : Number(e.target.value))} /></div>
+          <div><Label>Preferred area</Label><Input value={area} onChange={(e) => setArea(e.target.value)} maxLength={120} placeholder="e.g. Brahabebome" /></div>
+          <div>
+            <Label>Room type</Label>
+            <Select value={roomType || "any"} onValueChange={(v) => setRoomType(v === "any" ? "" : v)}>
+              <SelectTrigger><SelectValue placeholder="Any" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="any">Any</SelectItem>
+                <SelectItem value="Single">Single</SelectItem>
+                <SelectItem value="Shared">Shared</SelectItem>
+                <SelectItem value="Self-contained">Self-contained</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div><Label>Notes</Label><Textarea value={notes} onChange={(e) => setNotes(e.target.value)} maxLength={1000} /></div>
+          <Button type="submit" disabled={loading}>Submit request</Button>
+        </form>
+      </div>
+    </PublicLayout>
+  );
+}
+
+export function MyRequestsPage() {
+  const { user } = useAuth();
+  const [items, setItems] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!supabase || !user) return;
+    supabase.from("accommodation_requests").select("*").eq("user_id", user.id).order("created_at", { ascending: false }).then(({ data }) => {
+      setItems(data ?? []);
+      setLoading(false);
+    });
+  }, [user]);
+
+  return (
+    <PublicLayout>
+      <div className="mx-auto max-w-3xl px-4 py-10 md:px-6">
+        <div className="flex items-center justify-between">
+          <h1 className="text-3xl font-semibold tracking-tight">Your requests</h1>
+          <Button asChild><Link to="/requests/new"><PlusCircle className="mr-1 h-4 w-4" /> New request</Link></Button>
+        </div>
+        <div className="mt-8 space-y-3">
+          {loading && <RingLoader />}
+          {!loading && items.length === 0 && (
+            <div className="rounded-2xl border border-dashed border-border p-12 text-center text-sm text-muted-foreground">No requests yet.</div>
+          )}
+          {items.map((r) => (
+            <Card key={r.id} className="p-5">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div className="font-medium">{r.preferred_area ?? "Any area"} · {r.room_type ?? "Any room"}</div>
+                <Badge variant="secondary">{r.status}</Badge>
+              </div>
+              <div className="mt-1 text-sm text-muted-foreground">Budget: {r.budget_max ? `GH₵${r.budget_max}` : "—"}</div>
+              {r.notes && <p className="mt-2 text-sm">{r.notes}</p>}
+            </Card>
+          ))}
+        </div>
+      </div>
+    </PublicLayout>
+  );
+}
+
+/* ================== COMMUNITY / FEEDBACK / ABOUT ================== */
+
+export function CommunityPage() {
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [done, setDone] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!supabase) return;
+    setLoading(true);
+    const { error } = await supabase.from("community_signups").insert({ name, email, phone: phone || null });
+    setLoading(false);
+    if (error) toast.error(error.message);
+    else setDone(true);
+  };
+
+  return (
+    <PublicLayout>
+      <div className="mx-auto max-w-xl px-4 py-16 md:px-6">
+        <h1 className="text-3xl font-semibold tracking-tight">Join the student community</h1>
+        <p className="mt-2 text-muted-foreground">
+          Receive updates about new hostel listings, accommodation opportunities, student opportunities, campus announcements, and events. Participation is completely optional.
+        </p>
+        {done ? (
+          <div className="mt-8 rounded-2xl border border-border bg-card p-8 text-center">
+            <CheckCircle2 className="mx-auto h-10 w-10 text-green-600" />
+            <p className="mt-3 font-semibold">You're in!</p>
+            <p className="text-sm text-muted-foreground">We'll be in touch with the latest updates.</p>
+          </div>
+        ) : (
+          <form onSubmit={submit} className="mt-8 space-y-4 rounded-2xl border border-border bg-card p-6">
+            <div><Label>Name</Label><Input required value={name} onChange={(e) => setName(e.target.value)} maxLength={80} /></div>
+            <div><Label>Email</Label><Input required type="email" value={email} onChange={(e) => setEmail(e.target.value)} maxLength={255} /></div>
+            <div><Label>Phone (optional)</Label><Input value={phone} onChange={(e) => setPhone(e.target.value)} maxLength={20} /></div>
+            <Button type="submit" disabled={loading}>Sign me up</Button>
+          </form>
+        )}
+      </div>
+    </PublicLayout>
+  );
+}
+
+export function FeedbackPage() {
+  const { user } = useAuth();
+  const [type, setType] = useState("suggestion");
+  const [message, setMessage] = useState("");
+  const [done, setDone] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!supabase) return;
+    setLoading(true);
+    const { error } = await supabase.from("feedback").insert({ user_id: user?.id ?? null, type, message });
+    setLoading(false);
+    if (error) toast.error(error.message);
+    else setDone(true);
+  };
+
+  return (
+    <PublicLayout>
+      <div className="mx-auto max-w-xl px-4 py-16 md:px-6">
+        <h1 className="text-3xl font-semibold tracking-tight">Send feedback</h1>
+        <p className="mt-2 text-muted-foreground">
+          Suggest improvements, report incorrect information, or recommend a hostel for addition.
+        </p>
+        {done ? (
+          <div className="mt-8 rounded-2xl border border-border bg-card p-8 text-center">
+            <CheckCircle2 className="mx-auto h-10 w-10 text-green-600" />
+            <p className="mt-3 font-semibold">Thanks for the feedback!</p>
+          </div>
+        ) : (
+          <form onSubmit={submit} className="mt-8 space-y-4 rounded-2xl border border-border bg-card p-6">
+            <div>
+              <Label>Type</Label>
+              <Select value={type} onValueChange={setType}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="suggestion">Suggestion</SelectItem>
+                  <SelectItem value="report">Report a problem</SelectItem>
+                  <SelectItem value="recommendation">Recommend a hostel</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div><Label>Message</Label><Textarea required value={message} onChange={(e) => setMessage(e.target.value)} maxLength={2000} /></div>
+            <Button type="submit" disabled={loading}>Submit</Button>
+          </form>
+        )}
+      </div>
+    </PublicLayout>
+  );
+}
+
+export function AboutPage() {
+  return (
+    <PublicLayout>
+      <div className="mx-auto max-w-3xl px-4 py-16 md:px-6">
+        <h1 className="text-3xl font-semibold tracking-tight">About HostelHub</h1>
+        <p className="mt-4 text-muted-foreground leading-7">
+          This platform was created by{" "}
+          <a href={CREATOR_URL} className="font-medium text-foreground underline-offset-2 hover:underline">{CREATOR_NAME}</a>{" "}
+          to help students easily find accommodation around UMaT. It centralizes verified hostel listings so students can compare, save, and contact managers directly — and it gives owners a simple way to advertise available spaces.
+        </p>
+        <h2 className="mt-10 text-xl font-semibold">For students</h2>
+        <p className="mt-2 text-muted-foreground">Browse without signing up. Create a free account to save favorites, write reviews, and submit accommodation requests.</p>
+        <h2 className="mt-6 text-xl font-semibold">For hostel owners</h2>
+        <p className="mt-2 text-muted-foreground">Register, submit your hostel, upload photos, and manage availability. Listings are verified for trust before being promoted.</p>
+      </div>
+    </PublicLayout>
+  );
+}
+
+/* ================== OWNER ================== */
+
+const ownerNav = [
+  { to: "/owner", label: "My hostels", icon: Building2 },
+  { to: "/owner/new", label: "New hostel", icon: PlusCircle },
+];
 
 const adminNav = [
   { to: "/admin", label: "Overview", icon: LayoutDashboard },
-  { to: "/admin/users", label: "Users", icon: Users },
-  { to: "/admin/stores", label: "Stores", icon: Store },
-  { to: "/admin/analytics", label: "Analytics", icon: BarChart3 },
-  { to: "/admin/notifications", label: "Notifications", icon: Bell },
-  { to: "/admin/settings", label: "Settings", icon: Settings },
+  { to: "/admin/hostels", label: "Hostels", icon: Building2 },
+  { to: "/admin/reviews", label: "Reviews", icon: Star },
+  { to: "/admin/requests", label: "Requests", icon: ListChecks },
+  { to: "/admin/community", label: "Community", icon: Users },
+  { to: "/admin/feedback", label: "Feedback", icon: MessageSquare },
 ];
 
-export function AdminLayout() {
+function DashboardShell({ items, title, children }: { items: typeof ownerNav; title: string; children: ReactNode }) {
+  const { signOut, user } = useAuth();
+  const navigate = useNavigate();
   return (
-    <AppShell items={adminNav} brand="TapCart Admin">
-      <Outlet />
-    </AppShell>
+    <div className="flex min-h-screen bg-background">
+      <aside className="hidden w-64 shrink-0 flex-col border-r border-border bg-sidebar md:flex">
+        <div className="px-6 py-6">
+          <Link to="/" className="flex items-center gap-2 font-semibold">
+            <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground"><HomeIcon className="h-4 w-4" /></span>
+            HostelHub
+          </Link>
+          <div className="mt-1 text-xs text-muted-foreground">{title}</div>
+        </div>
+        <nav className="flex-1 px-3">
+          {items.map((i) => {
+            const Icon = i.icon;
+            return (
+              <NavLink key={i.to} to={i.to} end className={({ isActive }) =>
+                `mb-1 flex items-center gap-3 rounded-md px-3 py-2 text-sm ${
+                  isActive ? "bg-sidebar-accent text-sidebar-accent-foreground" : "text-muted-foreground hover:bg-sidebar-accent/60 hover:text-foreground"
+                }`
+              }>
+                <Icon className="h-4 w-4" /> {i.label}
+              </NavLink>
+            );
+          })}
+        </nav>
+        <div className="border-t border-sidebar-border p-3">
+          <button onClick={async () => { await signOut(); navigate("/"); }} className="flex w-full items-center justify-between rounded-md px-3 py-2 text-xs text-muted-foreground hover:bg-sidebar-accent hover:text-foreground">
+            <span className="truncate">{user?.email ?? "Sign out"}</span>
+            <LogOut className="h-3.5 w-3.5" />
+          </button>
+        </div>
+      </aside>
+      <div className="flex flex-1 flex-col">
+        <header className="flex items-center justify-between border-b border-border px-6 py-4 md:hidden">
+          <Link to="/" className="font-semibold">HostelHub</Link>
+          <Button size="sm" variant="ghost" onClick={async () => { await signOut(); navigate("/"); }}><LogOut className="h-4 w-4" /></Button>
+        </header>
+        <main className="flex-1 px-6 py-8 md:px-10 md:py-10">{children}</main>
+      </div>
+    </div>
   );
+}
+
+export function OwnerLayout() {
+  const { user, loading } = useAuth();
+  const { isOwner, loading: loadingRoles, refetch } = useRoles();
+
+  if (loading || loadingRoles) return <div className="flex min-h-screen items-center justify-center"><RingLoader /></div>;
+  if (!user) return <Navigate to="/auth" state={{ from: "/owner" }} replace />;
+  if (!isOwner) return <BecomeOwnerGate onDone={refetch} />;
+
+  return <DashboardShell items={ownerNav} title="Owner dashboard"><Outlet /></DashboardShell>;
+}
+
+function BecomeOwnerGate({ onDone }: { onDone: () => void }) {
+  const { user } = useAuth();
+  const [loading, setLoading] = useState(false);
+  return (
+    <PublicLayout>
+      <div className="mx-auto max-w-lg px-4 py-16 md:px-6">
+        <div className="rounded-2xl border border-border bg-card p-8 text-center">
+          <Building2 className="mx-auto h-10 w-10 text-primary" />
+          <h1 className="mt-3 text-2xl font-semibold">Become a hostel owner</h1>
+          <p className="mt-2 text-sm text-muted-foreground">Register as an owner to submit and manage hostel listings on HostelHub.</p>
+          <Button
+            className="mt-6"
+            disabled={loading}
+            onClick={async () => {
+              if (!user) return;
+              setLoading(true);
+              const { error } = await becomeOwner(user.id);
+              setLoading(false);
+              if (error) toast.error(error);
+              else { toast.success("You're an owner now"); onDone(); }
+            }}
+          >
+            Register as owner
+          </Button>
+        </div>
+      </div>
+    </PublicLayout>
+  );
+}
+
+export function OwnerHostelsPage() {
+  const { hostels, loading, refetch } = useMyHostels();
+  return (
+    <div>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold">My hostels</h1>
+          <p className="text-sm text-muted-foreground">Manage your listings, photos, and availability.</p>
+        </div>
+        <Button asChild><Link to="/owner/new"><PlusCircle className="mr-1 h-4 w-4" /> New</Link></Button>
+      </div>
+      <div className="mt-6 space-y-3">
+        {loading && <RingLoader />}
+        {!loading && hostels.length === 0 && (
+          <div className="rounded-2xl border border-dashed border-border p-12 text-center text-sm text-muted-foreground">
+            You haven't submitted any hostels yet.
+          </div>
+        )}
+        {hostels.map((h) => (
+          <Card key={h.id} className="p-4">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="h-12 w-12 overflow-hidden rounded-md bg-secondary">
+                  {h.cover_image && <img src={h.cover_image} className="h-full w-full object-cover" alt="" />}
+                </div>
+                <div>
+                  <div className="font-medium">{h.name}</div>
+                  <div className="text-xs text-muted-foreground">{h.location ?? "—"} · {h.is_published ? "Published" : "Draft"} {h.is_verified && "· Verified"}</div>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <Select
+                  value={h.availability}
+                  onValueChange={async (v) => {
+                    if (!supabase) return;
+                    await supabase.from("hostels").update({ availability: v }).eq("id", h.id);
+                    refetch();
+                  }}
+                >
+                  <SelectTrigger className="w-36"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="available">Available</SelectItem>
+                    <SelectItem value="limited">Limited</SelectItem>
+                    <SelectItem value="full">Full</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Button asChild size="sm" variant="outline"><Link to={`/owner/${h.id}/edit`}>Edit</Link></Button>
+                <Button asChild size="sm" variant="ghost"><Link to={`/hostels/${h.id}`}>View</Link></Button>
+              </div>
+            </div>
+          </Card>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+export function OwnerHostelFormPage() {
+  const { user } = useAuth();
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const editing = Boolean(id);
+
+  const [loading, setLoading] = useState(editing);
+  const [saving, setSaving] = useState(false);
+  const [form, setForm] = useState({
+    name: "", description: "", location: "", distance_km: "" as number | "",
+    price_min: "" as number | "", price_max: "" as number | "",
+    room_types: "", amenities: "",
+    cover_image: "", gallery: "",
+    contact_phone: "", contact_email: "", whatsapp: "",
+    availability: "available",
+    is_published: false,
+  });
+
+  useEffect(() => {
+    if (!editing || !supabase) return;
+    supabase.from("hostels").select("*").eq("id", id).maybeSingle().then(({ data }) => {
+      if (data) {
+        setForm({
+          name: data.name ?? "",
+          description: data.description ?? "",
+          location: data.location ?? "",
+          distance_km: data.distance_km ?? "",
+          price_min: data.price_min ?? "",
+          price_max: data.price_max ?? "",
+          room_types: (data.room_types ?? []).join(", "),
+          amenities: (data.amenities ?? []).join(", "),
+          cover_image: data.cover_image ?? "",
+          gallery: (data.gallery ?? []).join("\n"),
+          contact_phone: data.contact_phone ?? "",
+          contact_email: data.contact_email ?? "",
+          whatsapp: data.whatsapp ?? "",
+          availability: data.availability ?? "available",
+          is_published: data.is_published ?? false,
+        });
+      }
+      setLoading(false);
+    });
+  }, [id, editing]);
+
+  const set = <K extends keyof typeof form>(k: K, v: (typeof form)[K]) => setForm((s) => ({ ...s, [k]: v }));
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!supabase || !user) return;
+    setSaving(true);
+    const payload = {
+      owner_id: user.id,
+      name: form.name.trim(),
+      description: form.description.trim() || null,
+      location: form.location.trim() || null,
+      distance_km: form.distance_km === "" ? null : Number(form.distance_km),
+      price_min: form.price_min === "" ? null : Number(form.price_min),
+      price_max: form.price_max === "" ? null : Number(form.price_max),
+      room_types: form.room_types.split(",").map((s) => s.trim()).filter(Boolean),
+      amenities: form.amenities.split(",").map((s) => s.trim()).filter(Boolean),
+      cover_image: form.cover_image.trim() || null,
+      gallery: form.gallery.split("\n").map((s) => s.trim()).filter(Boolean),
+      contact_phone: form.contact_phone.trim() || null,
+      contact_email: form.contact_email.trim() || null,
+      whatsapp: form.whatsapp.trim() || null,
+      availability: form.availability,
+      is_published: form.is_published,
+    };
+    const { error } = editing
+      ? await supabase.from("hostels").update(payload).eq("id", id!)
+      : await supabase.from("hostels").insert(payload);
+    setSaving(false);
+    if (error) toast.error(error.message);
+    else {
+      toast.success(editing ? "Hostel updated" : "Hostel submitted for review");
+      navigate("/owner");
+    }
+  };
+
+  if (loading) return <div className="flex h-64 items-center justify-center"><RingLoader /></div>;
+
+  return (
+    <div>
+      <h1 className="text-2xl font-semibold">{editing ? "Edit hostel" : "Submit a new hostel"}</h1>
+      <p className="text-sm text-muted-foreground">New submissions enter a review queue before publication.</p>
+      <form onSubmit={submit} className="mt-6 grid max-w-3xl gap-4">
+        <div><Label>Hostel name</Label><Input required value={form.name} onChange={(e) => set("name", e.target.value)} maxLength={120} /></div>
+        <div><Label>Description</Label><Textarea value={form.description} onChange={(e) => set("description", e.target.value)} maxLength={2000} /></div>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div><Label>Location / area</Label><Input value={form.location} onChange={(e) => set("location", e.target.value)} maxLength={120} /></div>
+          <div><Label>Distance from campus (km)</Label><Input type="number" step="0.1" value={form.distance_km} onChange={(e) => set("distance_km", e.target.value === "" ? "" : Number(e.target.value))} /></div>
+          <div><Label>Min price (GH₵)</Label><Input type="number" value={form.price_min} onChange={(e) => set("price_min", e.target.value === "" ? "" : Number(e.target.value))} /></div>
+          <div><Label>Max price (GH₵)</Label><Input type="number" value={form.price_max} onChange={(e) => set("price_max", e.target.value === "" ? "" : Number(e.target.value))} /></div>
+        </div>
+        <div><Label>Room types (comma separated)</Label><Input value={form.room_types} onChange={(e) => set("room_types", e.target.value)} placeholder="Single, Shared, Self-contained" /></div>
+        <div><Label>Amenities (comma separated)</Label><Input value={form.amenities} onChange={(e) => set("amenities", e.target.value)} placeholder="WiFi, Water, Generator, Security" /></div>
+        <div><Label>Cover image URL</Label><Input value={form.cover_image} onChange={(e) => set("cover_image", e.target.value)} placeholder="https://..." /></div>
+        <div><Label>Gallery image URLs (one per line)</Label><Textarea value={form.gallery} onChange={(e) => set("gallery", e.target.value)} rows={4} /></div>
+        <div className="grid gap-4 sm:grid-cols-3">
+          <div><Label>Phone</Label><Input value={form.contact_phone} onChange={(e) => set("contact_phone", e.target.value)} maxLength={20} /></div>
+          <div><Label>WhatsApp</Label><Input value={form.whatsapp} onChange={(e) => set("whatsapp", e.target.value)} maxLength={20} /></div>
+          <div><Label>Email</Label><Input type="email" value={form.contact_email} onChange={(e) => set("contact_email", e.target.value)} maxLength={255} /></div>
+        </div>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div>
+            <Label>Availability</Label>
+            <Select value={form.availability} onValueChange={(v) => set("availability", v)}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="available">Available</SelectItem>
+                <SelectItem value="limited">Limited</SelectItem>
+                <SelectItem value="full">Full</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex items-center justify-between rounded-md border border-border p-3">
+            <div>
+              <div className="text-sm font-medium">Published</div>
+              <div className="text-xs text-muted-foreground">Visible publicly once admin approves</div>
+            </div>
+            <Switch checked={form.is_published} onCheckedChange={(v) => set("is_published", v)} />
+          </div>
+        </div>
+        <div className="flex gap-2 pt-2">
+          <Button type="submit" disabled={saving}>{saving ? "Saving..." : editing ? "Save changes" : "Submit hostel"}</Button>
+          <Button type="button" variant="ghost" onClick={() => navigate("/owner")}>Cancel</Button>
+        </div>
+      </form>
+    </div>
+  );
+}
+
+/* ================== ADMIN ================== */
+
+export function AdminLayout() {
+  const { user, loading } = useAuth();
+  const { isAdmin, loading: loadingRoles } = useRoles();
+  if (loading || loadingRoles) return <div className="flex min-h-screen items-center justify-center"><RingLoader /></div>;
+  if (!user) return <Navigate to="/auth" state={{ from: "/admin" }} replace />;
+  if (!isAdmin) {
+    return (
+      <PublicLayout>
+        <div className="mx-auto max-w-md px-4 py-24 text-center">
+          <AlertCircle className="mx-auto h-10 w-10 text-destructive" />
+          <h1 className="mt-3 text-2xl font-semibold">Admins only</h1>
+          <p className="mt-2 text-sm text-muted-foreground">You don't have admin access.</p>
+        </div>
+      </PublicLayout>
+    );
+  }
+  return <DashboardShell items={adminNav} title="Admin"><Outlet /></DashboardShell>;
 }
 
 export function AdminIndexPage() {
+  const [stats, setStats] = useState({ hostels: 0, users: 0, reviews: 0, signups: 0, requests: 0 });
+  useEffect(() => {
+    if (!supabase) return;
+    const head = { count: "exact" as const, head: true };
+    Promise.all([
+      supabase.from("hostels").select("*", head),
+      supabase.from("user_roles").select("*", head),
+      supabase.from("reviews").select("*", head),
+      supabase.from("community_signups").select("*", head),
+      supabase.from("accommodation_requests").select("*", head),
+    ]).then(([h, u, r, c, q]) => {
+      setStats({ hostels: h.count ?? 0, users: u.count ?? 0, reviews: r.count ?? 0, signups: c.count ?? 0, requests: q.count ?? 0 });
+    });
+  }, []);
   return (
-    <div className="space-y-6">
-      <div className="tc-fade-up rounded-3xl border border-border bg-card p-8 shadow-sm">
-        <h1 className="text-3xl font-semibold">Admin overview</h1>
-        <p className="mt-3 text-sm text-muted-foreground">Manage users, stores, and notifications for your team.</p>
-      </div>
-      <div className="tc-stagger grid gap-4 md:grid-cols-3">
-        <Stat label="Stores" value={0} />
-        <Stat label="Active users" value={0} />
-        <Stat label="Alerts" value={0} />
+    <div>
+      <h1 className="text-2xl font-semibold">Admin overview</h1>
+      <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <Stat label="Total hostels" value={stats.hostels} />
+        <Stat label="Roles assigned" value={stats.users} />
+        <Stat label="Reviews" value={stats.reviews} />
+        <Stat label="Community signups" value={stats.signups} />
+        <Stat label="Accommodation requests" value={stats.requests} />
       </div>
     </div>
   );
 }
 
-export function AdminUsersPage() {
+function Stat({ label, value }: { label: string; value: number }) {
   return (
-    <div className="space-y-6">
-      <div className="tc-fade-up rounded-3xl border border-border bg-card p-8 shadow-sm">
-        <h1 className="text-2xl font-semibold">Users</h1>
-        <p className="mt-3 text-sm text-muted-foreground">Review and manage admin access for your team.</p>
-      </div>
-      <div className="rounded-3xl border border-dashed border-border bg-card/40 p-12 text-center text-sm text-muted-foreground">
-        No users yet.
-      </div>
-    </div>
+    <Card className="p-5">
+      <div className="text-sm text-muted-foreground">{label}</div>
+      <div className="mt-1 text-3xl font-semibold tabular-nums">{value}</div>
+    </Card>
   );
 }
 
-export function AdminStoresPage() {
-  return (
-    <div className="space-y-6">
-      <div className="tc-fade-up rounded-3xl border border-border bg-card p-8 shadow-sm">
-        <h1 className="text-2xl font-semibold">Stores</h1>
-        <p className="mt-3 text-sm text-muted-foreground">View store activity across your organization.</p>
-      </div>
-      <div className="rounded-3xl border border-dashed border-border bg-card/40 p-12 text-center text-sm text-muted-foreground">
-        No stores yet.
-      </div>
-    </div>
-  );
-}
+export function AdminHostelsPage() {
+  const [items, setItems] = useState<Hostel[]>([]);
+  const [loading, setLoading] = useState(true);
 
-export function AdminNotificationsPage() {
-  return (
-    <div className="space-y-6">
-      <div className="tc-fade-up rounded-3xl border border-border bg-card p-8 shadow-sm">
-        <h1 className="text-2xl font-semibold">Notifications</h1>
-        <p className="mt-3 text-sm text-muted-foreground">System alerts and messages for your admin team.</p>
-      </div>
-      <div className="rounded-3xl border border-dashed border-border bg-card/40 p-12 text-center text-sm text-muted-foreground">
-        No notifications.
-      </div>
-    </div>
-  );
-}
-
-export function AdminAnalyticsPage() {
-  return (
-    <div className="tc-fade-up rounded-3xl border border-border bg-card p-8 shadow-sm">
-      <h1 className="text-2xl font-semibold">Admin analytics</h1>
-      <p className="mt-3 text-sm text-muted-foreground">High-level metrics for stores and team performance.</p>
-      <div className="tc-stagger mt-8 grid gap-4 md:grid-cols-3">
-        <Stat label="Total sales" value={14800} prefix="$" />
-        <Stat label="Stores active" value={18} />
-        <Stat label="Team members" value={9} />
-      </div>
-      <Reveal className="mt-8 rounded-3xl border border-border bg-background p-6">
-        <div className="mb-4 text-xs uppercase tracking-[0.18em] text-muted-foreground">Sales by week</div>
-        <MiniBars data={[8, 10, 9, 12, 15, 14, 18, 17, 21, 19, 24, 22]} />
-      </Reveal>
-    </div>
-  );
-}
-
-export function AdminSettingsPage() {
-  return (
-    <div className="tc-fade-up rounded-3xl border border-border bg-card p-8 shadow-sm">
-      <h1 className="text-2xl font-semibold">Admin settings</h1>
-      <p className="mt-3 text-sm text-muted-foreground">Manage team permissions, account preferences, and security settings.</p>
-    </div>
-  );
-}
-
-/* --------------------- PUBLIC STORE --------------------- */
-
-type PublicStore = {
-  user_id: string;
-  username: string;
-  store_name: string | null;
-  full_name: string | null;
-  whatsapp_number: string | null;
-};
-type PublicProduct = { id: string; name: string; price: number; description: string | null; image_url: string | null };
-
-export function PublicStorePage() {
-  const { username } = useParams();
-  const [loading, setLoading] = React.useState(true);
-  const [store, setStore] = React.useState<PublicStore | null>(null);
-  const [products, setProducts] = React.useState<PublicProduct[]>([]);
-
-  React.useEffect(() => {
-    let cancelled = false;
-    async function load() {
-      if (!supabase || !username) {
-        setLoading(false);
-        return;
-      }
-      setLoading(true);
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("id, username, store_name, full_name, whatsapp_number")
-        .eq("username", username)
-        .maybeSingle();
-
-      if (cancelled) return;
-      if (!profile) {
-        setStore(null);
-        setLoading(false);
-        return;
-      }
-      const storeData: PublicStore = {
-        user_id: profile.id,
-        username: profile.username,
-        store_name: profile.store_name,
-        full_name: profile.full_name,
-        whatsapp_number: profile.whatsapp_number,
-      };
-      setStore(storeData);
-
-      const { data: prods } = await supabase
-        .from("products")
-        .select("id, name, price, description, image_url")
-        .eq("user_id", profile.id)
-        .order("created_at", { ascending: false });
-      if (cancelled) return;
-      setProducts((prods as PublicProduct[]) ?? []);
+  const refetch = () => {
+    if (!supabase) return;
+    setLoading(true);
+    supabase.from("hostels").select("*").order("created_at", { ascending: false }).then(({ data }) => {
+      setItems((data as Hostel[]) ?? []);
       setLoading(false);
+    });
+  };
+  useEffect(refetch, []);
 
-      // Log a view (RLS allows anonymous inserts).
-      supabase.from("store_views").insert({ user_id: profile.id }).then(() => {});
-    }
-    load();
-    return () => { cancelled = true; };
-  }, [username]);
-
-  if (!loading && !store) {
-    return (
-      <div className="mx-auto max-w-md px-6 py-24 text-center">
-        <EmptyBoxIllustration className="mx-auto h-24 w-24 text-muted-foreground" />
-        <h1 className="mt-6 text-2xl font-semibold">Store not found</h1>
-        <p className="mt-2 text-sm text-muted-foreground">No TapCart store exists at /s/{username}.</p>
-        <Link to="/" className="mt-6 inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground">
-          Go home <ArrowRight className="h-4 w-4" />
-        </Link>
-      </div>
-    );
-  }
-
-  const brand = store?.store_name?.trim() || store?.full_name?.trim() || username || "Store";
-
-  const orderViaWhatsApp = (product: PublicProduct) => {
-    const phone = (store?.whatsapp_number ?? "").replace(/\D/g, "");
-    const text = encodeURIComponent(`Hi ${brand}! I'd like to order: ${product.name} ($${Number(product.price).toFixed(2)}).`);
-    const url = phone ? `https://wa.me/${phone}?text=${text}` : `https://wa.me/?text=${text}`;
-    window.open(url, "_blank");
+  const update = async (id: string, patch: Partial<Hostel>) => {
+    if (!supabase) return;
+    await supabase.from("hostels").update(patch).eq("id", id);
+    refetch();
+  };
+  const remove = async (id: string) => {
+    if (!supabase) return;
+    if (!confirm("Delete this hostel?")) return;
+    await supabase.from("hostels").delete().eq("id", id);
+    refetch();
   };
 
   return (
-    <div className="mx-auto max-w-4xl px-6 py-20">
-      <div className="tc-fade-up rounded-3xl border border-border bg-card p-10 shadow-[0_30px_80px_-40px_rgba(0,0,0,0.25)]">
-        <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
-          <div className="flex items-center gap-4">
-            <GradientAvatar name={brand} size={56} />
-            <div>
-              <p className="text-xs uppercase tracking-[0.24em] text-muted-foreground">Public store</p>
-              <h1 className="mt-2 text-3xl font-semibold md:text-4xl">{brand}</h1>
-            </div>
-          </div>
-          <div className="inline-flex items-center gap-2 rounded-full bg-secondary px-4 py-2 text-sm text-muted-foreground">
-            <Link2 className="h-3.5 w-3.5" />
-            tap-cart.shop/s/{username}
-          </div>
-        </div>
-
-        {loading ? (
-          <div className="mt-10 space-y-4">
-            <div className="grid gap-6 md:grid-cols-3">
-              {[0, 1, 2].map((i) => (
-                <div key={i} className="rounded-3xl border border-border p-6">
-                  <SkeletonShimmer className="h-24 w-full" />
-                  <SkeletonShimmer className="mt-4 h-3 w-2/3" />
-                  <SkeletonShimmer className="mt-2 h-3 w-1/3" />
+    <div>
+      <h1 className="text-2xl font-semibold">All hostels</h1>
+      <div className="mt-6 space-y-3">
+        {loading && <RingLoader />}
+        {items.map((h) => (
+          <Card key={h.id} className="p-4">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="h-12 w-12 overflow-hidden rounded-md bg-secondary">
+                  {h.cover_image && <img src={h.cover_image} className="h-full w-full object-cover" alt="" />}
                 </div>
-              ))}
-            </div>
-            <div className="flex justify-center pt-6"><DotLoader label="Loading store" /></div>
-          </div>
-        ) : products.length === 0 ? (
-          <div className="mt-12 text-center">
-            <EmptyBoxIllustration className="mx-auto h-20 w-20 text-muted-foreground" />
-            <p className="mt-4 text-sm text-muted-foreground">This store hasn't added any products yet.</p>
-          </div>
-        ) : (
-          <div className="tc-stagger mt-10 grid gap-6 md:grid-cols-3">
-            {products.map((item) => (
-              <div key={item.id} className="tc-lift flex flex-col rounded-3xl border border-border bg-background p-6">
-                <div className="aspect-square overflow-hidden rounded-2xl bg-secondary">
-                  {item.image_url ? (
-                    <img src={item.image_url} alt={item.name} className="h-full w-full object-cover" />
-                  ) : null}
+                <div>
+                  <div className="font-medium">{h.name} {h.is_verified && <Badge className="ml-2">Verified</Badge>}</div>
+                  <div className="text-xs text-muted-foreground">{h.location ?? "—"} · {h.is_published ? "Published" : "Draft"}</div>
                 </div>
-                <div className="mt-4 text-sm text-muted-foreground">{item.name}</div>
-                <div className="mt-2 text-2xl font-semibold tabular-nums">${Number(item.price).toFixed(2)}</div>
-                {item.description && <p className="mt-2 line-clamp-2 text-xs text-muted-foreground">{item.description}</p>}
-                <button
-                  onClick={() => orderViaWhatsApp(item)}
-                  className="mt-4 inline-flex items-center justify-center gap-2 rounded-full bg-[color:var(--whatsapp)] px-4 py-2 text-sm font-medium text-[color:var(--whatsapp-foreground)] transition-transform hover:-translate-y-0.5"
-                >
-                  <MessageCircle className="h-4 w-4" /> Order on WhatsApp
-                </button>
               </div>
-            ))}
-          </div>
-        )}
+              <div className="flex flex-wrap items-center gap-2">
+                <Button size="sm" variant={h.is_verified ? "secondary" : "default"} onClick={() => update(h.id, { is_verified: !h.is_verified })}>
+                  {h.is_verified ? "Unverify" : "Verify"}
+                </Button>
+                <Button size="sm" variant={h.is_published ? "secondary" : "outline"} onClick={() => update(h.id, { is_published: !h.is_published })}>
+                  {h.is_published ? "Unpublish" : "Publish"}
+                </Button>
+                <Button asChild size="sm" variant="ghost"><Link to={`/hostels/${h.id}`}>View</Link></Button>
+                <Button size="sm" variant="ghost" onClick={() => remove(h.id)}>Delete</Button>
+              </div>
+            </div>
+          </Card>
+        ))}
       </div>
     </div>
   );
 }
 
-/* --------------------- 404 --------------------- */
+export function AdminReviewsPage() {
+  const [items, setItems] = useState<any[]>([]);
+  const refetch = () => {
+    if (!supabase) return;
+    supabase.from("reviews").select("*").order("created_at", { ascending: false }).then(({ data }) => setItems(data ?? []));
+  };
+  useEffect(refetch, []);
+  return (
+    <div>
+      <h1 className="text-2xl font-semibold">Reviews</h1>
+      <div className="mt-6 space-y-3">
+        {items.length === 0 && <div className="text-sm text-muted-foreground">No reviews yet.</div>}
+        {items.map((r) => (
+          <Card key={r.id} className="p-4">
+            <div className="flex items-center justify-between gap-2">
+              <div className="text-sm">Rating {r.rating}/5 · {new Date(r.created_at).toLocaleDateString()}</div>
+              <div className="flex gap-2">
+                <Button size="sm" variant={r.approved ? "secondary" : "default"} onClick={async () => { if (!supabase) return; await supabase.from("reviews").update({ approved: !r.approved }).eq("id", r.id); refetch(); }}>
+                  {r.approved ? "Hide" : "Approve"}
+                </Button>
+                <Button size="sm" variant="ghost" onClick={async () => { if (!supabase) return; await supabase.from("reviews").delete().eq("id", r.id); refetch(); }}>Delete</Button>
+              </div>
+            </div>
+            {r.comment && <p className="mt-2 text-sm">{r.comment}</p>}
+          </Card>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+export function AdminRequestsPage() {
+  const [items, setItems] = useState<any[]>([]);
+  useEffect(() => {
+    if (!supabase) return;
+    supabase.from("accommodation_requests").select("*").order("created_at", { ascending: false }).then(({ data }) => setItems(data ?? []));
+  }, []);
+  return (
+    <div>
+      <h1 className="text-2xl font-semibold">Accommodation requests</h1>
+      <div className="mt-6 space-y-3">
+        {items.length === 0 && <div className="text-sm text-muted-foreground">No requests yet.</div>}
+        {items.map((r) => (
+          <Card key={r.id} className="p-4">
+            <div className="font-medium">{r.preferred_area ?? "Any area"} · {r.room_type ?? "Any room"}</div>
+            <div className="text-xs text-muted-foreground">Budget: {r.budget_max ? `GH₵${r.budget_max}` : "—"} · {new Date(r.created_at).toLocaleDateString()}</div>
+            {r.notes && <p className="mt-2 text-sm">{r.notes}</p>}
+          </Card>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+export function AdminCommunityPage() {
+  const [items, setItems] = useState<any[]>([]);
+  useEffect(() => {
+    if (!supabase) return;
+    supabase.from("community_signups").select("*").order("created_at", { ascending: false }).then(({ data }) => setItems(data ?? []));
+  }, []);
+  return (
+    <div>
+      <h1 className="text-2xl font-semibold">Community signups</h1>
+      <div className="mt-6 overflow-hidden rounded-2xl border border-border">
+        <table className="w-full text-sm">
+          <thead className="bg-secondary"><tr><th className="px-4 py-2 text-left">Name</th><th className="px-4 py-2 text-left">Email</th><th className="px-4 py-2 text-left">Phone</th><th className="px-4 py-2 text-left">Joined</th></tr></thead>
+          <tbody>
+            {items.map((s) => (
+              <tr key={s.id} className="border-t border-border">
+                <td className="px-4 py-2">{s.name}</td>
+                <td className="px-4 py-2">{s.email}</td>
+                <td className="px-4 py-2">{s.phone ?? "—"}</td>
+                <td className="px-4 py-2">{new Date(s.created_at).toLocaleDateString()}</td>
+              </tr>
+            ))}
+            {items.length === 0 && <tr><td colSpan={4} className="px-4 py-6 text-center text-muted-foreground">No signups yet.</td></tr>}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+export function AdminFeedbackPage() {
+  const [items, setItems] = useState<any[]>([]);
+  useEffect(() => {
+    if (!supabase) return;
+    supabase.from("feedback").select("*").order("created_at", { ascending: false }).then(({ data }) => setItems(data ?? []));
+  }, []);
+  return (
+    <div>
+      <h1 className="text-2xl font-semibold">Feedback</h1>
+      <div className="mt-6 space-y-3">
+        {items.length === 0 && <div className="text-sm text-muted-foreground">No feedback yet.</div>}
+        {items.map((f) => (
+          <Card key={f.id} className="p-4">
+            <div className="flex items-center justify-between gap-2">
+              <Badge variant="secondary">{f.type ?? "feedback"}</Badge>
+              <div className="text-xs text-muted-foreground">{new Date(f.created_at).toLocaleDateString()}</div>
+            </div>
+            <p className="mt-2 text-sm">{f.message}</p>
+          </Card>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ================== 404 ================== */
 
 export function NotFoundPage() {
   return (
-    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-background px-4">
-      <div className="tc-grid-bg pointer-events-none absolute inset-0 opacity-50" aria-hidden />
-      <div className="relative max-w-md text-center">
-        <div className="mx-auto mb-6 w-36"><EmptyBoxIllustration className="w-full text-foreground" /></div>
-        <h1 className="text-6xl font-semibold tracking-tight">404</h1>
-        <h2 className="mt-3 text-lg font-medium">Page not found</h2>
-        <p className="mt-2 text-sm text-muted-foreground">The page you're looking for doesn't exist or has been moved.</p>
-        <div className="mt-7">
-          <Link to="/" className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition-transform hover:-translate-y-0.5">
-            Go home <ArrowRight className="h-4 w-4" />
-          </Link>
-        </div>
+    <PublicLayout>
+      <div className="mx-auto max-w-md px-4 py-24 text-center">
+        <h1 className="text-3xl font-semibold">Page not found</h1>
+        <p className="mt-2 text-sm text-muted-foreground">The page you're looking for doesn't exist.</p>
+        <Button asChild className="mt-6"><Link to="/">Back home</Link></Button>
       </div>
-    </div>
+    </PublicLayout>
   );
 }
-
-/* Re-export loader for any future use */
-export { RingLoader };
