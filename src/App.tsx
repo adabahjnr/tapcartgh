@@ -32,6 +32,7 @@ export default function App() {
     <BrowserRouter>
       <AuthProvider>
         <Toaster richColors position="top-center" />
+        <ThemeToggle />
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/hostels" element={<HostelsPage />} />
