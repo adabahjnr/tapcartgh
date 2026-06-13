@@ -163,8 +163,8 @@ export function PublicLayout({ children }: { children: ReactNode }) {
             {/* Mobile hamburger */}
             <Sheet open={openMenu} onOpenChange={setOpenMenu}>
               <SheetTrigger asChild>
-                <Button variant="ghost" size="icon" className="md:hidden" aria-label="Open menu">
-                  <Menu className="h-5 w-5" />
+                <Button variant="outline" size="icon" className="md:hidden h-11 w-11 rounded-full border-primary/40 bg-primary/10 text-primary shadow-sm hh-burger-attn" aria-label="Open menu">
+                  <Menu className="h-6 w-6" />
                 </Button>
               </SheetTrigger>
               <SheetContent side="right" className="w-72">
