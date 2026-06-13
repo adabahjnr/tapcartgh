@@ -41,9 +41,12 @@ import {
   useMyOwnerApplication,
   useOwnerApplications,
   submitOwnerApplication,
+  useSiteSetting,
+  setSiteSetting,
   avgRating,
   type Hostel,
   type RoomOption,
+  type HeroSetting,
 } from "@/lib/data";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
