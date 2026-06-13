@@ -163,8 +163,8 @@ export function PublicLayout({ children }: { children: ReactNode }) {
             {/* Mobile hamburger */}
             <Sheet open={openMenu} onOpenChange={setOpenMenu}>
               <SheetTrigger asChild>
-                <Button variant="ghost" size="icon" className="md:hidden" aria-label="Open menu">
-                  <Menu className="h-5 w-5" />
+                <Button variant="outline" size="icon" className="md:hidden h-11 w-11 rounded-full border-primary/40 bg-primary/10 text-primary shadow-sm hh-burger-attn" aria-label="Open menu">
+                  <Menu className="h-6 w-6" />
                 </Button>
               </SheetTrigger>
               <SheetContent side="right" className="w-72">
@@ -313,16 +313,16 @@ export function HomePage() {
 
   return (
     <PublicLayout>
-      <section className="relative overflow-hidden">
+      <section className="relative isolate overflow-hidden">
         {hero.image_url && (
           <>
             <div
-              className="absolute inset-0 -z-20 bg-cover bg-center"
+              className="absolute inset-0 z-0 bg-cover bg-center"
               style={{ backgroundImage: `url(${hero.image_url})` }}
               aria-hidden
             />
             <div
-              className="absolute inset-0 -z-10 bg-black"
+              className="absolute inset-0 z-0 bg-black"
               style={{ opacity: Math.max(0, Math.min(1, hero.dim ?? 0.4)) }}
               aria-hidden
             />
@@ -330,8 +330,8 @@ export function HomePage() {
         )}
         {!hero.image_url && (
           <>
-            <div className="absolute inset-0 -z-10 hh-grain opacity-80" />
-            <div className="absolute inset-0 -z-10 bg-gradient-to-b from-transparent via-background/40 to-background" />
+            <div className="absolute inset-0 z-0 hh-grain opacity-80" />
+            <div className="absolute inset-0 z-0 bg-gradient-to-b from-transparent via-background/40 to-background" />
           </>
         )}
 
@@ -342,7 +342,7 @@ export function HomePage() {
         <DoodleKey className="absolute right-12 bottom-10 h-12 w-12 text-[var(--pop-mint)] hh-wiggle" />
         <DoodleCircle className="absolute left-1/2 top-24 hidden h-40 w-40 -translate-x-1/2 text-primary/15 md:block hh-spin-slow" />
 
-        <div className="mx-auto max-w-5xl px-4 py-20 md:px-6 md:py-28">
+        <div className="relative z-10 mx-auto max-w-5xl px-4 py-20 md:px-6 md:py-28">
           <div className="mx-auto max-w-3xl text-center hh-pop">
             <span className="hh-chip mb-5">
               <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
@@ -1251,8 +1251,8 @@ function DashboardShell({ items, title, children }: { items: typeof ownerNav; ti
         <header className="flex items-center justify-between border-b border-border px-4 py-3 md:hidden">
           <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
             <SheetTrigger asChild>
-              <Button size="icon" variant="ghost" aria-label="Open menu">
-                <Menu className="h-5 w-5" />
+              <Button size="icon" variant="outline" className="h-11 w-11 rounded-full border-primary/40 bg-primary/10 text-primary shadow-sm hh-burger-attn" aria-label="Open menu">
+                <Menu className="h-6 w-6" />
               </Button>
             </SheetTrigger>
             <SheetContent side="left" className="flex w-72 flex-col bg-sidebar p-0">
