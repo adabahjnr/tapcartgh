@@ -22,6 +22,10 @@ import {
   Menu,
   User as UserIcon,
   ClipboardCheck,
+  Upload,
+  X,
+  Trash2,
+  Users2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
