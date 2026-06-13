@@ -241,35 +241,12 @@ export function HowItWorksPage() {
 /* --------------------- EXAMPLES --------------------- */
 
 export function ExamplesPage() {
-  const examples = [
-    { name: "Bloom & Co.", description: "A flower shop built for WhatsApp orders.", tag: "Florist" },
-    { name: "Chai House", description: "A local cafe showcasing daily specials.", tag: "Cafe" },
-    { name: "Local Market", description: "A small grocery store with easy ordering.", tag: "Grocery" },
-    { name: "Olive & Oak", description: "A neighborhood deli built around regulars.", tag: "Deli" },
-    { name: "Rosewater", description: "A skincare studio with a tiny, careful catalog.", tag: "Beauty" },
-    { name: "North & Co.", description: "Hand-thrown ceramics, sold one piece at a time.", tag: "Goods" },
-  ];
   return (
     <MarketingLayout>
-      <PageHero eyebrow="Examples" title="Live store examples" sub="A small look at what sellers are building on TapCart." />
+      <PageHero eyebrow="Examples" title="Live store examples" sub="Real stores will appear here as sellers join TapCart." />
       <section className="mx-auto max-w-5xl px-6 pb-24">
-        <div className="tc-stagger grid gap-6 md:grid-cols-3">
-          {examples.map((example) => (
-            <Card key={example.name} className="group">
-              <div className="flex items-center gap-3">
-                <GradientAvatar name={example.name} size={36} />
-                <div>
-                  <h3 className="text-lg font-semibold">{example.name}</h3>
-                  <div className="text-[0.7rem] uppercase tracking-[0.18em] text-muted-foreground">{example.tag}</div>
-                </div>
-              </div>
-              <p className="mt-5 text-sm text-muted-foreground">{example.description}</p>
-              <div className="mt-6 inline-flex items-center gap-2 text-sm tc-link-underline text-foreground/80">
-                Visit store
-                <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-1" />
-              </div>
-            </Card>
-          ))}
+        <div className="rounded-3xl border border-dashed border-border bg-card/40 p-16 text-center">
+          <p className="text-sm text-muted-foreground">No example stores yet. Check back soon.</p>
         </div>
       </section>
     </MarketingLayout>
@@ -1014,93 +991,51 @@ export function AdminIndexPage() {
         <p className="mt-3 text-sm text-muted-foreground">Manage users, stores, and notifications for your team.</p>
       </div>
       <div className="tc-stagger grid gap-4 md:grid-cols-3">
-        <Stat label="Stores" value={12} />
-        <Stat label="Active users" value={298} />
-        <Stat label="Alerts" value={3} />
+        <Stat label="Stores" value={0} />
+        <Stat label="Active users" value={0} />
+        <Stat label="Alerts" value={0} />
       </div>
     </div>
   );
 }
 
 export function AdminUsersPage() {
-  const users = [
-    { name: "Amina", role: "Owner" },
-    { name: "Jordan", role: "Editor" },
-    { name: "Kelsey", role: "Support" },
-  ];
   return (
     <div className="space-y-6">
       <div className="tc-fade-up rounded-3xl border border-border bg-card p-8 shadow-sm">
         <h1 className="text-2xl font-semibold">Users</h1>
         <p className="mt-3 text-sm text-muted-foreground">Review and manage admin access for your team.</p>
       </div>
-      <ul className="tc-stagger space-y-3">
-        {users.map((user) => (
-          <li key={user.name} className="tc-lift flex items-center justify-between rounded-3xl border border-border bg-card p-5">
-            <div className="flex items-center gap-3">
-              <GradientAvatar name={user.name} />
-              <div>
-                <div className="font-medium">{user.name}</div>
-                <div className="text-sm text-muted-foreground">{user.role}</div>
-              </div>
-            </div>
-            <span className="rounded-full bg-secondary px-3 py-1 text-xs text-muted-foreground">Active</span>
-          </li>
-        ))}
-      </ul>
+      <div className="rounded-3xl border border-dashed border-border bg-card/40 p-12 text-center text-sm text-muted-foreground">
+        No users yet.
+      </div>
     </div>
   );
 }
 
 export function AdminStoresPage() {
-  const stores = [
-    { name: "Bloom & Co.", sales: "$1.2k" },
-    { name: "Chai House", sales: "$860" },
-    { name: "Local Market", sales: "$540" },
-    { name: "Olive & Oak", sales: "$420" },
-  ];
   return (
     <div className="space-y-6">
       <div className="tc-fade-up rounded-3xl border border-border bg-card p-8 shadow-sm">
         <h1 className="text-2xl font-semibold">Stores</h1>
         <p className="mt-3 text-sm text-muted-foreground">View store activity across your organization.</p>
       </div>
-      <div className="tc-stagger grid gap-4 md:grid-cols-2">
-        {stores.map((store) => (
-          <div key={store.name} className="tc-lift flex items-center justify-between rounded-3xl border border-border bg-background p-6">
-            <div className="flex items-center gap-3">
-              <GradientAvatar name={store.name} />
-              <div className="font-medium">{store.name}</div>
-            </div>
-            <div className="text-sm text-muted-foreground tabular-nums">{store.sales}</div>
-          </div>
-        ))}
+      <div className="rounded-3xl border border-dashed border-border bg-card/40 p-12 text-center text-sm text-muted-foreground">
+        No stores yet.
       </div>
     </div>
   );
 }
 
 export function AdminNotificationsPage() {
-  const messages = [
-    "Inventory alert for Bloom & Co.",
-    "New user signup pending review.",
-    "Monthly report is ready to download.",
-  ];
   return (
     <div className="space-y-6">
       <div className="tc-fade-up rounded-3xl border border-border bg-card p-8 shadow-sm">
         <h1 className="text-2xl font-semibold">Notifications</h1>
         <p className="mt-3 text-sm text-muted-foreground">System alerts and messages for your admin team.</p>
       </div>
-      <div className="tc-stagger space-y-3">
-        {messages.map((message) => (
-          <div key={message} className="tc-lift flex items-start gap-4 rounded-3xl border border-border bg-card p-5">
-            <div className="mt-0.5 inline-flex h-8 w-8 items-center justify-center rounded-full border border-border bg-background">
-              <Bell className="h-4 w-4 text-muted-foreground" />
-            </div>
-            <div className="text-sm">{message}</div>
-          </div>
-        ))}
+      <div className="rounded-3xl border border-dashed border-border bg-card/40 p-12 text-center text-sm text-muted-foreground">
+        No notifications.
       </div>
     </div>
   );
