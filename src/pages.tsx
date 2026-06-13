@@ -1139,12 +1139,14 @@ const ownerNav = [
 
 const adminNav = [
   { to: "/admin", label: "Overview", icon: LayoutDashboard },
+  { to: "/admin/owners", label: "Owner applications", icon: ClipboardCheck },
   { to: "/admin/hostels", label: "Hostels", icon: Building2 },
   { to: "/admin/reviews", label: "Reviews", icon: Star },
   { to: "/admin/requests", label: "Requests", icon: ListChecks },
   { to: "/admin/community", label: "Community", icon: Users },
   { to: "/admin/feedback", label: "Feedback", icon: MessageSquare },
 ];
+
 
 function DashboardShell({ items, title, children }: { items: typeof ownerNav; title: string; children: ReactNode }) {
   const { signOut, user } = useAuth();
