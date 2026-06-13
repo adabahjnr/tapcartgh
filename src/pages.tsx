@@ -725,9 +725,13 @@ function HostelCard({ hostel }: { hostel: Hostel }) {
       </div>
       <div className="p-4">
         <div className="flex items-start justify-between gap-2">
-          <h3 className="text-base font-semibold leading-tight tracking-tight md:text-lg">{hostel.name}</h3>
-          <div className="shrink-0 text-sm font-medium">
-            {hostel.price_min ? `GH₵${hostel.price_min}${hostel.price_max ? `–${hostel.price_max}` : ""}` : "—"}
+          <h3 className={`text-base font-semibold leading-tight tracking-tight md:text-lg ${!user ? "select-none blur-[5px]" : ""}`}>
+            {user ? hostel.name : "Hostel name hidden"}
+          </h3>
+          <div className={`shrink-0 text-sm font-medium ${!user ? "select-none blur-[5px]" : ""}`}>
+            {user
+              ? (hostel.price_min ? `GH₵${hostel.price_min}${hostel.price_max ? `–${hostel.price_max}` : ""}` : "—")
+              : "GH₵••••"}
           </div>
         </div>
         <div className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
@@ -735,6 +739,11 @@ function HostelCard({ hostel }: { hostel: Hostel }) {
           {hostel.location ?? "Location not set"}
           {hostel.distance_km != null && <span> · {hostel.distance_km} km from campus</span>}
         </div>
+        {!user && (
+          <div className="mt-3 rounded-lg border border-dashed border-primary/40 bg-primary/5 px-3 py-2 text-xs text-primary">
+            🔒 <Link to="/auth" onClick={(e) => e.stopPropagation()} className="font-semibold underline underline-offset-2">Sign in</Link> to view name & price
+          </div>
+        )}
       </div>
     </Link>
   );
