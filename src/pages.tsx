@@ -725,9 +725,13 @@ function HostelCard({ hostel }: { hostel: Hostel }) {
       </div>
       <div className="p-4">
         <div className="flex items-start justify-between gap-2">
-          <h3 className="text-base font-semibold leading-tight tracking-tight md:text-lg">{hostel.name}</h3>
-          <div className="shrink-0 text-sm font-medium">
-            {hostel.price_min ? `GH₵${hostel.price_min}${hostel.price_max ? `–${hostel.price_max}` : ""}` : "—"}
+          <h3 className={`text-base font-semibold leading-tight tracking-tight md:text-lg ${!user ? "select-none blur-[5px]" : ""}`}>
+            {user ? hostel.name : "Hostel name hidden"}
+          </h3>
+          <div className={`shrink-0 text-sm font-medium ${!user ? "select-none blur-[5px]" : ""}`}>
+            {user
+              ? (hostel.price_min ? `GH₵${hostel.price_min}${hostel.price_max ? `–${hostel.price_max}` : ""}` : "—")
+              : "GH₵••••"}
           </div>
         </div>
         <div className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
@@ -735,6 +739,11 @@ function HostelCard({ hostel }: { hostel: Hostel }) {
           {hostel.location ?? "Location not set"}
           {hostel.distance_km != null && <span> · {hostel.distance_km} km from campus</span>}
         </div>
+        {!user && (
+          <div className="mt-3 rounded-lg border border-dashed border-primary/40 bg-primary/5 px-3 py-2 text-xs text-primary">
+            🔒 <span className="font-semibold underline underline-offset-2">Sign in</span> to view name & price
+          </div>
+        )}
       </div>
     </Link>
   );
@@ -1168,7 +1177,7 @@ export function HostelDetailPage() {
                 <Badge variant="secondary" className="gap-1"><Star className="h-3 w-3 fill-amber-400 text-amber-400" /> {avg.toFixed(1)} · {reviews.length} review{reviews.length === 1 ? "" : "s"}</Badge>
               )}
             </div>
-            <h1 className="mt-3 text-3xl font-semibold tracking-tight">{hostel.name}</h1>
+            <h1 className={`mt-3 text-3xl font-semibold tracking-tight ${!user ? "select-none blur-[6px]" : ""}`}>{user ? hostel.name : "Hostel name hidden — sign in to view"}</h1>
             <div className="mt-1 flex items-center gap-1 text-sm text-muted-foreground">
               <MapPin className="h-4 w-4" /> {hostel.location ?? "Location not set"}
               {hostel.distance_km != null && <span> · {hostel.distance_km} km from campus</span>}
@@ -1212,41 +1221,58 @@ export function HostelDetailPage() {
           <aside className="space-y-4 rounded-2xl border border-border bg-gradient-to-br from-card to-secondary/40 p-5 h-fit shadow-sm">
             <div>
               <div className="text-xs uppercase tracking-wide text-muted-foreground">Starting from</div>
-              <div className="mt-1 text-3xl font-semibold tracking-tight">
-                {hostel.price_min ? (
-                  <>GH₵{hostel.price_min.toLocaleString()}{hostel.price_max ? <span className="text-muted-foreground text-xl"> – {hostel.price_max.toLocaleString()}</span> : null}</>
+              <div className={`mt-1 text-3xl font-semibold tracking-tight ${!user ? "select-none blur-[6px]" : ""}`}>
+                {user ? (
+                  hostel.price_min ? (
+                    <>GH₵{hostel.price_min.toLocaleString()}{hostel.price_max ? <span className="text-muted-foreground text-xl"> – {hostel.price_max.toLocaleString()}</span> : null}</>
+                  ) : (
+                    <span className="text-xl">Contact for price</span>
+                  )
                 ) : (
-                  <span className="text-xl">Contact for price</span>
+                  <span>GH₵••••</span>
                 )}
               </div>
               <div className="text-xs text-muted-foreground">per academic year</div>
             </div>
 
-            <RoomPicker hostel={hostel}>
-              {(selectedRoom) => {
-                const baseMsg = `Hi! I'm interested in *${hostel.name}*${hostel.location ? ` (${hostel.location})` : ""}.${selectedRoom ? ` I'd like to book the *${selectedRoom.name}* room${selectedRoom.price ? ` at GH₵${selectedRoom.price.toLocaleString()}` : ""}.` : ""} Could you share availability and next steps?\n\n— Sent via HostelHub by Adabah`;
-                const waUrl = hostel.whatsapp ? `https://wa.me/${hostel.whatsapp.replace(/\D/g, "")}?text=${encodeURIComponent(baseMsg)}` : null;
-                return (
-                  <div className="space-y-2">
-                    {waUrl && (
-                      <a href={waUrl} target="_blank" rel="noreferrer" className="flex items-center justify-center gap-2 rounded-lg bg-[color:var(--whatsapp)] px-4 py-3 text-sm font-medium text-[color:var(--whatsapp-foreground)] shadow-sm transition hover:opacity-90">
-                        <MessageSquare className="h-4 w-4" /> Message on WhatsApp
-                      </a>
-                    )}
-                    {hostel.contact_phone && (
-                      <a href={`tel:${hostel.contact_phone}`} className="flex items-center justify-center gap-2 rounded-lg border border-border bg-background px-4 py-2.5 text-sm font-medium hover:bg-secondary">
-                        <Phone className="h-4 w-4" /> Call {hostel.contact_phone}
-                      </a>
-                    )}
-                    {hostel.contact_email && (
-                      <a href={`mailto:${hostel.contact_email}?subject=${encodeURIComponent(`Enquiry about ${hostel.name}`)}&body=${encodeURIComponent(baseMsg)}`} className="flex items-center justify-center gap-2 rounded-lg border border-border bg-background px-4 py-2.5 text-sm font-medium hover:bg-secondary">
-                        <Mail className="h-4 w-4" /> Send email
-                      </a>
-                    )}
-                  </div>
-                );
-              }}
-            </RoomPicker>
+            {!user ? (
+              <div className="space-y-3 rounded-xl border border-dashed border-primary/40 bg-primary/5 p-4 text-center">
+                <div className="text-sm font-semibold">🔒 Full details are for members</div>
+                <p className="text-xs text-muted-foreground">Sign in to view the hostel name, prices and owner contact details.</p>
+                <Link to="/auth" className="inline-flex w-full items-center justify-center rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground hover:opacity-90">
+                  Sign in to view
+                </Link>
+                <Link to="/auth" className="block text-xs text-muted-foreground underline-offset-2 hover:underline">
+                  New here? Create a free account
+                </Link>
+              </div>
+            ) : (
+              <RoomPicker hostel={hostel}>
+                {(selectedRoom) => {
+                  const baseMsg = `Hi! I'm interested in *${hostel.name}*${hostel.location ? ` (${hostel.location})` : ""}.${selectedRoom ? ` I'd like to book the *${selectedRoom.name}* room${selectedRoom.price ? ` at GH₵${selectedRoom.price.toLocaleString()}` : ""}.` : ""} Could you share availability and next steps?\n\n— Sent via HostelHub by Adabah`;
+                  const waUrl = hostel.whatsapp ? `https://wa.me/${hostel.whatsapp.replace(/\D/g, "")}?text=${encodeURIComponent(baseMsg)}` : null;
+                  return (
+                    <div className="space-y-2">
+                      {waUrl && (
+                        <a href={waUrl} target="_blank" rel="noreferrer" className="flex items-center justify-center gap-2 rounded-lg bg-[color:var(--whatsapp)] px-4 py-3 text-sm font-medium text-[color:var(--whatsapp-foreground)] shadow-sm transition hover:opacity-90">
+                          <MessageSquare className="h-4 w-4" /> Message on WhatsApp
+                        </a>
+                      )}
+                      {hostel.contact_phone && (
+                        <a href={`tel:${hostel.contact_phone}`} className="flex items-center justify-center gap-2 rounded-lg border border-border bg-background px-4 py-2.5 text-sm font-medium hover:bg-secondary">
+                          <Phone className="h-4 w-4" /> Call {hostel.contact_phone}
+                        </a>
+                      )}
+                      {hostel.contact_email && (
+                        <a href={`mailto:${hostel.contact_email}?subject=${encodeURIComponent(`Enquiry about ${hostel.name}`)}&body=${encodeURIComponent(baseMsg)}`} className="flex items-center justify-center gap-2 rounded-lg border border-border bg-background px-4 py-2.5 text-sm font-medium hover:bg-secondary">
+                          <Mail className="h-4 w-4" /> Send email
+                        </a>
+                      )}
+                    </div>
+                  );
+                }}
+              </RoomPicker>
+            )}
 
             {user && (
               <Button variant="outline" className="w-full" onClick={() => toggle(hostel.id)}>
@@ -1395,13 +1421,18 @@ export function AuthPage() {
     }
     setLoading(true);
     if (mode === "signup") {
+      if (!phone.trim()) {
+        setLoading(false);
+        toast.error("Phone number is required.");
+        return;
+      }
       const { error } = await supabase.auth.signUp({
         email, password,
         options: { emailRedirectTo: window.location.origin, data: { full_name: name, phone } },
       });
       setLoading(false);
       if (error) toast.error(error.message);
-      else toast.success("Check your email to confirm your account.");
+      else toast.success("Account created — welcome to HostelHub!");
     } else {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       setLoading(false);
@@ -1507,10 +1538,12 @@ export function AuthPage() {
                       />
                     </div>
                     <div className="space-y-1.5">
-                      <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Phone (optional)</Label>
+                      <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Phone</Label>
                       <Input
                         value={phone}
                         onChange={(e) => setPhone(e.target.value)}
+                        required
+                        type="tel"
                         maxLength={20}
                         placeholder="+233..."
                         className="h-12 rounded-xl border-border bg-background text-base"
