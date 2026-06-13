@@ -48,6 +48,7 @@ import {
   type Hostel,
   type RoomOption,
   type HeroSetting,
+  type FounderSetting,
 } from "@/lib/data";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
