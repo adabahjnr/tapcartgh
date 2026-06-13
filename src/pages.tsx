@@ -713,7 +713,7 @@ export function HostelDetailPage() {
               </div>
             ) : null}
 
-            <ReviewsSection hostelId={hostel.id} reviews={reviews} onPosted={refetchReviews} />
+            
           </div>
 
           <aside className="space-y-3 rounded-2xl border border-border bg-card p-5 h-fit">
