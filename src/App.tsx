@@ -1,4 +1,5 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
+import { useEffect } from "react";
 import { Toaster } from "sonner";
 import { AuthProvider } from "./lib/auth-context";
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
