@@ -27,6 +27,7 @@ import {
   Trash2,
   Users2,
   Image as ImageIcon,
+  SlidersHorizontal,
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
