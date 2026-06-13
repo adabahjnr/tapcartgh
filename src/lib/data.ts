@@ -377,3 +377,37 @@ export function avgRating(reviews: Review[]) {
   if (!reviews.length) return 0;
   return reviews.reduce((a, r) => a + (r.rating ?? 0), 0) / reviews.length;
 }
+
+/* ================== SITE SETTINGS ================== */
+
+export type HeroSetting = { image_url: string | null; dim: number };
+
+export function useSiteSetting<T = unknown>(key: string, fallback: T) {
+  const [value, setValue] = useState<T>(fallback);
+  const [loading, setLoading] = useState(true);
+
+  const refetch = useCallback(async () => {
+    if (!supabase) {
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    const { data } = await supabase.from("site_settings").select("value").eq("key", key).maybeSingle();
+    if (data && data.value) setValue(data.value as T);
+    setLoading(false);
+  }, [key]);
+
+  useEffect(() => {
+    refetch();
+  }, [refetch]);
+
+  return { value, loading, refetch };
+}
+
+export async function setSiteSetting(key: string, value: unknown) {
+  if (!supabase) return { error: "Not configured" };
+  const { error } = await supabase
+    .from("site_settings")
+    .upsert({ key, value, updated_at: new Date().toISOString() });
+  return { error: error?.message };
+}

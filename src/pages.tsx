@@ -26,6 +26,7 @@ import {
   X,
   Trash2,
   Users2,
+  Image as ImageIcon,
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
@@ -41,9 +42,12 @@ import {
   useMyOwnerApplication,
   useOwnerApplications,
   submitOwnerApplication,
+  useSiteSetting,
+  setSiteSetting,
   avgRating,
   type Hostel,
   type RoomOption,
+  type HeroSetting,
 } from "@/lib/data";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -297,6 +301,7 @@ export function HomePage() {
   const navigate = useNavigate();
   const [q, setQ] = useState("");
   const { hostels } = useHostels();
+  const { value: hero } = useSiteSetting<HeroSetting>("hero", { image_url: null, dim: 0.4 });
   const featured = hostels.slice(0, 3);
   const verified = hostels.filter((h) => h.is_verified).slice(0, 3);
   const recent = [...hostels].slice(0, 6);
@@ -309,8 +314,26 @@ export function HomePage() {
   return (
     <PublicLayout>
       <section className="relative overflow-hidden">
-        <div className="absolute inset-0 -z-10 hh-grain opacity-80" />
-        <div className="absolute inset-0 -z-10 bg-gradient-to-b from-transparent via-background/40 to-background" />
+        {hero.image_url && (
+          <>
+            <div
+              className="absolute inset-0 -z-20 bg-cover bg-center"
+              style={{ backgroundImage: `url(${hero.image_url})` }}
+              aria-hidden
+            />
+            <div
+              className="absolute inset-0 -z-10 bg-black"
+              style={{ opacity: Math.max(0, Math.min(1, hero.dim ?? 0.4)) }}
+              aria-hidden
+            />
+          </>
+        )}
+        {!hero.image_url && (
+          <>
+            <div className="absolute inset-0 -z-10 hh-grain opacity-80" />
+            <div className="absolute inset-0 -z-10 bg-gradient-to-b from-transparent via-background/40 to-background" />
+          </>
+        )}
 
         {/* Floating doodles */}
         <DoodleStar className="absolute left-6 top-10 h-10 w-10 text-[var(--pop-sun)] hh-wiggle" />
@@ -325,14 +348,14 @@ export function HomePage() {
               <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
               UMaT student housing
             </span>
-            <h1 className="text-4xl font-bold tracking-tight md:text-6xl">
+            <h1 className={`text-4xl font-bold tracking-tight md:text-6xl ${hero.image_url ? "text-white drop-shadow-lg" : ""}`}>
               Your hostel,{" "}
               <span className="relative inline-block">
                 <span className="relative z-10">sorted.</span>
                 <DoodleSquiggle className="absolute -bottom-3 left-0 z-0 h-4 w-full text-primary" />
               </span>
             </h1>
-            <p className="mx-auto mt-5 max-w-lg text-base text-muted-foreground">
+            <p className={`mx-auto mt-5 max-w-lg text-base ${hero.image_url ? "text-white/85" : "text-muted-foreground"}`}>
               Browse verified hostels around campus. Compare. Connect.
             </p>
             <form onSubmit={onSearch} className="mt-8 flex w-full items-center gap-2 rounded-full border border-border bg-card p-2 shadow-lg shadow-primary/5">
@@ -1163,6 +1186,7 @@ const adminNav = [
   { to: "/admin/requests", label: "Requests", icon: ListChecks },
   { to: "/admin/community", label: "Community", icon: Users },
   { to: "/admin/feedback", label: "Feedback", icon: MessageSquare },
+  { to: "/admin/appearance", label: "Appearance", icon: ImageIcon },
 ];
 
 
@@ -1979,6 +2003,115 @@ export function AdminFeedbackPage() {
             <p className="mt-2 text-sm">{f.message}</p>
           </Card>
         ))}
+      </div>
+    </div>
+  );
+}
+
+export function AdminAppearancePage() {
+  const { user } = useAuth();
+  const { value: hero, refetch } = useSiteSetting<HeroSetting>("hero", { image_url: null, dim: 0.4 });
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [dim, setDim] = useState(0.4);
+  const [uploading, setUploading] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    setImageUrl(hero.image_url);
+    setDim(hero.dim ?? 0.4);
+  }, [hero.image_url, hero.dim]);
+
+  const upload = async (file: File) => {
+    if (!supabase || !user) return;
+    if (file.size > 8 * 1024 * 1024) {
+      toast.error("Image must be smaller than 8MB");
+      return;
+    }
+    setUploading(true);
+    const ext = file.name.split(".").pop()?.toLowerCase() ?? "jpg";
+    const path = `hero/${crypto.randomUUID()}.${ext}`;
+    const { error } = await supabase.storage
+      .from("site-assets")
+      .upload(path, file, { cacheControl: "3600", upsert: false, contentType: file.type });
+    if (error) {
+      toast.error(error.message);
+      setUploading(false);
+      return;
+    }
+    const { data } = supabase.storage.from("site-assets").getPublicUrl(path);
+    setImageUrl(data.publicUrl);
+    setUploading(false);
+  };
+
+  const save = async () => {
+    setSaving(true);
+    const { error } = await setSiteSetting("hero", { image_url: imageUrl, dim });
+    setSaving(false);
+    if (error) toast.error(error);
+    else {
+      toast.success("Hero updated");
+      refetch();
+    }
+  };
+
+  return (
+    <div>
+      <h1 className="text-2xl font-semibold">Appearance</h1>
+      <p className="text-sm text-muted-foreground">Set a background image for the home page hero and tune the dim overlay.</p>
+
+      <div className="mt-6 grid max-w-3xl gap-6">
+        <div>
+          <Label>Hero background image</Label>
+          <div className="mt-2 overflow-hidden rounded-xl border border-border bg-secondary">
+            {imageUrl ? (
+              <div className="relative">
+                <img src={imageUrl} alt="Hero preview" className="h-56 w-full object-cover" />
+                <div className="absolute inset-0 bg-black" style={{ opacity: dim }} />
+                <div className="absolute inset-0 flex items-center justify-center text-2xl font-bold text-white drop-shadow">
+                  Preview
+                </div>
+              </div>
+            ) : (
+              <div className="flex h-56 items-center justify-center text-sm text-muted-foreground">No hero image set — using default gradient.</div>
+            )}
+          </div>
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <label className="inline-flex cursor-pointer items-center gap-2 rounded-md border border-border px-3 py-2 text-sm hover:bg-secondary">
+              <Upload className="h-4 w-4" />
+              {uploading ? "Uploading..." : imageUrl ? "Replace image" : "Upload image"}
+              <input
+                type="file"
+                accept="image/*"
+                className="hidden"
+                disabled={uploading}
+                onChange={(e) => { if (e.target.files?.[0]) upload(e.target.files[0]); e.target.value = ""; }}
+              />
+            </label>
+            {imageUrl && (
+              <Button variant="ghost" size="sm" onClick={() => setImageUrl(null)}>
+                <Trash2 className="mr-2 h-4 w-4" /> Remove image
+              </Button>
+            )}
+          </div>
+        </div>
+
+        <div>
+          <Label>Dim overlay ({Math.round(dim * 100)}%)</Label>
+          <input
+            type="range"
+            min={0}
+            max={1}
+            step={0.05}
+            value={dim}
+            onChange={(e) => setDim(Number(e.target.value))}
+            className="mt-2 w-full accent-primary"
+          />
+          <p className="mt-1 text-xs text-muted-foreground">Higher values darken the image for better text contrast.</p>
+        </div>
+
+        <div className="flex gap-2">
+          <Button onClick={save} disabled={saving}>{saving ? "Saving..." : "Save changes"}</Button>
+        </div>
       </div>
     </div>
   );
