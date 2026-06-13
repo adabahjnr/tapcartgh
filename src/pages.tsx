@@ -741,7 +741,7 @@ function HostelCard({ hostel }: { hostel: Hostel }) {
         </div>
         {!user && (
           <div className="mt-3 rounded-lg border border-dashed border-primary/40 bg-primary/5 px-3 py-2 text-xs text-primary">
-            🔒 <Link to="/auth" onClick={(e) => e.stopPropagation()} className="font-semibold underline underline-offset-2">Sign in</Link> to view name & price
+            🔒 <span className="font-semibold underline underline-offset-2">Sign in</span> to view name & price
           </div>
         )}
       </div>
