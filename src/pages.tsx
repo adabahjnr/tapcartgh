@@ -1062,23 +1062,40 @@ export function HostelDetailPage() {
 
   const gallery = hostel.gallery ?? [];
   const isFav = ids.includes(hostel.id);
+  const allImages = [hostel.cover_image, ...gallery].filter(Boolean) as string[];
+  const [lightboxIdx, setLightboxIdx] = useState<number | null>(null);
+  const openLightbox = (src: string) => {
+    const i = allImages.indexOf(src);
+    setLightboxIdx(i >= 0 ? i : 0);
+  };
 
   return (
     <PublicLayout>
       <div className="mx-auto max-w-6xl px-4 py-8 md:px-6">
         <div className="grid gap-4 md:grid-cols-3">
-          <div className="md:col-span-2 aspect-[16/10] overflow-hidden rounded-2xl bg-secondary">
+          <button
+            type="button"
+            onClick={() => hostel.cover_image && openLightbox(hostel.cover_image)}
+            className="group md:col-span-2 aspect-[16/10] overflow-hidden rounded-2xl bg-secondary text-left"
+            aria-label="View full image"
+          >
             {hostel.cover_image ? (
-              <img src={hostel.cover_image} alt={hostel.name} className="h-full w-full object-cover" />
+              <img src={hostel.cover_image} alt={hostel.name} className="h-full w-full object-cover transition group-hover:scale-[1.02]" />
             ) : (
               <div className="flex h-full items-center justify-center text-muted-foreground">No cover image</div>
             )}
-          </div>
+          </button>
           <div className="grid grid-cols-2 gap-3">
             {gallery.slice(0, 4).map((src, i) => (
-              <div key={i} className="aspect-square overflow-hidden rounded-xl bg-secondary">
-                <img src={src} alt="" className="h-full w-full object-cover" />
-              </div>
+              <button
+                type="button"
+                key={i}
+                onClick={() => openLightbox(src)}
+                className="aspect-square overflow-hidden rounded-xl bg-secondary"
+                aria-label="View full image"
+              >
+                <img src={src} alt="" className="h-full w-full object-cover transition hover:scale-[1.03]" />
+              </button>
             ))}
             {gallery.length === 0 && (
               <div className="col-span-2 flex aspect-[2/1] items-center justify-center rounded-xl border border-dashed border-border text-xs text-muted-foreground">
@@ -1087,6 +1104,44 @@ export function HostelDetailPage() {
             )}
           </div>
         </div>
+
+        {lightboxIdx !== null && allImages[lightboxIdx] && (
+          <div
+            className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 p-4 backdrop-blur-sm animate-in fade-in"
+            onClick={() => setLightboxIdx(null)}
+          >
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); setLightboxIdx(null); }}
+              className="absolute right-4 top-4 rounded-full bg-white/10 p-2 text-white hover:bg-white/20"
+              aria-label="Close"
+            >
+              <X className="h-5 w-5" />
+            </button>
+            {allImages.length > 1 && (
+              <>
+                <button
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); setLightboxIdx((i) => (i === null ? 0 : (i - 1 + allImages.length) % allImages.length)); }}
+                  className="absolute left-4 top-1/2 -translate-y-1/2 rounded-full bg-white/10 p-3 text-white hover:bg-white/20"
+                  aria-label="Previous"
+                >‹</button>
+                <button
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); setLightboxIdx((i) => (i === null ? 0 : (i + 1) % allImages.length)); }}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 rounded-full bg-white/10 p-3 text-white hover:bg-white/20"
+                  aria-label="Next"
+                >›</button>
+              </>
+            )}
+            <img
+              src={allImages[lightboxIdx]}
+              alt={hostel.name}
+              onClick={(e) => e.stopPropagation()}
+              className="max-h-[90vh] max-w-[95vw] rounded-xl object-contain shadow-2xl"
+            />
+          </div>
+        )}
 
         <div className="mt-8 grid gap-8 md:grid-cols-[1fr,320px]">
           <div>
@@ -1772,6 +1827,7 @@ const ownerNav = [
 const adminNav = [
   { to: "/admin", label: "Overview", icon: LayoutDashboard },
   { to: "/admin/owners", label: "Owner applications", icon: ClipboardCheck },
+  { to: "/admin/users", label: "Users", icon: Users },
   { to: "/admin/hostels", label: "Hostels", icon: Building2 },
   { to: "/admin/reviews", label: "Reviews", icon: Star },
   { to: "/admin/requests", label: "Requests", icon: ListChecks },
@@ -3157,6 +3213,112 @@ export function AdminOwnersPage() {
 }
 
 
+export function AdminUsersPage() {
+  type Row = { id: string; full_name: string | null; phone: string | null; created_at?: string; roles: string[] };
+  const [rows, setRows] = useState<Row[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [query, setQuery] = useState("");
+  const [busy, setBusy] = useState<string | null>(null);
+
+  const refetch = async () => {
+    if (!supabase) return;
+    setLoading(true);
+    const [{ data: profiles }, { data: roles }] = await Promise.all([
+      supabase.from("profiles").select("id, full_name, phone, created_at").order("created_at", { ascending: false }),
+      supabase.from("user_roles").select("user_id, role"),
+    ]);
+    const roleMap = new Map<string, string[]>();
+    ((roles as { user_id: string; role: string }[]) ?? []).forEach((r) => {
+      const arr = roleMap.get(r.user_id) ?? [];
+      arr.push(r.role);
+      roleMap.set(r.user_id, arr);
+    });
+    setRows(
+      ((profiles as { id: string; full_name: string | null; phone: string | null; created_at?: string }[]) ?? []).map((p) => ({
+        ...p,
+        roles: roleMap.get(p.id) ?? [],
+      })),
+    );
+    setLoading(false);
+  };
+
+  useEffect(() => { refetch(); }, []);
+
+  const setOwner = async (userId: string, makeOwner: boolean) => {
+    if (!supabase) return;
+    setBusy(userId);
+    if (makeOwner) {
+      const { error } = await supabase.from("user_roles").insert({ user_id: userId, role: "owner" });
+      if (error) toast.error(error.message); else toast.success("Promoted to owner");
+    } else {
+      const { error } = await supabase.from("user_roles").delete().eq("user_id", userId).eq("role", "owner");
+      if (error) toast.error(error.message); else toast.success("Owner access revoked");
+    }
+    setBusy(null);
+    refetch();
+  };
+
+  const filtered = rows.filter((r) => {
+    const q = query.trim().toLowerCase();
+    if (!q) return true;
+    return (r.full_name ?? "").toLowerCase().includes(q) || (r.phone ?? "").toLowerCase().includes(q) || r.id.toLowerCase().includes(q);
+  });
+
+  return (
+    <div>
+      <h1 className="text-2xl font-semibold">All users</h1>
+      <p className="text-sm text-muted-foreground">View every registered user and promote students to owner accounts.</p>
+
+      <div className="mt-4 max-w-sm">
+        <Input placeholder="Search by name, phone, or ID" value={query} onChange={(e) => setQuery(e.target.value)} />
+      </div>
+
+      <div className="mt-6 space-y-3">
+        {loading && <RingLoader />}
+        {!loading && filtered.length === 0 && (
+          <div className="rounded-2xl border border-dashed border-border p-12 text-center text-sm text-muted-foreground">
+            No users found.
+          </div>
+        )}
+        {filtered.map((u) => {
+          const isAdmin = u.roles.includes("admin");
+          const isOwner = u.roles.includes("owner");
+          return (
+            <Card key={u.id} className="p-4">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="font-medium">{u.full_name || "Unnamed user"}</span>
+                    {isAdmin && <Badge>Admin</Badge>}
+                    {isOwner ? <Badge variant="secondary">Owner</Badge> : <Badge variant="outline">Student</Badge>}
+                  </div>
+                  <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
+                    {u.phone && <span>{u.phone}</span>}
+                    <span className="font-mono truncate max-w-[18rem]">{u.id}</span>
+                    {u.created_at && <span>Joined {new Date(u.created_at).toLocaleDateString()}</span>}
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  {isAdmin ? (
+                    <span className="text-xs text-muted-foreground">Admin role managed in DB</span>
+                  ) : isOwner ? (
+                    <Button size="sm" variant="outline" disabled={busy === u.id} onClick={() => setOwner(u.id, false)}>
+                      Revoke owner
+                    </Button>
+                  ) : (
+                    <Button size="sm" disabled={busy === u.id} onClick={() => setOwner(u.id, true)}>
+                      <CheckCircle2 className="mr-1 h-4 w-4" /> Make owner
+                    </Button>
+                  )}
+                </div>
+              </div>
+            </Card>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
 
 export function NotFoundPage() {
   return (
