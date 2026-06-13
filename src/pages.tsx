@@ -1221,41 +1221,58 @@ export function HostelDetailPage() {
           <aside className="space-y-4 rounded-2xl border border-border bg-gradient-to-br from-card to-secondary/40 p-5 h-fit shadow-sm">
             <div>
               <div className="text-xs uppercase tracking-wide text-muted-foreground">Starting from</div>
-              <div className="mt-1 text-3xl font-semibold tracking-tight">
-                {hostel.price_min ? (
-                  <>GH₵{hostel.price_min.toLocaleString()}{hostel.price_max ? <span className="text-muted-foreground text-xl"> – {hostel.price_max.toLocaleString()}</span> : null}</>
+              <div className={`mt-1 text-3xl font-semibold tracking-tight ${!user ? "select-none blur-[6px]" : ""}`}>
+                {user ? (
+                  hostel.price_min ? (
+                    <>GH₵{hostel.price_min.toLocaleString()}{hostel.price_max ? <span className="text-muted-foreground text-xl"> – {hostel.price_max.toLocaleString()}</span> : null}</>
+                  ) : (
+                    <span className="text-xl">Contact for price</span>
+                  )
                 ) : (
-                  <span className="text-xl">Contact for price</span>
+                  <span>GH₵••••</span>
                 )}
               </div>
               <div className="text-xs text-muted-foreground">per academic year</div>
             </div>
 
-            <RoomPicker hostel={hostel}>
-              {(selectedRoom) => {
-                const baseMsg = `Hi! I'm interested in *${hostel.name}*${hostel.location ? ` (${hostel.location})` : ""}.${selectedRoom ? ` I'd like to book the *${selectedRoom.name}* room${selectedRoom.price ? ` at GH₵${selectedRoom.price.toLocaleString()}` : ""}.` : ""} Could you share availability and next steps?\n\n— Sent via HostelHub by Adabah`;
-                const waUrl = hostel.whatsapp ? `https://wa.me/${hostel.whatsapp.replace(/\D/g, "")}?text=${encodeURIComponent(baseMsg)}` : null;
-                return (
-                  <div className="space-y-2">
-                    {waUrl && (
-                      <a href={waUrl} target="_blank" rel="noreferrer" className="flex items-center justify-center gap-2 rounded-lg bg-[color:var(--whatsapp)] px-4 py-3 text-sm font-medium text-[color:var(--whatsapp-foreground)] shadow-sm transition hover:opacity-90">
-                        <MessageSquare className="h-4 w-4" /> Message on WhatsApp
-                      </a>
-                    )}
-                    {hostel.contact_phone && (
-                      <a href={`tel:${hostel.contact_phone}`} className="flex items-center justify-center gap-2 rounded-lg border border-border bg-background px-4 py-2.5 text-sm font-medium hover:bg-secondary">
-                        <Phone className="h-4 w-4" /> Call {hostel.contact_phone}
-                      </a>
-                    )}
-                    {hostel.contact_email && (
-                      <a href={`mailto:${hostel.contact_email}?subject=${encodeURIComponent(`Enquiry about ${hostel.name}`)}&body=${encodeURIComponent(baseMsg)}`} className="flex items-center justify-center gap-2 rounded-lg border border-border bg-background px-4 py-2.5 text-sm font-medium hover:bg-secondary">
-                        <Mail className="h-4 w-4" /> Send email
-                      </a>
-                    )}
-                  </div>
-                );
-              }}
-            </RoomPicker>
+            {!user ? (
+              <div className="space-y-3 rounded-xl border border-dashed border-primary/40 bg-primary/5 p-4 text-center">
+                <div className="text-sm font-semibold">🔒 Full details are for members</div>
+                <p className="text-xs text-muted-foreground">Sign in to view the hostel name, prices and owner contact details.</p>
+                <Link to="/auth" className="inline-flex w-full items-center justify-center rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground hover:opacity-90">
+                  Sign in to view
+                </Link>
+                <Link to="/auth" className="block text-xs text-muted-foreground underline-offset-2 hover:underline">
+                  New here? Create a free account
+                </Link>
+              </div>
+            ) : (
+              <RoomPicker hostel={hostel}>
+                {(selectedRoom) => {
+                  const baseMsg = `Hi! I'm interested in *${hostel.name}*${hostel.location ? ` (${hostel.location})` : ""}.${selectedRoom ? ` I'd like to book the *${selectedRoom.name}* room${selectedRoom.price ? ` at GH₵${selectedRoom.price.toLocaleString()}` : ""}.` : ""} Could you share availability and next steps?\n\n— Sent via HostelHub by Adabah`;
+                  const waUrl = hostel.whatsapp ? `https://wa.me/${hostel.whatsapp.replace(/\D/g, "")}?text=${encodeURIComponent(baseMsg)}` : null;
+                  return (
+                    <div className="space-y-2">
+                      {waUrl && (
+                        <a href={waUrl} target="_blank" rel="noreferrer" className="flex items-center justify-center gap-2 rounded-lg bg-[color:var(--whatsapp)] px-4 py-3 text-sm font-medium text-[color:var(--whatsapp-foreground)] shadow-sm transition hover:opacity-90">
+                          <MessageSquare className="h-4 w-4" /> Message on WhatsApp
+                        </a>
+                      )}
+                      {hostel.contact_phone && (
+                        <a href={`tel:${hostel.contact_phone}`} className="flex items-center justify-center gap-2 rounded-lg border border-border bg-background px-4 py-2.5 text-sm font-medium hover:bg-secondary">
+                          <Phone className="h-4 w-4" /> Call {hostel.contact_phone}
+                        </a>
+                      )}
+                      {hostel.contact_email && (
+                        <a href={`mailto:${hostel.contact_email}?subject=${encodeURIComponent(`Enquiry about ${hostel.name}`)}&body=${encodeURIComponent(baseMsg)}`} className="flex items-center justify-center gap-2 rounded-lg border border-border bg-background px-4 py-2.5 text-sm font-medium hover:bg-secondary">
+                          <Mail className="h-4 w-4" /> Send email
+                        </a>
+                      )}
+                    </div>
+                  );
+                }}
+              </RoomPicker>
+            )}
 
             {user && (
               <Button variant="outline" className="w-full" onClick={() => toggle(hostel.id)}>
