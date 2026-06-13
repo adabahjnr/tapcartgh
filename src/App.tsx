@@ -44,6 +44,7 @@ export default function App() {
           <Route path="/about" element={<AboutPage />} />
           <Route path="/auth" element={<AuthPage />} />
 
+          <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
           <Route path="/favorites" element={<ProtectedRoute><FavoritesPage /></ProtectedRoute>} />
           <Route path="/requests" element={<ProtectedRoute><MyRequestsPage /></ProtectedRoute>} />
           <Route path="/requests/new" element={<ProtectedRoute><NewRequestPage /></ProtectedRoute>} />
