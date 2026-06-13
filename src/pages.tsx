@@ -429,7 +429,7 @@ export function HomePage() {
 }
 
 
-function Section({ title, subtitle, children }: { title: string; subtitle?: string; children: ReactNode }) {
+function Section({ title, subtitle, action, children }: { title: string; subtitle?: string; action?: ReactNode; children: ReactNode }) {
   return (
     <section className="mx-auto max-w-6xl px-4 py-12 md:px-6">
       <div className="mb-6 flex items-end justify-between gap-4">
@@ -437,8 +437,58 @@ function Section({ title, subtitle, children }: { title: string; subtitle?: stri
           <h2 className="text-2xl font-semibold tracking-tight md:text-3xl">{title}</h2>
           {subtitle && <p className="mt-1 text-sm text-muted-foreground">{subtitle}</p>}
         </div>
+        {action && <div className="shrink-0">{action}</div>}
       </div>
       {children}
+    </section>
+  );
+}
+
+function FounderSection({ founder }: { founder: FounderSetting }) {
+  const scale = founder.scale ?? 1;
+  const ox = founder.offset_x ?? 0;
+  const oy = founder.offset_y ?? 0;
+  return (
+    <section className="relative border-t border-border bg-gradient-to-b from-background to-secondary/30">
+      <div className="mx-auto grid max-w-6xl items-center gap-10 px-4 py-16 md:grid-cols-2 md:px-6 md:py-24">
+        <div className="relative mx-auto w-full max-w-sm">
+          <div className="absolute -inset-3 -z-10 rounded-[2rem] bg-gradient-to-br from-primary/20 via-[var(--pop-coral)]/20 to-[var(--pop-mint)]/20 blur-2xl" />
+          <div className="relative aspect-[4/5] overflow-hidden rounded-3xl border border-border bg-secondary shadow-xl">
+            {founder.image_url ? (
+              <img
+                src={founder.image_url}
+                alt="Adabah Michael Junior — founder of HostelHub"
+                className="h-full w-full object-cover select-none"
+                style={{ transform: `translate(${ox}%, ${oy}%) scale(${scale})`, transformOrigin: "center" }}
+                draggable={false}
+              />
+            ) : (
+              <div className="flex h-full w-full items-center justify-center p-6 text-center text-sm text-muted-foreground">
+                Founder photo coming soon.
+              </div>
+            )}
+          </div>
+        </div>
+        <div>
+          <span className="hh-chip mb-4"><span className="h-1.5 w-1.5 rounded-full bg-primary" />Meet the founder</span>
+          <h2 className="text-3xl font-semibold tracking-tight md:text-4xl">Adabah Michael Junior</h2>
+          <p className="mt-2 text-sm font-medium text-primary">Student · UMaT · Builder of HostelHub</p>
+          <p className="mt-5 text-base leading-relaxed text-muted-foreground">
+            As a student of the University of Mines and Technology (UMaT), Michael felt firsthand how
+            stressful and confusing hostel hunting can be — endless walks under the sun, unclear
+            prices, and no easy way to compare what's actually available. So he built HostelHub: a
+            simple, student-first platform to find, compare and connect with verified hostels around
+            campus in minutes.
+          </p>
+          <p className="mt-4 text-base leading-relaxed text-muted-foreground">
+            Made by a student, for students — so no one else has to figure it out the hard way.
+          </p>
+          <div className="mt-6 flex flex-wrap gap-3">
+            <Button asChild className="rounded-full"><Link to="/about">Our story</Link></Button>
+            <Button asChild variant="outline" className="rounded-full"><Link to="/community">Join the community</Link></Button>
+          </div>
+        </div>
+      </div>
     </section>
   );
 }
