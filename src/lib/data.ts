@@ -408,21 +408,18 @@ export function useLogoUrl(fallback: string) {
     _logoSubs.add(sub);
 
     if (_logoCache === undefined && !_logoPromise && supabase) {
-      _logoPromise = supabase
-        .from("site_settings")
-        .select("value")
-        .eq("key", "logo")
-        .maybeSingle()
-        .then(({ data }) => {
-          const v = ((data?.value as LogoSetting | null)?.image_url) ?? null;
-          _logoCache = v;
-          if (typeof window !== "undefined") {
-            if (v) window.localStorage.setItem("hh_logo_url", v);
-            else window.localStorage.removeItem("hh_logo_url");
-          }
-          _logoSubs.forEach((f) => f(v));
-          return v;
-        });
+      _logoPromise = Promise.resolve(
+        supabase.from("site_settings").select("value").eq("key", "logo").maybeSingle(),
+      ).then(({ data }) => {
+        const v = ((data?.value as LogoSetting | null)?.image_url) ?? null;
+        _logoCache = v;
+        if (typeof window !== "undefined") {
+          if (v) window.localStorage.setItem("hh_logo_url", v);
+          else window.localStorage.removeItem("hh_logo_url");
+        }
+        _logoSubs.forEach((f) => f(v));
+        return v;
+      });
     }
     return () => {
       _logoSubs.delete(sub);
