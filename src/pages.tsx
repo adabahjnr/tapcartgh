@@ -301,6 +301,7 @@ export function HomePage() {
   const navigate = useNavigate();
   const [q, setQ] = useState("");
   const { hostels } = useHostels();
+  const { value: hero } = useSiteSetting<HeroSetting>("hero", { image_url: null, dim: 0.4 });
   const featured = hostels.slice(0, 3);
   const verified = hostels.filter((h) => h.is_verified).slice(0, 3);
   const recent = [...hostels].slice(0, 6);
