@@ -112,14 +112,21 @@
 
 @layer base {
   * { border-color: var(--color-border); }
-  html { -webkit-font-smoothing: antialiased; }
+  html { -webkit-font-smoothing: antialiased; font-size: 17px; }
+  @media (min-width: 768px) { html { font-size: 18px; } }
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
     font-family: ui-sans-serif, system-ui, -apple-system, "Inter", "Segoe UI", sans-serif;
     font-feature-settings: "ss01", "cv11";
+    line-height: 1.65;
   }
-  h1, h2, h3, h4 { letter-spacing: -0.02em; }
+  h1 { font-size: clamp(2.4rem, 5vw + 1rem, 4.5rem); line-height: 1.05; letter-spacing: -0.035em; font-weight: 800; }
+  h2 { font-size: clamp(1.85rem, 2.6vw + 1rem, 3.1rem); line-height: 1.12; letter-spacing: -0.03em; font-weight: 800; }
+  h3 { font-size: clamp(1.4rem, 1.4vw + 0.9rem, 2rem); line-height: 1.2; letter-spacing: -0.02em; font-weight: 700; }
+  h4 { font-size: clamp(1.15rem, 0.6vw + 0.95rem, 1.4rem); line-height: 1.25; letter-spacing: -0.015em; font-weight: 700; }
+  p  { line-height: 1.7; }
+  section { scroll-margin-top: 5rem; }
   ::selection { background: oklch(0.145 0 0); color: white; }
 }
 

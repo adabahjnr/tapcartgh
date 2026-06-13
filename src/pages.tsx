@@ -81,6 +81,7 @@ import { Sheet, SheetContent, SheetTrigger, SheetTitle, SheetHeader } from "@/co
 import { RingLoader, DotLoader } from "@/components/ui/loader";
 import { Slider } from "@/components/ui/slider";
 import { DoodleHouse, DoodleStar, DoodleSquiggle, DoodleKey, DoodleArrow, DoodleCircle } from "@/components/hh/Doodles";
+import { ThemeToggle } from "@/components/hh/ThemeToggle";
 
 /* ================== LAYOUT ================== */
 
@@ -144,6 +145,7 @@ export function PublicLayout({ children }: { children: ReactNode }) {
           </nav>
 
           <div className="flex items-center gap-2">
+            <ThemeToggle className="hidden md:inline-flex" />
             {user ? (
               <>
                 {isAdmin && (
@@ -237,7 +239,11 @@ export function PublicLayout({ children }: { children: ReactNode }) {
                   </>
                 )}
 
-                <div className="mt-6 border-t border-border pt-4">
+                <div className="mt-6 border-t border-border pt-4 space-y-3">
+                  <div className="flex items-center justify-between rounded-xl border border-border px-3 py-2">
+                    <span className="text-sm text-muted-foreground">Theme</span>
+                    <ThemeToggle />
+                  </div>
                   {user ? (
                     <Button variant="outline" className="w-full" onClick={handleSignOut}>
                       <LogOut className="mr-1 h-4 w-4" /> Sign out
