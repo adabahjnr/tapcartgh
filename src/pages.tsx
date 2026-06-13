@@ -717,7 +717,7 @@ function HostelCard({ hostel }: { hostel: Hostel }) {
       </div>
       <div className="p-4">
         <div className="flex items-start justify-between gap-2">
-          <h3 className="font-semibold leading-tight">{hostel.name}</h3>
+          <h3 className="text-base font-semibold leading-tight tracking-tight md:text-lg">{hostel.name}</h3>
           <div className="shrink-0 text-sm font-medium">
             {hostel.price_min ? `GH₵${hostel.price_min}${hostel.price_max ? `–${hostel.price_max}` : ""}` : "—"}
           </div>
