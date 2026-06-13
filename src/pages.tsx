@@ -1421,13 +1421,18 @@ export function AuthPage() {
     }
     setLoading(true);
     if (mode === "signup") {
+      if (!phone.trim()) {
+        setLoading(false);
+        toast.error("Phone number is required.");
+        return;
+      }
       const { error } = await supabase.auth.signUp({
         email, password,
         options: { emailRedirectTo: window.location.origin, data: { full_name: name, phone } },
       });
       setLoading(false);
       if (error) toast.error(error.message);
-      else toast.success("Check your email to confirm your account.");
+      else toast.success("Account created — welcome to HostelHub!");
     } else {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       setLoading(false);
