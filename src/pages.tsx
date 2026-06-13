@@ -33,6 +33,7 @@ import { Card } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { RingLoader } from "@/components/ui/loader";
+import { DoodleHouse, DoodleStar, DoodleSquiggle, DoodleKey, DoodleArrow, DoodleCircle } from "@/components/hh/Doodles";
 
 /* ================== LAYOUT ================== */
 
@@ -183,29 +184,51 @@ export function HomePage() {
   return (
     <PublicLayout>
       <section className="relative overflow-hidden">
-        <div className="absolute inset-0 -z-10 bg-gradient-to-b from-accent/30 via-background to-background" />
-        <div className="mx-auto max-w-6xl px-4 py-16 md:px-6 md:py-24">
-          <div className="mx-auto max-w-3xl text-center">
-            <Badge variant="secondary" className="mb-4">For UMaT students</Badge>
-            <h1 className="text-4xl font-semibold tracking-tight md:text-6xl">Find Your Next Hostel Near UMaT</h1>
-            <p className="mt-5 text-base text-muted-foreground md:text-lg">
-              Browse verified hostels, compare prices, view photos, and connect directly with hostel managers.
+        <div className="absolute inset-0 -z-10 hh-grain opacity-80" />
+        <div className="absolute inset-0 -z-10 bg-gradient-to-b from-transparent via-background/40 to-background" />
+
+        {/* Floating doodles */}
+        <DoodleStar className="absolute left-6 top-10 h-10 w-10 text-[var(--pop-sun)] hh-wiggle" />
+        <DoodleHouse className="absolute right-8 top-16 h-16 w-16 text-primary hh-bob" />
+        <DoodleSquiggle className="absolute left-10 bottom-6 h-6 w-32 text-[var(--pop-coral)]" />
+        <DoodleKey className="absolute right-12 bottom-10 h-12 w-12 text-[var(--pop-mint)] hh-wiggle" />
+        <DoodleCircle className="absolute left-1/2 top-24 hidden h-40 w-40 -translate-x-1/2 text-primary/15 md:block hh-spin-slow" />
+
+        <div className="mx-auto max-w-5xl px-4 py-20 md:px-6 md:py-28">
+          <div className="mx-auto max-w-3xl text-center hh-pop">
+            <span className="hh-chip mb-5">
+              <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
+              UMaT student housing
+            </span>
+            <h1 className="text-4xl font-bold tracking-tight md:text-6xl">
+              Your hostel,{" "}
+              <span className="relative inline-block">
+                <span className="relative z-10">sorted.</span>
+                <DoodleSquiggle className="absolute -bottom-3 left-0 z-0 h-4 w-full text-primary" />
+              </span>
+            </h1>
+            <p className="mx-auto mt-5 max-w-lg text-base text-muted-foreground">
+              Browse verified hostels around campus. Compare. Connect.
             </p>
-            <form onSubmit={onSearch} className="mt-8 flex w-full items-center gap-2 rounded-2xl border border-border bg-card p-2 shadow-sm">
-              <Search className="ml-2 h-5 w-5 text-muted-foreground" />
+            <form onSubmit={onSearch} className="mt-8 flex w-full items-center gap-2 rounded-full border border-border bg-card p-2 shadow-lg shadow-primary/5">
+              <Search className="ml-3 h-5 w-5 text-muted-foreground" />
               <input
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
-                placeholder="Search hostel name, area, or amenity..."
+                placeholder="Search by name, area, or amenity…"
                 className="flex-1 bg-transparent px-2 py-2 text-sm outline-none placeholder:text-muted-foreground"
               />
-              <Button type="submit">Search</Button>
+              <Button type="submit" className="rounded-full px-5">Search</Button>
             </form>
-            <div className="mt-4 flex flex-wrap items-center justify-center gap-2 text-xs text-muted-foreground">
-              <span>Popular:</span>
-              {["Tarkwa", "Brahabebome", "T-Polo", "Cyanide", "Akoon"].map((p) => (
-                <Link key={p} to={`/hostels?q=${encodeURIComponent(p)}`} className="rounded-full border border-border bg-background px-3 py-1 hover:bg-secondary">
-                  {p}
+            <div className="mt-5 flex flex-wrap items-center justify-center gap-2 text-xs">
+              {["Tarkwa", "Brahabebome", "T-Polo", "Cyanide", "Akoon"].map((p, i) => (
+                <Link
+                  key={p}
+                  to={`/hostels?q=${encodeURIComponent(p)}`}
+                  className="rounded-full border border-border bg-background/70 px-3 py-1.5 text-muted-foreground backdrop-blur transition hover:-translate-y-0.5 hover:border-primary hover:text-primary"
+                  style={{ animation: `hh-pop-in .5s ${i * 80}ms both` }}
+                >
+                  #{p}
                 </Link>
               ))}
             </div>
@@ -213,43 +236,43 @@ export function HomePage() {
         </div>
       </section>
 
-      <Section title="Featured hostels" subtitle="Popular picks among UMaT students.">
+      <Section title="Featured" subtitle="Student favorites this week.">
         <HostelGrid hostels={featured} empty="No featured hostels yet." />
       </Section>
 
-      <Section title="Verified hostels" subtitle="Reviewed and approved by HostelHub.">
+      <Section title="Verified" subtitle="Checked and approved.">
         <HostelGrid hostels={verified} empty="No verified hostels yet." />
       </Section>
 
-      <Section title="Recently added" subtitle="Fresh listings around campus.">
-        <HostelGrid hostels={recent} empty="No hostels listed yet — be the first to submit one." />
+      <Section title="Fresh listings" subtitle="Just added around campus.">
+        <HostelGrid hostels={recent} empty="No hostels listed yet — be the first." />
       </Section>
 
-      <section className="border-t border-border bg-secondary/30">
-        <div className="mx-auto grid max-w-6xl gap-8 px-4 py-16 md:grid-cols-2 md:px-6">
-          <div>
-            <h2 className="text-3xl font-semibold tracking-tight">Join the student community</h2>
-            <p className="mt-3 text-muted-foreground">
-              Get updates on new hostel listings, accommodation opportunities, and campus events — straight to your inbox.
-            </p>
-            <Button asChild className="mt-6">
-              <Link to="/community">Join now</Link>
-            </Button>
+      <section className="relative overflow-hidden border-t border-border bg-secondary/40">
+        <DoodleArrow className="absolute right-10 top-6 hidden h-16 w-28 text-primary/60 md:block" />
+        <div className="mx-auto grid max-w-6xl gap-6 px-4 py-16 md:grid-cols-2 md:px-6">
+          <div className="rounded-3xl border border-border bg-card p-7 transition hover:-translate-y-1 hover:shadow-xl">
+            <div className="mb-3 inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-primary/15 text-primary">
+              <Users className="h-5 w-5" />
+            </div>
+            <h2 className="text-2xl font-semibold tracking-tight">Join the community</h2>
+            <p className="mt-2 text-sm text-muted-foreground">New listings & campus updates in your inbox.</p>
+            <Button asChild className="mt-5 rounded-full"><Link to="/community">Join now</Link></Button>
           </div>
-          <div className="rounded-2xl border border-border bg-card p-6">
-            <h3 className="text-lg font-semibold">Need help finding a place?</h3>
-            <p className="mt-2 text-sm text-muted-foreground">
-              Tell us your budget and preferred area — we'll match you with suitable hostels.
-            </p>
-            <Button asChild variant="outline" className="mt-4">
-              <Link to="/requests/new">Submit a request</Link>
-            </Button>
+          <div className="rounded-3xl border border-border bg-card p-7 transition hover:-translate-y-1 hover:shadow-xl">
+            <div className="mb-3 inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-[var(--pop-coral)]/20 text-[var(--pop-coral)]">
+              <Send className="h-5 w-5" />
+            </div>
+            <h2 className="text-2xl font-semibold tracking-tight">Need help?</h2>
+            <p className="mt-2 text-sm text-muted-foreground">Tell us your budget — we'll match you.</p>
+            <Button asChild variant="outline" className="mt-5 rounded-full"><Link to="/requests/new">Submit a request</Link></Button>
           </div>
         </div>
       </section>
     </PublicLayout>
   );
 }
+
 
 function Section({ title, subtitle, children }: { title: string; subtitle?: string; children: ReactNode }) {
   return (

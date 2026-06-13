@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Toaster } from "sonner";
 import { AuthProvider } from "./lib/auth-context";
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
+import { ThemeToggle } from "./components/hh/ThemeToggle";
 import {
   HomePage,
   HostelsPage,
@@ -31,6 +32,7 @@ export default function App() {
     <BrowserRouter>
       <AuthProvider>
         <Toaster richColors position="top-center" />
+        <ThemeToggle />
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/hostels" element={<HostelsPage />} />
