@@ -1062,23 +1062,40 @@ export function HostelDetailPage() {
 
   const gallery = hostel.gallery ?? [];
   const isFav = ids.includes(hostel.id);
+  const allImages = [hostel.cover_image, ...gallery].filter(Boolean) as string[];
+  const [lightboxIdx, setLightboxIdx] = useState<number | null>(null);
+  const openLightbox = (src: string) => {
+    const i = allImages.indexOf(src);
+    setLightboxIdx(i >= 0 ? i : 0);
+  };
 
   return (
     <PublicLayout>
       <div className="mx-auto max-w-6xl px-4 py-8 md:px-6">
         <div className="grid gap-4 md:grid-cols-3">
-          <div className="md:col-span-2 aspect-[16/10] overflow-hidden rounded-2xl bg-secondary">
+          <button
+            type="button"
+            onClick={() => hostel.cover_image && openLightbox(hostel.cover_image)}
+            className="group md:col-span-2 aspect-[16/10] overflow-hidden rounded-2xl bg-secondary text-left"
+            aria-label="View full image"
+          >
             {hostel.cover_image ? (
-              <img src={hostel.cover_image} alt={hostel.name} className="h-full w-full object-cover" />
+              <img src={hostel.cover_image} alt={hostel.name} className="h-full w-full object-cover transition group-hover:scale-[1.02]" />
             ) : (
               <div className="flex h-full items-center justify-center text-muted-foreground">No cover image</div>
             )}
-          </div>
+          </button>
           <div className="grid grid-cols-2 gap-3">
             {gallery.slice(0, 4).map((src, i) => (
-              <div key={i} className="aspect-square overflow-hidden rounded-xl bg-secondary">
-                <img src={src} alt="" className="h-full w-full object-cover" />
-              </div>
+              <button
+                type="button"
+                key={i}
+                onClick={() => openLightbox(src)}
+                className="aspect-square overflow-hidden rounded-xl bg-secondary"
+                aria-label="View full image"
+              >
+                <img src={src} alt="" className="h-full w-full object-cover transition hover:scale-[1.03]" />
+              </button>
             ))}
             {gallery.length === 0 && (
               <div className="col-span-2 flex aspect-[2/1] items-center justify-center rounded-xl border border-dashed border-border text-xs text-muted-foreground">
@@ -1087,6 +1104,44 @@ export function HostelDetailPage() {
             )}
           </div>
         </div>
+
+        {lightboxIdx !== null && allImages[lightboxIdx] && (
+          <div
+            className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 p-4 backdrop-blur-sm animate-in fade-in"
+            onClick={() => setLightboxIdx(null)}
+          >
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); setLightboxIdx(null); }}
+              className="absolute right-4 top-4 rounded-full bg-white/10 p-2 text-white hover:bg-white/20"
+              aria-label="Close"
+            >
+              <X className="h-5 w-5" />
+            </button>
+            {allImages.length > 1 && (
+              <>
+                <button
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); setLightboxIdx((i) => (i === null ? 0 : (i - 1 + allImages.length) % allImages.length)); }}
+                  className="absolute left-4 top-1/2 -translate-y-1/2 rounded-full bg-white/10 p-3 text-white hover:bg-white/20"
+                  aria-label="Previous"
+                >‹</button>
+                <button
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); setLightboxIdx((i) => (i === null ? 0 : (i + 1) % allImages.length)); }}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 rounded-full bg-white/10 p-3 text-white hover:bg-white/20"
+                  aria-label="Next"
+                >›</button>
+              </>
+            )}
+            <img
+              src={allImages[lightboxIdx]}
+              alt={hostel.name}
+              onClick={(e) => e.stopPropagation()}
+              className="max-h-[90vh] max-w-[95vw] rounded-xl object-contain shadow-2xl"
+            />
+          </div>
+        )}
 
         <div className="mt-8 grid gap-8 md:grid-cols-[1fr,320px]">
           <div>
