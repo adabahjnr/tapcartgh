@@ -1177,7 +1177,7 @@ export function HostelDetailPage() {
                 <Badge variant="secondary" className="gap-1"><Star className="h-3 w-3 fill-amber-400 text-amber-400" /> {avg.toFixed(1)} · {reviews.length} review{reviews.length === 1 ? "" : "s"}</Badge>
               )}
             </div>
-            <h1 className="mt-3 text-3xl font-semibold tracking-tight">{hostel.name}</h1>
+            <h1 className={`mt-3 text-3xl font-semibold tracking-tight ${!user ? "select-none blur-[6px]" : ""}`}>{user ? hostel.name : "Hostel name hidden — sign in to view"}</h1>
             <div className="mt-1 flex items-center gap-1 text-sm text-muted-foreground">
               <MapPin className="h-4 w-4" /> {hostel.location ?? "Location not set"}
               {hostel.distance_km != null && <span> · {hostel.distance_km} km from campus</span>}
