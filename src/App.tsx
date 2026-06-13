@@ -64,6 +64,7 @@ export default function App() {
             <Route path="requests" element={<AdminRequestsPage />} />
             <Route path="community" element={<AdminCommunityPage />} />
             <Route path="feedback" element={<AdminFeedbackPage />} />
+            <Route path="appearance" element={<AdminAppearancePage />} />
           </Route>
 
           <Route path="*" element={<NotFoundPage />} />
