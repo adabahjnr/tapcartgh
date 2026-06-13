@@ -1827,6 +1827,7 @@ const ownerNav = [
 const adminNav = [
   { to: "/admin", label: "Overview", icon: LayoutDashboard },
   { to: "/admin/owners", label: "Owner applications", icon: ClipboardCheck },
+  { to: "/admin/users", label: "Users", icon: Users },
   { to: "/admin/hostels", label: "Hostels", icon: Building2 },
   { to: "/admin/reviews", label: "Reviews", icon: Star },
   { to: "/admin/requests", label: "Requests", icon: ListChecks },
