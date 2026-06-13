@@ -48,6 +48,7 @@ import {
   type Hostel,
   type RoomOption,
   type HeroSetting,
+  type FounderSetting,
 } from "@/lib/data";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -302,9 +303,13 @@ export function HomePage() {
   const [q, setQ] = useState("");
   const { hostels } = useHostels();
   const { value: hero } = useSiteSetting<HeroSetting>("hero", { image_url: null, dim: 0.4 });
-  const featured = hostels.slice(0, 3);
-  const verified = hostels.filter((h) => h.is_verified).slice(0, 3);
-  const recent = [...hostels].slice(0, 6);
+  const { value: founder } = useSiteSetting<FounderSetting>("founder", {
+    image_url: null,
+    scale: 1,
+    offset_x: 0,
+    offset_y: 0,
+  });
+  const available = hostels.filter((h) => h.availability !== "full").slice(0, 6);
 
   const onSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -384,17 +389,20 @@ export function HomePage() {
         </div>
       </section>
 
-      <Section title="Featured" subtitle="Student favorites this week.">
-        <HostelGrid hostels={featured} empty="No featured hostels yet." />
+      <Section
+        title="Available hostels"
+        subtitle="Rooms open right now around campus."
+        action={
+          <Button asChild variant="outline" className="rounded-full">
+            <Link to="/hostels">See more</Link>
+          </Button>
+        }
+      >
+        <HostelGrid hostels={available} empty="No hostels listed yet — be the first." />
       </Section>
 
-      <Section title="Verified" subtitle="Checked and approved.">
-        <HostelGrid hostels={verified} empty="No verified hostels yet." />
-      </Section>
+      <FounderSection founder={founder} />
 
-      <Section title="Fresh listings" subtitle="Just added around campus.">
-        <HostelGrid hostels={recent} empty="No hostels listed yet — be the first." />
-      </Section>
 
       <section className="relative overflow-hidden border-t border-border bg-secondary/40">
         <DoodleArrow className="absolute right-10 top-6 hidden h-16 w-28 text-primary/60 md:block" />
@@ -422,7 +430,7 @@ export function HomePage() {
 }
 
 
-function Section({ title, subtitle, children }: { title: string; subtitle?: string; children: ReactNode }) {
+function Section({ title, subtitle, action, children }: { title: string; subtitle?: string; action?: ReactNode; children: ReactNode }) {
   return (
     <section className="mx-auto max-w-6xl px-4 py-12 md:px-6">
       <div className="mb-6 flex items-end justify-between gap-4">
@@ -430,8 +438,58 @@ function Section({ title, subtitle, children }: { title: string; subtitle?: stri
           <h2 className="text-2xl font-semibold tracking-tight md:text-3xl">{title}</h2>
           {subtitle && <p className="mt-1 text-sm text-muted-foreground">{subtitle}</p>}
         </div>
+        {action && <div className="shrink-0">{action}</div>}
       </div>
       {children}
+    </section>
+  );
+}
+
+function FounderSection({ founder }: { founder: FounderSetting }) {
+  const scale = founder.scale ?? 1;
+  const ox = founder.offset_x ?? 0;
+  const oy = founder.offset_y ?? 0;
+  return (
+    <section className="relative border-t border-border bg-gradient-to-b from-background to-secondary/30">
+      <div className="mx-auto grid max-w-6xl items-center gap-10 px-4 py-16 md:grid-cols-2 md:px-6 md:py-24">
+        <div className="relative mx-auto w-full max-w-sm">
+          <div className="absolute -inset-3 -z-10 rounded-[2rem] bg-gradient-to-br from-primary/20 via-[var(--pop-coral)]/20 to-[var(--pop-mint)]/20 blur-2xl" />
+          <div className="relative aspect-[4/5] overflow-hidden rounded-3xl border border-border bg-secondary shadow-xl">
+            {founder.image_url ? (
+              <img
+                src={founder.image_url}
+                alt="Adabah Michael Junior — founder of HostelHub"
+                className="h-full w-full object-cover select-none"
+                style={{ transform: `translate(${ox}%, ${oy}%) scale(${scale})`, transformOrigin: "center" }}
+                draggable={false}
+              />
+            ) : (
+              <div className="flex h-full w-full items-center justify-center p-6 text-center text-sm text-muted-foreground">
+                Founder photo coming soon.
+              </div>
+            )}
+          </div>
+        </div>
+        <div>
+          <span className="hh-chip mb-4"><span className="h-1.5 w-1.5 rounded-full bg-primary" />Meet the founder</span>
+          <h2 className="text-3xl font-semibold tracking-tight md:text-4xl">Adabah Michael Junior</h2>
+          <p className="mt-2 text-sm font-medium text-primary">Student · UMaT · Builder of HostelHub</p>
+          <p className="mt-5 text-base leading-relaxed text-muted-foreground">
+            As a student of the University of Mines and Technology (UMaT), Michael felt firsthand how
+            stressful and confusing hostel hunting can be — endless walks under the sun, unclear
+            prices, and no easy way to compare what's actually available. So he built HostelHub: a
+            simple, student-first platform to find, compare and connect with verified hostels around
+            campus in minutes.
+          </p>
+          <p className="mt-4 text-base leading-relaxed text-muted-foreground">
+            Made by a student, for students — so no one else has to figure it out the hard way.
+          </p>
+          <div className="mt-6 flex flex-wrap gap-3">
+            <Button asChild className="rounded-full"><Link to="/about">Our story</Link></Button>
+            <Button asChild variant="outline" className="rounded-full"><Link to="/community">Join the community</Link></Button>
+          </div>
+        </div>
+      </div>
     </section>
   );
 }
@@ -2183,6 +2241,150 @@ export function AdminAppearancePage() {
 
         <div className="flex gap-2">
           <Button onClick={save} disabled={saving}>{saving ? "Saving..." : "Save changes"}</Button>
+        </div>
+      </div>
+
+      <FounderEditor />
+    </div>
+  );
+}
+
+function FounderEditor() {
+  const { user } = useAuth();
+  const { value: founder, refetch } = useSiteSetting<FounderSetting>("founder", {
+    image_url: null,
+    scale: 1,
+    offset_x: 0,
+    offset_y: 0,
+  });
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [scale, setScale] = useState(1);
+  const [ox, setOx] = useState(0);
+  const [oy, setOy] = useState(0);
+  const [uploading, setUploading] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    setImageUrl(founder.image_url);
+    setScale(founder.scale ?? 1);
+    setOx(founder.offset_x ?? 0);
+    setOy(founder.offset_y ?? 0);
+  }, [founder.image_url, founder.scale, founder.offset_x, founder.offset_y]);
+
+  const upload = async (file: File) => {
+    if (!supabase || !user) return;
+    if (file.size > 8 * 1024 * 1024) {
+      toast.error("Image must be smaller than 8MB");
+      return;
+    }
+    setUploading(true);
+    const ext = file.name.split(".").pop()?.toLowerCase() ?? "jpg";
+    const path = `founder/${crypto.randomUUID()}.${ext}`;
+    const { error } = await supabase.storage
+      .from("site-assets")
+      .upload(path, file, { cacheControl: "3600", upsert: false, contentType: file.type });
+    if (error) {
+      toast.error(error.message);
+      setUploading(false);
+      return;
+    }
+    const { data } = supabase.storage.from("site-assets").getPublicUrl(path);
+    setImageUrl(data.publicUrl);
+    setScale(1);
+    setOx(0);
+    setOy(0);
+    setUploading(false);
+  };
+
+  const save = async () => {
+    setSaving(true);
+    const { error } = await setSiteSetting("founder", {
+      image_url: imageUrl,
+      scale,
+      offset_x: ox,
+      offset_y: oy,
+    });
+    setSaving(false);
+    if (error) toast.error(error);
+    else {
+      toast.success("Founder section updated");
+      refetch();
+    }
+  };
+
+  return (
+    <div className="mt-12 border-t border-border pt-10">
+      <h2 className="text-xl font-semibold">Founder photo</h2>
+      <p className="text-sm text-muted-foreground">
+        Upload the founder's photo for the homepage. Zoom and pan to frame it nicely before saving.
+      </p>
+
+      <div className="mt-6 grid max-w-3xl gap-6">
+        <div>
+          <Label>Preview (4:5 frame, same as homepage)</Label>
+          <div className="mt-2 mx-auto w-full max-w-xs">
+            <div className="relative aspect-[4/5] overflow-hidden rounded-3xl border border-border bg-secondary shadow">
+              {imageUrl ? (
+                <img
+                  src={imageUrl}
+                  alt="Founder preview"
+                  className="h-full w-full object-cover select-none"
+                  style={{ transform: `translate(${ox}%, ${oy}%) scale(${scale})`, transformOrigin: "center" }}
+                  draggable={false}
+                />
+              ) : (
+                <div className="flex h-full w-full items-center justify-center text-sm text-muted-foreground">
+                  No founder image yet.
+                </div>
+              )}
+            </div>
+          </div>
+          <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
+            <label className="inline-flex cursor-pointer items-center gap-2 rounded-md border border-border px-3 py-2 text-sm hover:bg-secondary">
+              <Upload className="h-4 w-4" />
+              {uploading ? "Uploading..." : imageUrl ? "Replace photo" : "Upload photo"}
+              <input
+                type="file"
+                accept="image/*"
+                className="hidden"
+                disabled={uploading}
+                onChange={(e) => { if (e.target.files?.[0]) upload(e.target.files[0]); e.target.value = ""; }}
+              />
+            </label>
+            {imageUrl && (
+              <Button variant="ghost" size="sm" onClick={() => setImageUrl(null)}>
+                <Trash2 className="mr-2 h-4 w-4" /> Remove
+              </Button>
+            )}
+          </div>
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-3">
+          <div>
+            <Label>Zoom ({scale.toFixed(2)}x)</Label>
+            <input type="range" min={0.5} max={3} step={0.05} value={scale}
+              onChange={(e) => setScale(Number(e.target.value))}
+              className="mt-2 w-full accent-primary" />
+          </div>
+          <div>
+            <Label>Horizontal ({ox}%)</Label>
+            <input type="range" min={-50} max={50} step={1} value={ox}
+              onChange={(e) => setOx(Number(e.target.value))}
+              className="mt-2 w-full accent-primary" />
+          </div>
+          <div>
+            <Label>Vertical ({oy}%)</Label>
+            <input type="range" min={-50} max={50} step={1} value={oy}
+              onChange={(e) => setOy(Number(e.target.value))}
+              className="mt-2 w-full accent-primary" />
+          </div>
+        </div>
+
+        <div className="flex flex-wrap gap-2">
+          <Button onClick={save} disabled={saving}>{saving ? "Saving..." : "Save founder photo"}</Button>
+          <Button variant="outline" onClick={() => { setScale(1); setOx(0); setOy(0); }}>
+            Reset framing
+          </Button>
         </div>
       </div>
     </div>
