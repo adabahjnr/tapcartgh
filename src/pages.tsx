@@ -1882,6 +1882,7 @@ const adminNav = [
   { to: "/admin/community", label: "Community", icon: Users },
   { to: "/admin/feedback", label: "Feedback", icon: MessageSquare },
   { to: "/admin/appearance", label: "Appearance", icon: ImageIcon },
+  { to: "/admin/waitlist", label: "Waitlist", icon: ClipboardCheck },
 ];
 
 
