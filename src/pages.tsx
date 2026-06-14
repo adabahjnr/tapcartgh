@@ -3430,17 +3430,16 @@ export function WaitlistPage() {
     }
     if (!supabase) return;
     setLoading(true);
-    const { data, error } = await supabase
-      .from("waitlist_signups")
-      .insert({ name: name.trim(), phone: phone.trim() })
-      .select("position")
-      .single();
+    const { data, error } = await supabase.rpc("join_waitlist", {
+      _name: name.trim(),
+      _phone: phone.trim(),
+    });
     setLoading(false);
     if (error) {
       toast.error(error.message);
       return;
     }
-    setPosition((data as { position: number }).position);
+    setPosition(Number(data));
     fireConfetti();
   };
 
