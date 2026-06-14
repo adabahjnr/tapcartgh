@@ -3453,17 +3453,25 @@ export function WaitlistPage() {
         <div className="mb-8 flex justify-center"><BrandLogo className="h-14 w-14" /></div>
 
         {position === null ? (
-          <Card className="rounded-2xl border bg-card p-8 shadow-xl sm:p-10">
+          <Card className="relative overflow-hidden rounded-2xl border bg-card p-8 shadow-xl sm:p-10">
+            {/* Brand accent stripe */}
+            <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-primary via-primary to-[#eab308]" />
             <div className="flex items-center gap-2">
-              <span className="flex h-2 w-2 rounded-full bg-primary">
-                <span className="absolute inline-flex h-2 w-2 animate-ping rounded-full bg-primary opacity-60" />
+              <span className="relative flex h-2 w-2">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-60" />
+                <span className="relative inline-flex h-2 w-2 rounded-full bg-primary" />
               </span>
               <span className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
                 Coming soon
               </span>
             </div>
             <h1 className="mt-4 text-3xl font-semibold leading-tight tracking-tight sm:text-4xl">
-              Join the HostelHub waitlist
+              Join the{" "}
+              <span className="relative inline-block">
+                <span className="relative z-10">HostelHub</span>
+                <span className="absolute inset-x-0 bottom-1 -z-0 h-3 bg-[#eab308]/40" />
+              </span>{" "}
+              waitlist
             </h1>
             <p className="mt-3 text-base text-muted-foreground">
               We're putting the finishing touches on the platform. Leave your details and we'll notify you the moment we go live.
@@ -3496,7 +3504,7 @@ export function WaitlistPage() {
               <Button
                 type="submit"
                 disabled={loading}
-                className="h-14 w-full rounded-xl text-base font-medium shadow-sm transition"
+                className="h-14 w-full rounded-xl text-base font-medium shadow-[0_8px_24px_-8px_hsl(var(--primary)/0.55)] transition hover:shadow-[0_10px_28px_-8px_hsl(var(--primary)/0.65)]"
               >
                 {loading ? "Joining..." : "Reserve my spot"}
               </Button>
@@ -3509,8 +3517,9 @@ export function WaitlistPage() {
             </div>
           </Card>
         ) : (
-          <Card className="rounded-2xl border bg-card p-8 text-center shadow-xl sm:p-10">
-            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 text-primary">
+          <Card className="relative overflow-hidden rounded-2xl border bg-card p-8 text-center shadow-xl sm:p-10">
+            <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-primary via-primary to-[#eab308]" />
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 text-primary ring-4 ring-[#eab308]/25">
               <CheckCircle2 className="h-8 w-8" />
             </div>
             <h1 className="mt-5 text-3xl font-semibold tracking-tight sm:text-4xl">
@@ -3519,15 +3528,15 @@ export function WaitlistPage() {
             <p className="mt-2 text-base text-muted-foreground">
               We'll be in touch soon with early access details.
             </p>
-            <div className="mt-8 rounded-xl border bg-muted/30 px-6 py-8">
+            <div className="mt-8 rounded-xl border bg-gradient-to-br from-primary/5 via-transparent to-[#eab308]/10 px-6 py-8">
               <div className="text-xs font-medium uppercase tracking-[0.2em] text-muted-foreground">Your position</div>
-              <div className="mt-2 text-7xl font-semibold tabular-nums text-foreground sm:text-8xl">
+              <div className="mt-2 text-7xl font-semibold tabular-nums text-primary sm:text-8xl">
                 #{position}
               </div>
             </div>
             <Button
               variant="outline"
-              className="mt-7 h-11 rounded-xl px-6"
+              className="mt-7 h-11 rounded-xl border-2 px-6"
               onClick={fireConfetti}
             >
               Celebrate again
