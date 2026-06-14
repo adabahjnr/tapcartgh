@@ -3444,48 +3444,110 @@ export function WaitlistPage() {
   };
 
   return (
-    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-gradient-to-br from-background via-background to-primary/10 px-4 py-16">
-      <div className="pointer-events-none absolute -top-32 -left-32 h-96 w-96 rounded-full bg-primary/30 blur-3xl" />
-      <div className="pointer-events-none absolute -bottom-32 -right-32 h-96 w-96 rounded-full bg-accent/30 blur-3xl" />
-      <div className="relative w-full max-w-md">
-        <div className="mb-6 flex justify-center"><BrandLogo className="h-14 w-14" /></div>
+    <div className="relative flex min-h-screen items-center justify-center overflow-hidden px-4 py-16">
+      {/* Vibrant animated backdrop */}
+      <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(circle_at_20%_15%,hsl(280_90%_60%/0.35),transparent_55%),radial-gradient(circle_at_80%_25%,hsl(190_95%_55%/0.35),transparent_55%),radial-gradient(circle_at_50%_90%,hsl(20_95%_60%/0.35),transparent_55%),linear-gradient(135deg,hsl(var(--background)),hsl(var(--background)))]" />
+      <div className="pointer-events-none absolute -top-24 -left-24 -z-10 h-[28rem] w-[28rem] animate-pulse rounded-full bg-fuchsia-500/30 blur-3xl" />
+      <div className="pointer-events-none absolute -bottom-24 -right-24 -z-10 h-[28rem] w-[28rem] animate-pulse rounded-full bg-cyan-400/30 blur-3xl [animation-delay:1s]" />
+      <div className="pointer-events-none absolute top-1/2 left-1/2 -z-10 h-72 w-72 -translate-x-1/2 -translate-y-1/2 rounded-full bg-amber-400/20 blur-3xl" />
+
+      <div className="relative w-full max-w-xl">
+        <div className="mb-8 flex justify-center"><BrandLogo className="h-16 w-16" /></div>
+
         {position === null ? (
-          <Card className="border-2 p-8 shadow-2xl backdrop-blur">
-            <Badge className="bg-primary/15 text-primary hover:bg-primary/15">Coming soon</Badge>
-            <h1 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">Join the HostelHub waitlist</h1>
-            <p className="mt-2 text-sm text-muted-foreground">
-              We're putting the finishing touches on something special. Drop your details and we'll let you know the moment we open the doors.
-            </p>
-            <form onSubmit={submit} className="mt-6 space-y-3">
-              <div>
-                <Label htmlFor="wl-name">Full name</Label>
-                <Input id="wl-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Ama Mensah" required />
+          <div className="relative rounded-[2rem] p-[2px] shadow-[0_30px_80px_-20px_rgba(124,58,237,0.45)]">
+            {/* Gradient border */}
+            <div className="absolute inset-0 -z-10 rounded-[2rem] bg-[conic-gradient(from_0deg,#a855f7,#06b6d4,#f59e0b,#ef4444,#a855f7)] opacity-90 [filter:blur(2px)]" />
+            <Card className="rounded-[calc(2rem-2px)] border-0 bg-background/85 p-8 backdrop-blur-xl sm:p-10">
+              <div className="flex flex-wrap items-center gap-2">
+                <Badge className="bg-gradient-to-r from-fuchsia-500 to-cyan-500 text-white shadow hover:opacity-95">
+                  ✨ Coming soon
+                </Badge>
+                <Badge variant="outline" className="border-amber-400/60 text-amber-600 dark:text-amber-300">
+                  Limited spots
+                </Badge>
               </div>
-              <div>
-                <Label htmlFor="wl-phone">Phone number</Label>
-                <Input id="wl-phone" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+233 ..." required />
+              <h1 className="mt-4 text-4xl font-bold leading-tight tracking-tight sm:text-5xl">
+                Join the{" "}
+                <span className="bg-gradient-to-r from-fuchsia-500 via-violet-500 to-cyan-500 bg-clip-text text-transparent">
+                  HostelHub
+                </span>{" "}
+                waitlist
+              </h1>
+              <p className="mt-3 text-base text-muted-foreground sm:text-lg">
+                We're putting the finishing touches on something special. Drop your details and we'll let you know the moment we open the doors. 🚪✨
+              </p>
+
+              <form onSubmit={submit} className="mt-8 space-y-5">
+                <div>
+                  <Label htmlFor="wl-name" className="text-base font-medium">Full name</Label>
+                  <Input
+                    id="wl-name"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder="Ama Mensah"
+                    required
+                    className="mt-2 h-14 rounded-2xl border-2 px-5 text-lg shadow-sm transition focus-visible:border-primary focus-visible:ring-4 focus-visible:ring-primary/20"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="wl-phone" className="text-base font-medium">Phone number</Label>
+                  <Input
+                    id="wl-phone"
+                    type="tel"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    placeholder="+233 ..."
+                    required
+                    className="mt-2 h-14 rounded-2xl border-2 px-5 text-lg shadow-sm transition focus-visible:border-primary focus-visible:ring-4 focus-visible:ring-primary/20"
+                  />
+                </div>
+                <Button
+                  type="submit"
+                  disabled={loading}
+                  className="h-14 w-full rounded-2xl bg-gradient-to-r from-fuchsia-500 via-violet-500 to-cyan-500 text-base font-semibold text-white shadow-lg shadow-fuchsia-500/30 transition hover:scale-[1.01] hover:opacity-95 sm:text-lg"
+                >
+                  {loading ? "Joining..." : "🚀 Reserve my spot"}
+                </Button>
+              </form>
+
+              <div className="mt-6 flex items-center justify-center gap-4 text-xs text-muted-foreground">
+                <span className="flex items-center gap-1.5"><CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" /> No spam</span>
+                <span className="flex items-center gap-1.5"><CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" /> Early access</span>
+                <span className="flex items-center gap-1.5"><CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" /> Free</span>
               </div>
-              <Button type="submit" className="h-11 w-full text-base" disabled={loading}>
-                {loading ? "Joining..." : "Join the waitlist"}
-              </Button>
-            </form>
-          </Card>
+            </Card>
+          </div>
         ) : (
-          <Card className="border-2 p-8 text-center shadow-2xl backdrop-blur">
-            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-primary/15 text-primary">
-              <CheckCircle2 className="h-8 w-8" />
-            </div>
-            <h1 className="mt-4 text-2xl font-bold">You're in, {name.split(" ")[0]}!</h1>
-            <p className="mt-1 text-sm text-muted-foreground">You'll be among the first to know when we go live.</p>
-            <div className="mt-6 rounded-2xl border-2 border-dashed border-primary/40 bg-primary/5 px-6 py-8">
-              <div className="text-xs uppercase tracking-wider text-muted-foreground">Your position</div>
-              <div className="mt-1 text-6xl font-bold tabular-nums text-primary">#{position}</div>
-            </div>
-            <Button variant="outline" className="mt-6" onClick={fireConfetti}>Celebrate again 🎉</Button>
-          </Card>
+          <div className="relative rounded-[2rem] p-[2px] shadow-[0_30px_80px_-20px_rgba(16,185,129,0.45)]">
+            <div className="absolute inset-0 -z-10 rounded-[2rem] bg-[conic-gradient(from_0deg,#10b981,#06b6d4,#a855f7,#f59e0b,#10b981)] opacity-90 [filter:blur(2px)]" />
+            <Card className="rounded-[calc(2rem-2px)] border-0 bg-background/85 p-8 text-center backdrop-blur-xl sm:p-10">
+              <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-emerald-400 to-cyan-500 text-white shadow-lg shadow-emerald-500/40">
+                <CheckCircle2 className="h-10 w-10" />
+              </div>
+              <h1 className="mt-5 text-3xl font-bold sm:text-4xl">
+                You're in, <span className="bg-gradient-to-r from-fuchsia-500 to-cyan-500 bg-clip-text text-transparent">{name.split(" ")[0]}</span>!
+              </h1>
+              <p className="mt-2 text-base text-muted-foreground">You'll be among the first to know when we go live. 🎉</p>
+              <div className="mt-7 rounded-3xl border-2 border-dashed border-fuchsia-400/50 bg-gradient-to-br from-fuchsia-500/10 via-violet-500/10 to-cyan-500/10 px-6 py-10">
+                <div className="text-xs font-medium uppercase tracking-[0.2em] text-muted-foreground">Your position</div>
+                <div className="mt-2 bg-gradient-to-r from-fuchsia-500 via-violet-500 to-cyan-500 bg-clip-text text-7xl font-extrabold tabular-nums text-transparent sm:text-8xl">
+                  #{position}
+                </div>
+              </div>
+              <Button
+                variant="outline"
+                className="mt-7 h-12 rounded-2xl border-2 px-6 text-base"
+                onClick={fireConfetti}
+              >
+                🎉 Celebrate again
+              </Button>
+            </Card>
+          </div>
         )}
-        <p className="mt-6 text-center text-xs text-muted-foreground">
-          Are you an admin? <Link to="/auth" className="underline">Sign in</Link>
+
+        <p className="mt-8 text-center text-sm text-muted-foreground">
+          Are you an admin? <Link to="/auth" className="font-medium text-primary underline-offset-4 hover:underline">Sign in</Link>
         </p>
       </div>
     </div>
