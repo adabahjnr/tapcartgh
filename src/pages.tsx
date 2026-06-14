@@ -3413,7 +3413,7 @@ export function WaitlistPage() {
   const fireConfetti = async () => {
     const confetti = (await import("canvas-confetti")).default;
     const end = Date.now() + 1500;
-    const colors = ["hsl(var(--primary))", "#0f172a", "#475569", "#94a3b8", "#cbd5e1"];
+    const colors = ["hsl(var(--primary))", "#eab308", "#16a34a", "#facc15", "#0f172a"];
     (function frame() {
       confetti({ particleCount: 6, angle: 60, spread: 70, origin: { x: 0 }, colors });
       confetti({ particleCount: 6, angle: 120, spread: 70, origin: { x: 1 }, colors });
