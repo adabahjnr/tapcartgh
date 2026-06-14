@@ -32,6 +32,28 @@ create policy "Admins delete waitlist"
   on public.waitlist_signups for delete to authenticated
   using (public.has_role(auth.uid(), 'admin'));
 
+-- Public function so anonymous users can join and immediately learn their position.
+create or replace function public.join_waitlist(_name text, _phone text)
+returns bigint
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  new_position bigint;
+begin
+  if coalesce(btrim(_name), '') = '' or coalesce(btrim(_phone), '') = '' then
+    raise exception 'Name and phone are required';
+  end if;
+  insert into public.waitlist_signups (name, phone)
+  values (btrim(_name), btrim(_phone))
+  returning position into new_position;
+  return new_position;
+end;
+$$;
+
+grant execute on function public.join_waitlist(text, text) to anon, authenticated;
+
 -- Seed waitlist mode setting (off by default)
 insert into public.site_settings (key, value)
 values ('waitlist_mode', jsonb_build_object('enabled', false))
