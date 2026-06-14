@@ -29,6 +29,8 @@ import {
   AdminOwnersPage,
   AdminUsersPage,
   AdminAppearancePage,
+  AdminWaitlistPage,
+  WaitlistGate,
   ProfilePage,
   NotFoundPage,
 } from "./pages";
