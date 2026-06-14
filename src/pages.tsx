@@ -3413,7 +3413,7 @@ export function WaitlistPage() {
   const fireConfetti = async () => {
     const confetti = (await import("canvas-confetti")).default;
     const end = Date.now() + 1500;
-    const colors = ["#7c3aed", "#f59e0b", "#10b981", "#ef4444", "#3b82f6"];
+    const colors = ["hsl(var(--primary))", "#0f172a", "#475569", "#94a3b8", "#cbd5e1"];
     (function frame() {
       confetti({ particleCount: 6, angle: 60, spread: 70, origin: { x: 0 }, colors });
       confetti({ particleCount: 6, angle: 120, spread: 70, origin: { x: 1 }, colors });
@@ -3444,110 +3444,99 @@ export function WaitlistPage() {
   };
 
   return (
-    <div className="relative flex min-h-screen items-center justify-center overflow-hidden px-4 py-16">
-      {/* Vibrant animated backdrop */}
-      <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(circle_at_20%_15%,hsl(280_90%_60%/0.35),transparent_55%),radial-gradient(circle_at_80%_25%,hsl(190_95%_55%/0.35),transparent_55%),radial-gradient(circle_at_50%_90%,hsl(20_95%_60%/0.35),transparent_55%),linear-gradient(135deg,hsl(var(--background)),hsl(var(--background)))]" />
-      <div className="pointer-events-none absolute -top-24 -left-24 -z-10 h-[28rem] w-[28rem] animate-pulse rounded-full bg-fuchsia-500/30 blur-3xl" />
-      <div className="pointer-events-none absolute -bottom-24 -right-24 -z-10 h-[28rem] w-[28rem] animate-pulse rounded-full bg-cyan-400/30 blur-3xl [animation-delay:1s]" />
-      <div className="pointer-events-none absolute top-1/2 left-1/2 -z-10 h-72 w-72 -translate-x-1/2 -translate-y-1/2 rounded-full bg-amber-400/20 blur-3xl" />
+    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-background px-4 py-16">
+      {/* Subtle professional backdrop */}
+      <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(circle_at_15%_10%,hsl(var(--primary)/0.10),transparent_55%),radial-gradient(circle_at_85%_90%,hsl(var(--primary)/0.08),transparent_55%)]" />
+      <div className="pointer-events-none absolute inset-0 -z-10 opacity-[0.025] [background-image:linear-gradient(to_right,hsl(var(--foreground))_1px,transparent_1px),linear-gradient(to_bottom,hsl(var(--foreground))_1px,transparent_1px)] [background-size:48px_48px]" />
 
       <div className="relative w-full max-w-xl">
-        <div className="mb-8 flex justify-center"><BrandLogo className="h-16 w-16" /></div>
+        <div className="mb-8 flex justify-center"><BrandLogo className="h-14 w-14" /></div>
 
         {position === null ? (
-          <div className="relative rounded-[2rem] p-[2px] shadow-[0_30px_80px_-20px_rgba(124,58,237,0.45)]">
-            {/* Gradient border */}
-            <div className="absolute inset-0 -z-10 rounded-[2rem] bg-[conic-gradient(from_0deg,#a855f7,#06b6d4,#f59e0b,#ef4444,#a855f7)] opacity-90 [filter:blur(2px)]" />
-            <Card className="rounded-[calc(2rem-2px)] border-0 bg-background/85 p-8 backdrop-blur-xl sm:p-10">
-              <div className="flex flex-wrap items-center gap-2">
-                <Badge className="bg-gradient-to-r from-fuchsia-500 to-cyan-500 text-white shadow hover:opacity-95">
-                  ✨ Coming soon
-                </Badge>
-                <Badge variant="outline" className="border-amber-400/60 text-amber-600 dark:text-amber-300">
-                  Limited spots
-                </Badge>
-              </div>
-              <h1 className="mt-4 text-4xl font-bold leading-tight tracking-tight sm:text-5xl">
-                Join the{" "}
-                <span className="bg-gradient-to-r from-fuchsia-500 via-violet-500 to-cyan-500 bg-clip-text text-transparent">
-                  HostelHub
-                </span>{" "}
-                waitlist
-              </h1>
-              <p className="mt-3 text-base text-muted-foreground sm:text-lg">
-                We're putting the finishing touches on something special. Drop your details and we'll let you know the moment we open the doors. 🚪✨
-              </p>
+          <Card className="rounded-2xl border bg-card p-8 shadow-xl sm:p-10">
+            <div className="flex items-center gap-2">
+              <span className="flex h-2 w-2 rounded-full bg-primary">
+                <span className="absolute inline-flex h-2 w-2 animate-ping rounded-full bg-primary opacity-60" />
+              </span>
+              <span className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
+                Coming soon
+              </span>
+            </div>
+            <h1 className="mt-4 text-3xl font-semibold leading-tight tracking-tight sm:text-4xl">
+              Join the HostelHub waitlist
+            </h1>
+            <p className="mt-3 text-base text-muted-foreground">
+              We're putting the finishing touches on the platform. Leave your details and we'll notify you the moment we go live.
+            </p>
 
-              <form onSubmit={submit} className="mt-8 space-y-5">
-                <div>
-                  <Label htmlFor="wl-name" className="text-base font-medium">Full name</Label>
-                  <Input
-                    id="wl-name"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    placeholder="Ama Mensah"
-                    required
-                    className="mt-2 h-14 rounded-2xl border-2 px-5 text-lg shadow-sm transition focus-visible:border-primary focus-visible:ring-4 focus-visible:ring-primary/20"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="wl-phone" className="text-base font-medium">Phone number</Label>
-                  <Input
-                    id="wl-phone"
-                    type="tel"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    placeholder="+233 ..."
-                    required
-                    className="mt-2 h-14 rounded-2xl border-2 px-5 text-lg shadow-sm transition focus-visible:border-primary focus-visible:ring-4 focus-visible:ring-primary/20"
-                  />
-                </div>
-                <Button
-                  type="submit"
-                  disabled={loading}
-                  className="h-14 w-full rounded-2xl bg-gradient-to-r from-fuchsia-500 via-violet-500 to-cyan-500 text-base font-semibold text-white shadow-lg shadow-fuchsia-500/30 transition hover:scale-[1.01] hover:opacity-95 sm:text-lg"
-                >
-                  {loading ? "Joining..." : "🚀 Reserve my spot"}
-                </Button>
-              </form>
-
-              <div className="mt-6 flex items-center justify-center gap-4 text-xs text-muted-foreground">
-                <span className="flex items-center gap-1.5"><CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" /> No spam</span>
-                <span className="flex items-center gap-1.5"><CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" /> Early access</span>
-                <span className="flex items-center gap-1.5"><CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" /> Free</span>
+            <form onSubmit={submit} className="mt-8 space-y-5">
+              <div>
+                <Label htmlFor="wl-name" className="text-sm font-medium">Full name</Label>
+                <Input
+                  id="wl-name"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="Ama Mensah"
+                  required
+                  className="mt-2 h-14 rounded-xl border px-4 text-base shadow-sm transition focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/25"
+                />
               </div>
-            </Card>
-          </div>
-        ) : (
-          <div className="relative rounded-[2rem] p-[2px] shadow-[0_30px_80px_-20px_rgba(16,185,129,0.45)]">
-            <div className="absolute inset-0 -z-10 rounded-[2rem] bg-[conic-gradient(from_0deg,#10b981,#06b6d4,#a855f7,#f59e0b,#10b981)] opacity-90 [filter:blur(2px)]" />
-            <Card className="rounded-[calc(2rem-2px)] border-0 bg-background/85 p-8 text-center backdrop-blur-xl sm:p-10">
-              <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-emerald-400 to-cyan-500 text-white shadow-lg shadow-emerald-500/40">
-                <CheckCircle2 className="h-10 w-10" />
-              </div>
-              <h1 className="mt-5 text-3xl font-bold sm:text-4xl">
-                You're in, <span className="bg-gradient-to-r from-fuchsia-500 to-cyan-500 bg-clip-text text-transparent">{name.split(" ")[0]}</span>!
-              </h1>
-              <p className="mt-2 text-base text-muted-foreground">You'll be among the first to know when we go live. 🎉</p>
-              <div className="mt-7 rounded-3xl border-2 border-dashed border-fuchsia-400/50 bg-gradient-to-br from-fuchsia-500/10 via-violet-500/10 to-cyan-500/10 px-6 py-10">
-                <div className="text-xs font-medium uppercase tracking-[0.2em] text-muted-foreground">Your position</div>
-                <div className="mt-2 bg-gradient-to-r from-fuchsia-500 via-violet-500 to-cyan-500 bg-clip-text text-7xl font-extrabold tabular-nums text-transparent sm:text-8xl">
-                  #{position}
-                </div>
+              <div>
+                <Label htmlFor="wl-phone" className="text-sm font-medium">Phone number</Label>
+                <Input
+                  id="wl-phone"
+                  type="tel"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  placeholder="+233 ..."
+                  required
+                  className="mt-2 h-14 rounded-xl border px-4 text-base shadow-sm transition focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/25"
+                />
               </div>
               <Button
-                variant="outline"
-                className="mt-7 h-12 rounded-2xl border-2 px-6 text-base"
-                onClick={fireConfetti}
+                type="submit"
+                disabled={loading}
+                className="h-14 w-full rounded-xl text-base font-medium shadow-sm transition"
               >
-                🎉 Celebrate again
+                {loading ? "Joining..." : "Reserve my spot"}
               </Button>
-            </Card>
-          </div>
+            </form>
+
+            <div className="mt-6 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-xs text-muted-foreground">
+              <span className="flex items-center gap-1.5"><CheckCircle2 className="h-3.5 w-3.5 text-primary" /> No spam, ever</span>
+              <span className="flex items-center gap-1.5"><CheckCircle2 className="h-3.5 w-3.5 text-primary" /> Priority early access</span>
+              <span className="flex items-center gap-1.5"><CheckCircle2 className="h-3.5 w-3.5 text-primary" /> Free to join</span>
+            </div>
+          </Card>
+        ) : (
+          <Card className="rounded-2xl border bg-card p-8 text-center shadow-xl sm:p-10">
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 text-primary">
+              <CheckCircle2 className="h-8 w-8" />
+            </div>
+            <h1 className="mt-5 text-3xl font-semibold tracking-tight sm:text-4xl">
+              You're on the list, {name.split(" ")[0]}.
+            </h1>
+            <p className="mt-2 text-base text-muted-foreground">
+              We'll be in touch soon with early access details.
+            </p>
+            <div className="mt-8 rounded-xl border bg-muted/30 px-6 py-8">
+              <div className="text-xs font-medium uppercase tracking-[0.2em] text-muted-foreground">Your position</div>
+              <div className="mt-2 text-7xl font-semibold tabular-nums text-foreground sm:text-8xl">
+                #{position}
+              </div>
+            </div>
+            <Button
+              variant="outline"
+              className="mt-7 h-11 rounded-xl px-6"
+              onClick={fireConfetti}
+            >
+              Celebrate again
+            </Button>
+          </Card>
         )}
 
         <p className="mt-8 text-center text-sm text-muted-foreground">
-          Are you an admin? <Link to="/auth" className="font-medium text-primary underline-offset-4 hover:underline">Sign in</Link>
+          Are you an admin? <Link to="/auth" className="font-medium text-foreground underline-offset-4 hover:underline">Sign in</Link>
         </p>
       </div>
     </div>
