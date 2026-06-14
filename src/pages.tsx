@@ -3379,3 +3379,246 @@ export function NotFoundPage() {
     </PublicLayout>
   );
 }
+
+/* ================== WAITLIST ================== */
+
+export type WaitlistMode = { enabled: boolean };
+
+export function useWaitlistMode() {
+  const [enabled, setEnabled] = useState<boolean | null>(null);
+  const refetch = async () => {
+    if (!supabase) { setEnabled(false); return; }
+    const { data } = await supabase
+      .from("site_settings")
+      .select("value")
+      .eq("key", "waitlist_mode")
+      .maybeSingle();
+    setEnabled(!!(data?.value as WaitlistMode | null)?.enabled);
+  };
+  useEffect(() => {
+    refetch();
+    const id = setInterval(refetch, 30000);
+    return () => clearInterval(id);
+  }, []);
+  return { enabled, refetch };
+}
+
+export function WaitlistPage() {
+  const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [position, setPosition] = useState<number | null>(null);
+
+  const fireConfetti = async () => {
+    const confetti = (await import("canvas-confetti")).default;
+    const end = Date.now() + 1500;
+    const colors = ["#7c3aed", "#f59e0b", "#10b981", "#ef4444", "#3b82f6"];
+    (function frame() {
+      confetti({ particleCount: 6, angle: 60, spread: 70, origin: { x: 0 }, colors });
+      confetti({ particleCount: 6, angle: 120, spread: 70, origin: { x: 1 }, colors });
+      if (Date.now() < end) requestAnimationFrame(frame);
+    })();
+    confetti({ particleCount: 160, spread: 100, origin: { y: 0.6 }, colors });
+  };
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!name.trim() || !phone.trim()) {
+      toast.error("Please enter your name and phone number.");
+      return;
+    }
+    if (!supabase) return;
+    setLoading(true);
+    const { data, error } = await supabase
+      .from("waitlist_signups")
+      .insert({ name: name.trim(), phone: phone.trim() })
+      .select("position")
+      .single();
+    setLoading(false);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    setPosition((data as { position: number }).position);
+    fireConfetti();
+  };
+
+  return (
+    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-gradient-to-br from-background via-background to-primary/10 px-4 py-16">
+      <div className="pointer-events-none absolute -top-32 -left-32 h-96 w-96 rounded-full bg-primary/30 blur-3xl" />
+      <div className="pointer-events-none absolute -bottom-32 -right-32 h-96 w-96 rounded-full bg-accent/30 blur-3xl" />
+      <div className="relative w-full max-w-md">
+        <div className="mb-6 flex justify-center"><BrandLogo className="h-14 w-14" /></div>
+        {position === null ? (
+          <Card className="border-2 p-8 shadow-2xl backdrop-blur">
+            <Badge className="bg-primary/15 text-primary hover:bg-primary/15">Coming soon</Badge>
+            <h1 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">Join the HostelHub waitlist</h1>
+            <p className="mt-2 text-sm text-muted-foreground">
+              We're putting the finishing touches on something special. Drop your details and we'll let you know the moment we open the doors.
+            </p>
+            <form onSubmit={submit} className="mt-6 space-y-3">
+              <div>
+                <Label htmlFor="wl-name">Full name</Label>
+                <Input id="wl-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Ama Mensah" required />
+              </div>
+              <div>
+                <Label htmlFor="wl-phone">Phone number</Label>
+                <Input id="wl-phone" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+233 ..." required />
+              </div>
+              <Button type="submit" className="h-11 w-full text-base" disabled={loading}>
+                {loading ? "Joining..." : "Join the waitlist"}
+              </Button>
+            </form>
+          </Card>
+        ) : (
+          <Card className="border-2 p-8 text-center shadow-2xl backdrop-blur">
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-primary/15 text-primary">
+              <CheckCircle2 className="h-8 w-8" />
+            </div>
+            <h1 className="mt-4 text-2xl font-bold">You're in, {name.split(" ")[0]}!</h1>
+            <p className="mt-1 text-sm text-muted-foreground">You'll be among the first to know when we go live.</p>
+            <div className="mt-6 rounded-2xl border-2 border-dashed border-primary/40 bg-primary/5 px-6 py-8">
+              <div className="text-xs uppercase tracking-wider text-muted-foreground">Your position</div>
+              <div className="mt-1 text-6xl font-bold tabular-nums text-primary">#{position}</div>
+            </div>
+            <Button variant="outline" className="mt-6" onClick={fireConfetti}>Celebrate again 🎉</Button>
+          </Card>
+        )}
+        <p className="mt-6 text-center text-xs text-muted-foreground">
+          Are you an admin? <Link to="/auth" className="underline">Sign in</Link>
+        </p>
+      </div>
+    </div>
+  );
+}
+
+export function WaitlistGate({ children }: { children: ReactNode }) {
+  const { enabled } = useWaitlistMode();
+  const { isAdmin, loading: rolesLoading } = useRoles();
+  const { loading: authLoading } = useAuth();
+  const location = useLocation();
+
+  if (enabled === null || authLoading || rolesLoading) {
+    return <div className="flex min-h-screen items-center justify-center bg-background"><RingLoader /></div>;
+  }
+  if (!enabled || isAdmin) return <>{children}</>;
+  // Allow admin sign-in to remain reachable
+  if (location.pathname === "/auth" || location.pathname.startsWith("/admin")) return <>{children}</>;
+  return <WaitlistPage />;
+}
+
+export function AdminWaitlistPage() {
+  const [items, setItems] = useState<{ id: string; position: number; name: string; phone: string; created_at: string }[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { value: mode, refetch: refetchMode } = useSiteSetting<WaitlistMode>("waitlist_mode", { enabled: false });
+  const [saving, setSaving] = useState(false);
+
+  const load = async () => {
+    if (!supabase) return;
+    setLoading(true);
+    const { data } = await supabase
+      .from("waitlist_signups")
+      .select("id, position, name, phone, created_at")
+      .order("position", { ascending: true });
+    setItems((data as typeof items) ?? []);
+    setLoading(false);
+  };
+  useEffect(() => { load(); }, []);
+
+  const toggle = async (next: boolean) => {
+    setSaving(true);
+    const { error } = await setSiteSetting("waitlist_mode", { enabled: next });
+    setSaving(false);
+    if (error) { toast.error(error); return; }
+    toast.success(next ? "Waitlist mode is now ON — only admins can access the site." : "Waitlist mode is OFF.");
+    refetchMode();
+  };
+
+  const downloadExcel = async () => {
+    const XLSX = await import("xlsx");
+    const rows = items.map((i) => ({
+      Position: i.position,
+      Name: i.name,
+      Phone: i.phone,
+      "Signed up": new Date(i.created_at).toLocaleString(),
+    }));
+    const ws = XLSX.utils.json_to_sheet(rows);
+    ws["!cols"] = [{ wch: 10 }, { wch: 28 }, { wch: 18 }, { wch: 22 }];
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Waitlist");
+    XLSX.writeFile(wb, `hostelhub-waitlist-${new Date().toISOString().slice(0, 10)}.xlsx`);
+  };
+
+  const remove = async (id: string) => {
+    if (!supabase) return;
+    if (!confirm("Remove this entry?")) return;
+    await supabase.from("waitlist_signups").delete().eq("id", id);
+    load();
+  };
+
+  return (
+    <div>
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-semibold">Waitlist</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            When ON, the entire site shows the waitlist landing — only admins can access pages.
+          </p>
+        </div>
+        <Button onClick={downloadExcel} disabled={items.length === 0}>
+          <Upload className="mr-2 h-4 w-4 rotate-180" /> Download Excel
+        </Button>
+      </div>
+
+      <Card className="mt-6 flex items-center justify-between gap-4 p-5">
+        <div>
+          <div className="font-medium">Waitlist mode</div>
+          <div className="text-sm text-muted-foreground">
+            Status: <span className={mode.enabled ? "text-primary font-medium" : "text-muted-foreground"}>{mode.enabled ? "ON" : "OFF"}</span>
+          </div>
+        </div>
+        <Switch checked={mode.enabled} disabled={saving} onCheckedChange={toggle} />
+      </Card>
+
+      <div className="mt-6">
+        <div className="mb-2 text-sm text-muted-foreground">{items.length} signup{items.length === 1 ? "" : "s"}</div>
+        {loading ? (
+          <div className="py-12 text-center"><DotLoader /></div>
+        ) : items.length === 0 ? (
+          <Card className="p-8 text-center text-sm text-muted-foreground">No signups yet.</Card>
+        ) : (
+          <Card className="overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="bg-muted/40 text-left">
+                  <tr>
+                    <th className="px-4 py-2 font-medium">#</th>
+                    <th className="px-4 py-2 font-medium">Name</th>
+                    <th className="px-4 py-2 font-medium">Phone</th>
+                    <th className="px-4 py-2 font-medium">Signed up</th>
+                    <th className="px-4 py-2"></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {items.map((i) => (
+                    <tr key={i.id} className="border-t">
+                      <td className="px-4 py-2 tabular-nums">{i.position}</td>
+                      <td className="px-4 py-2">{i.name}</td>
+                      <td className="px-4 py-2"><a className="underline" href={`tel:${i.phone}`}>{i.phone}</a></td>
+                      <td className="px-4 py-2 text-muted-foreground">{new Date(i.created_at).toLocaleString()}</td>
+                      <td className="px-4 py-2 text-right">
+                        <Button size="sm" variant="ghost" onClick={() => remove(i.id)}>
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </Card>
+        )}
+      </div>
+    </div>
+  );
+}
