@@ -3446,8 +3446,8 @@ export function WaitlistPage() {
   return (
     <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-background px-4 py-16">
       {/* Subtle professional backdrop */}
-      <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(circle_at_15%_10%,hsl(var(--primary)/0.10),transparent_55%),radial-gradient(circle_at_85%_90%,hsl(var(--primary)/0.08),transparent_55%)]" />
-      <div className="pointer-events-none absolute inset-0 -z-10 opacity-[0.025] [background-image:linear-gradient(to_right,hsl(var(--foreground))_1px,transparent_1px),linear-gradient(to_bottom,hsl(var(--foreground))_1px,transparent_1px)] [background-size:48px_48px]" />
+      <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(circle_at_12%_8%,hsl(var(--primary)/0.16),transparent_55%),radial-gradient(circle_at_88%_92%,#eab30822,transparent_55%)]" />
+      <div className="pointer-events-none absolute inset-0 -z-10 opacity-[0.03] [background-image:linear-gradient(to_right,hsl(var(--foreground))_1px,transparent_1px),linear-gradient(to_bottom,hsl(var(--foreground))_1px,transparent_1px)] [background-size:48px_48px]" />
 
       <div className="relative w-full max-w-xl">
         <div className="mb-8 flex justify-center"><BrandLogo className="h-14 w-14" /></div>
