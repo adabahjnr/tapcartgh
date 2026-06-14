@@ -3474,8 +3474,28 @@ export function WaitlistPage() {
               waitlist
             </h1>
             <p className="mt-3 text-base text-muted-foreground">
-              We're putting the finishing touches on the platform. Leave your details and we'll notify you the moment we go live.
+              HostelHub is the smarter way for UMaT students to find a hostel — browse verified rooms,
+              compare prices, see real reviews, and book straight from your phone. No more long queues,
+              no more guesswork.
             </p>
+            <p className="mt-3 text-sm text-muted-foreground">
+              We're putting the finishing touches on the platform. Drop your details and we'll notify you the moment we go live.
+            </p>
+
+            <div className="mt-6 grid grid-cols-3 gap-3 text-center">
+              <div className="rounded-lg border bg-muted/30 p-3">
+                <Building2 className="mx-auto h-5 w-5 text-primary" />
+                <div className="mt-1.5 text-xs font-medium">Verified hostels</div>
+              </div>
+              <div className="rounded-lg border bg-muted/30 p-3">
+                <Star className="mx-auto h-5 w-5 text-[#eab308]" />
+                <div className="mt-1.5 text-xs font-medium">Honest reviews</div>
+              </div>
+              <div className="rounded-lg border bg-muted/30 p-3">
+                <ShieldCheck className="mx-auto h-5 w-5 text-primary" />
+                <div className="mt-1.5 text-xs font-medium">Safe booking</div>
+              </div>
+            </div>
 
             <form onSubmit={submit} className="mt-8 space-y-5">
               <div>
