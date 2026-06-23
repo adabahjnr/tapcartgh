@@ -31,7 +31,55 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import logoAsset from "@/assets/hostelhub-logo.png.asset.json";
+import campusInsiderLogo from "@/assets/campus-insider-logo.jpg.asset.json";
+import umatLamlaLogo from "@/assets/umat-lamla-news-file-logo.jpg.asset.json";
 import { useLogoUrl, notifyLogoChanged } from "@/lib/data";
+
+export function PartnerLogos({
+  variant = "row",
+  className = "",
+}: {
+  variant?: "row" | "stacked";
+  className?: string;
+}) {
+  return (
+    <div className={`flex flex-col items-center gap-3 ${className}`}>
+      <div className="text-[10px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">
+        Official partners
+      </div>
+      <div
+        className={`flex flex-wrap items-center justify-center gap-x-6 gap-y-3 ${
+          variant === "stacked" ? "sm:flex-col sm:gap-4" : ""
+        }`}
+      >
+        <a
+          href="#"
+          aria-label="Campus Insider"
+          className="group inline-flex items-center rounded-md bg-white/95 px-2 py-1 ring-1 ring-border shadow-sm transition hover:shadow-md"
+        >
+          <img
+            src={campusInsiderLogo.url}
+            alt="Campus Insider — official partner"
+            className="h-8 w-auto object-contain sm:h-10"
+            loading="lazy"
+          />
+        </a>
+        <a
+          href="#"
+          aria-label="UMaT Lamla News File"
+          className="group inline-flex items-center rounded-md bg-white/95 px-2 py-1 ring-1 ring-border shadow-sm transition hover:shadow-md"
+        >
+          <img
+            src={umatLamlaLogo.url}
+            alt="UMaT Lamla News File — official partner"
+            className="h-8 w-auto object-contain sm:h-10"
+            loading="lazy"
+          />
+        </a>
+      </div>
+    </div>
+  );
+}
 
 function BrandLogo({ className = "h-8 w-8" }: { className?: string }) {
   const url = useLogoUrl("/favicon.png");
@@ -458,6 +506,9 @@ function SiteFooter() {
             .
           </p>
         </div>
+      </div>
+      <div className="border-t border-border py-6">
+        <PartnerLogos className="mx-auto max-w-6xl px-4 md:px-6" />
       </div>
       <div className="border-t border-border py-4 text-center text-xs text-muted-foreground">
         © {new Date().getFullYear()} HostelHub. Made for UMaT students.
@@ -3567,6 +3618,10 @@ export function WaitlistPage() {
         <p className="mt-8 text-center text-sm text-muted-foreground">
           Are you an admin? <Link to="/auth" className="font-medium text-foreground underline-offset-4 hover:underline">Sign in</Link>
         </p>
+
+        <div className="mt-10">
+          <PartnerLogos />
+        </div>
       </div>
     </div>
   );
