@@ -627,6 +627,7 @@ export function HomePage() {
                 </Link>
               ))}
             </div>
+            <PartnerLogos className="mt-10" />
           </div>
         </div>
       </section>
