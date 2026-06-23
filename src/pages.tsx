@@ -31,7 +31,55 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import logoAsset from "@/assets/hostelhub-logo.png.asset.json";
+import campusInsiderLogo from "@/assets/campus-insider-logo.jpg.asset.json";
+import umatLamlaLogo from "@/assets/umat-lamla-news-file-logo.jpg.asset.json";
 import { useLogoUrl, notifyLogoChanged } from "@/lib/data";
+
+export function PartnerLogos({
+  variant = "row",
+  className = "",
+}: {
+  variant?: "row" | "stacked";
+  className?: string;
+}) {
+  return (
+    <div className={`flex flex-col items-center gap-3 ${className}`}>
+      <div className="text-[10px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">
+        Official partners
+      </div>
+      <div
+        className={`flex flex-wrap items-center justify-center gap-x-6 gap-y-3 ${
+          variant === "stacked" ? "sm:flex-col sm:gap-4" : ""
+        }`}
+      >
+        <a
+          href="#"
+          aria-label="Campus Insider"
+          className="group inline-flex items-center rounded-md bg-white/95 px-2 py-1 ring-1 ring-border shadow-sm transition hover:shadow-md"
+        >
+          <img
+            src={campusInsiderLogo.url}
+            alt="Campus Insider — official partner"
+            className="h-8 w-auto object-contain sm:h-10"
+            loading="lazy"
+          />
+        </a>
+        <a
+          href="#"
+          aria-label="UMaT Lamla News File"
+          className="group inline-flex items-center rounded-md bg-white/95 px-2 py-1 ring-1 ring-border shadow-sm transition hover:shadow-md"
+        >
+          <img
+            src={umatLamlaLogo.url}
+            alt="UMaT Lamla News File — official partner"
+            className="h-8 w-auto object-contain sm:h-10"
+            loading="lazy"
+          />
+        </a>
+      </div>
+    </div>
+  );
+}
 
 function BrandLogo({ className = "h-8 w-8" }: { className?: string }) {
   const url = useLogoUrl("/favicon.png");
@@ -458,6 +506,9 @@ function SiteFooter() {
             .
           </p>
         </div>
+      </div>
+      <div className="border-t border-border py-6">
+        <PartnerLogos className="mx-auto max-w-6xl px-4 md:px-6" />
       </div>
       <div className="border-t border-border py-4 text-center text-xs text-muted-foreground">
         © {new Date().getFullYear()} HostelHub. Made for UMaT students.
@@ -3307,6 +3358,26 @@ export function AdminUsersPage() {
     refetch();
   };
 
+  const { user } = useAuth();
+  const setAdmin = async (userId: string, makeAdmin: boolean) => {
+    if (!supabase) return;
+    if (!makeAdmin && user?.id === userId) {
+      toast.error("You can't revoke your own admin access.");
+      return;
+    }
+    if (!makeAdmin && !window.confirm("Revoke admin access for this user?")) return;
+    setBusy(userId);
+    if (makeAdmin) {
+      const { error } = await supabase.from("user_roles").insert({ user_id: userId, role: "admin" });
+      if (error) toast.error(error.message); else toast.success("Promoted to admin");
+    } else {
+      const { error } = await supabase.from("user_roles").delete().eq("user_id", userId).eq("role", "admin");
+      if (error) toast.error(error.message); else toast.success("Admin access revoked");
+    }
+    setBusy(null);
+    refetch();
+  };
+
   const filtered = rows.filter((r) => {
     const q = query.trim().toLowerCase();
     if (!q) return true;
@@ -3347,10 +3418,23 @@ export function AdminUsersPage() {
                     {u.created_at && <span>Joined {new Date(u.created_at).toLocaleDateString()}</span>}
                   </div>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex flex-wrap gap-2">
                   {isAdmin ? (
-                    <span className="text-xs text-muted-foreground">Admin role managed in DB</span>
-                  ) : isOwner ? (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      disabled={busy === u.id || user?.id === u.id}
+                      onClick={() => setAdmin(u.id, false)}
+                      title={user?.id === u.id ? "You can't revoke your own admin" : undefined}
+                    >
+                      Revoke admin
+                    </Button>
+                  ) : (
+                    <Button size="sm" variant="secondary" disabled={busy === u.id} onClick={() => setAdmin(u.id, true)}>
+                      <ShieldCheck className="mr-1 h-4 w-4" /> Make admin
+                    </Button>
+                  )}
+                  {isOwner ? (
                     <Button size="sm" variant="outline" disabled={busy === u.id} onClick={() => setOwner(u.id, false)}>
                       Revoke owner
                     </Button>
@@ -3567,6 +3651,10 @@ export function WaitlistPage() {
         <p className="mt-8 text-center text-sm text-muted-foreground">
           Are you an admin? <Link to="/auth" className="font-medium text-foreground underline-offset-4 hover:underline">Sign in</Link>
         </p>
+
+        <div className="mt-10">
+          <PartnerLogos />
+        </div>
       </div>
     </div>
   );
