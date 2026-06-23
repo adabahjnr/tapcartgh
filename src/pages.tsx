@@ -1938,6 +1938,10 @@ export function AboutPage() {
         <p className="mt-2 text-muted-foreground">Browse without signing up. Create a free account to save favorites, write reviews, and submit accommodation requests.</p>
         <h2 className="mt-6 text-xl font-semibold">For hostel owners</h2>
         <p className="mt-2 text-muted-foreground">Register, submit your hostel, upload photos, and manage availability. Listings are verified for trust before being promoted.</p>
+
+        <div className="mt-12 rounded-2xl border border-border bg-secondary/30 p-6">
+          <PartnerLogos />
+        </div>
       </div>
     </PublicLayout>
   );
