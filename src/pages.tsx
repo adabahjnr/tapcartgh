@@ -313,6 +313,27 @@ export function PublicLayout({ children }: { children: ReactNode }) {
           </div>
         </div>
       </header>
+      <div className="border-b border-border bg-secondary/30">
+        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-center gap-x-5 gap-y-2 px-4 py-2 md:px-6">
+          <span className="text-[10px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">
+            In partnership with
+          </span>
+          <a
+            href="#"
+            aria-label="Campus Insider"
+            className="inline-flex items-center rounded-md bg-white/95 px-2 py-0.5 ring-1 ring-border shadow-sm transition hover:shadow-md"
+          >
+            <img src={campusInsiderLogo.url} alt="Campus Insider — official partner" className="h-6 w-auto object-contain" loading="lazy" />
+          </a>
+          <a
+            href="#"
+            aria-label="UMaT Lamla News File"
+            className="inline-flex items-center rounded-md bg-white/95 px-2 py-0.5 ring-1 ring-border shadow-sm transition hover:shadow-md"
+          >
+            <img src={umatLamlaLogo.url} alt="UMaT Lamla News File — official partner" className="h-6 w-auto object-contain" loading="lazy" />
+          </a>
+        </div>
+      </div>
       <main className="flex-1">{children}</main>
       <SiteFooter />
       <WelcomePopup />
