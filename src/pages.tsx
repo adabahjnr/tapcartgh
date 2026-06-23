@@ -3358,6 +3358,26 @@ export function AdminUsersPage() {
     refetch();
   };
 
+  const { user } = useAuth();
+  const setAdmin = async (userId: string, makeAdmin: boolean) => {
+    if (!supabase) return;
+    if (!makeAdmin && user?.id === userId) {
+      toast.error("You can't revoke your own admin access.");
+      return;
+    }
+    if (!makeAdmin && !window.confirm("Revoke admin access for this user?")) return;
+    setBusy(userId);
+    if (makeAdmin) {
+      const { error } = await supabase.from("user_roles").insert({ user_id: userId, role: "admin" });
+      if (error) toast.error(error.message); else toast.success("Promoted to admin");
+    } else {
+      const { error } = await supabase.from("user_roles").delete().eq("user_id", userId).eq("role", "admin");
+      if (error) toast.error(error.message); else toast.success("Admin access revoked");
+    }
+    setBusy(null);
+    refetch();
+  };
+
   const filtered = rows.filter((r) => {
     const q = query.trim().toLowerCase();
     if (!q) return true;
@@ -3398,10 +3418,23 @@ export function AdminUsersPage() {
                     {u.created_at && <span>Joined {new Date(u.created_at).toLocaleDateString()}</span>}
                   </div>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex flex-wrap gap-2">
                   {isAdmin ? (
-                    <span className="text-xs text-muted-foreground">Admin role managed in DB</span>
-                  ) : isOwner ? (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      disabled={busy === u.id || user?.id === u.id}
+                      onClick={() => setAdmin(u.id, false)}
+                      title={user?.id === u.id ? "You can't revoke your own admin" : undefined}
+                    >
+                      Revoke admin
+                    </Button>
+                  ) : (
+                    <Button size="sm" variant="secondary" disabled={busy === u.id} onClick={() => setAdmin(u.id, true)}>
+                      <ShieldCheck className="mr-1 h-4 w-4" /> Make admin
+                    </Button>
+                  )}
+                  {isOwner ? (
                     <Button size="sm" variant="outline" disabled={busy === u.id} onClick={() => setOwner(u.id, false)}>
                       Revoke owner
                     </Button>
