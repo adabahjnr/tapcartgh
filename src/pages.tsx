@@ -644,7 +644,12 @@ export function HomePage() {
         <HostelGrid hostels={available} empty="No hostels listed yet — be the first." />
       </Section>
 
+      <section className="border-y border-border bg-secondary/20 py-10">
+        <PartnerLogos className="mx-auto max-w-6xl px-4 md:px-6" />
+      </section>
+
       <FounderSection founder={founder} />
+
 
 
       <section className="relative overflow-hidden border-t border-border bg-secondary/40">
