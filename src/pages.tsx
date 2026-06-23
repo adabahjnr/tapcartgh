@@ -31,8 +31,8 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import logoAsset from "@/assets/hostelhub-logo.png.asset.json";
-import campusInsiderLogo from "@/assets/campus-insider-logo.jpg.asset.json";
-import umatLamlaLogo from "@/assets/umat-lamla-news-file-logo.jpg.asset.json";
+import campusInsiderLogo from "@/assets/campus-insider-logo.jpg";
+import umatLamlaLogo from "@/assets/umat-lamla-news-file-logo.jpg";
 import { useLogoUrl, notifyLogoChanged } from "@/lib/data";
 
 export function PartnerLogos({
@@ -58,7 +58,7 @@ export function PartnerLogos({
           className="group inline-flex items-center rounded-md bg-white/95 px-2 py-1 ring-1 ring-border shadow-sm transition hover:shadow-md"
         >
           <img
-            src={campusInsiderLogo.url}
+            src={campusInsiderLogo}
             alt="Campus Insider — official partner"
             className="h-8 w-auto object-contain sm:h-10"
             loading="lazy"
@@ -70,7 +70,7 @@ export function PartnerLogos({
           className="group inline-flex items-center rounded-md bg-white/95 px-2 py-1 ring-1 ring-border shadow-sm transition hover:shadow-md"
         >
           <img
-            src={umatLamlaLogo.url}
+            src={umatLamlaLogo}
             alt="UMaT Lamla News File — official partner"
             className="h-8 w-auto object-contain sm:h-10"
             loading="lazy"
@@ -323,14 +323,14 @@ export function PublicLayout({ children }: { children: ReactNode }) {
             aria-label="Campus Insider"
             className="inline-flex items-center rounded-md bg-white/95 px-2 py-0.5 ring-1 ring-border shadow-sm transition hover:shadow-md"
           >
-            <img src={campusInsiderLogo.url} alt="Campus Insider — official partner" className="h-6 w-auto object-contain" loading="lazy" />
+            <img src={campusInsiderLogo} alt="Campus Insider — official partner" className="h-6 w-auto object-contain" loading="lazy" />
           </a>
           <a
             href="#"
             aria-label="UMaT Lamla News File"
             className="inline-flex items-center rounded-md bg-white/95 px-2 py-0.5 ring-1 ring-border shadow-sm transition hover:shadow-md"
           >
-            <img src={umatLamlaLogo.url} alt="UMaT Lamla News File — official partner" className="h-6 w-auto object-contain" loading="lazy" />
+            <img src={umatLamlaLogo} alt="UMaT Lamla News File — official partner" className="h-6 w-auto object-contain" loading="lazy" />
           </a>
         </div>
       </div>
