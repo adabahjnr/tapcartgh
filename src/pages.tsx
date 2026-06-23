@@ -313,6 +313,27 @@ export function PublicLayout({ children }: { children: ReactNode }) {
           </div>
         </div>
       </header>
+      <div className="border-b border-border bg-secondary/30">
+        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-center gap-x-5 gap-y-2 px-4 py-2 md:px-6">
+          <span className="text-[10px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">
+            In partnership with
+          </span>
+          <a
+            href="#"
+            aria-label="Campus Insider"
+            className="inline-flex items-center rounded-md bg-white/95 px-2 py-0.5 ring-1 ring-border shadow-sm transition hover:shadow-md"
+          >
+            <img src={campusInsiderLogo.url} alt="Campus Insider — official partner" className="h-6 w-auto object-contain" loading="lazy" />
+          </a>
+          <a
+            href="#"
+            aria-label="UMaT Lamla News File"
+            className="inline-flex items-center rounded-md bg-white/95 px-2 py-0.5 ring-1 ring-border shadow-sm transition hover:shadow-md"
+          >
+            <img src={umatLamlaLogo.url} alt="UMaT Lamla News File — official partner" className="h-6 w-auto object-contain" loading="lazy" />
+          </a>
+        </div>
+      </div>
       <main className="flex-1">{children}</main>
       <SiteFooter />
       <WelcomePopup />
@@ -606,6 +627,7 @@ export function HomePage() {
                 </Link>
               ))}
             </div>
+            <PartnerLogos className="mt-10" />
           </div>
         </div>
       </section>
@@ -622,7 +644,12 @@ export function HomePage() {
         <HostelGrid hostels={available} empty="No hostels listed yet — be the first." />
       </Section>
 
+      <section className="border-y border-border bg-secondary/20 py-10">
+        <PartnerLogos className="mx-auto max-w-6xl px-4 md:px-6" />
+      </section>
+
       <FounderSection founder={founder} />
+
 
 
       <section className="relative overflow-hidden border-t border-border bg-secondary/40">
@@ -1911,6 +1938,10 @@ export function AboutPage() {
         <p className="mt-2 text-muted-foreground">Browse without signing up. Create a free account to save favorites, write reviews, and submit accommodation requests.</p>
         <h2 className="mt-6 text-xl font-semibold">For hostel owners</h2>
         <p className="mt-2 text-muted-foreground">Register, submit your hostel, upload photos, and manage availability. Listings are verified for trust before being promoted.</p>
+
+        <div className="mt-12 rounded-2xl border border-border bg-secondary/30 p-6">
+          <PartnerLogos />
+        </div>
       </div>
     </PublicLayout>
   );
