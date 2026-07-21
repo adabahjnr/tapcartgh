@@ -560,77 +560,176 @@ export function HomePage() {
 
   return (
     <PublicLayout>
-      <section className="relative isolate overflow-hidden">
+      <section className="relative isolate overflow-hidden bg-background">
+        {/* Blue mesh backdrop */}
+        <div aria-hidden className="absolute inset-0 z-0">
+          <div className="absolute -left-32 -top-32 h-[26rem] w-[26rem] rounded-full bg-primary/25 blur-3xl" />
+          <div className="absolute right-[-6rem] top-24 h-[22rem] w-[22rem] rounded-full bg-[var(--pop-mint)]/40 blur-3xl" />
+          <div className="absolute bottom-[-8rem] left-1/3 h-[24rem] w-[24rem] rounded-full bg-[var(--accent)]/45 blur-3xl" />
+          <div
+            className="absolute inset-0 opacity-[0.35]"
+            style={{
+              backgroundImage:
+                "linear-gradient(to right, color-mix(in oklch, var(--primary) 12%, transparent) 1px, transparent 1px), linear-gradient(to bottom, color-mix(in oklch, var(--primary) 12%, transparent) 1px, transparent 1px)",
+              backgroundSize: "44px 44px",
+              maskImage: "radial-gradient(ellipse at center, black 40%, transparent 78%)",
+            }}
+          />
+        </div>
+
+        {/* Optional admin hero image (kept, but overlaid softly with blue tint) */}
         {hero.image_url && (
           <>
             <div
-              className="absolute inset-0 z-0 bg-cover bg-center"
+              className="absolute inset-0 z-0 bg-cover bg-center opacity-40"
               style={{ backgroundImage: `url(${hero.image_url})` }}
               aria-hidden
             />
             <div
-              className="absolute inset-0 z-0 bg-black"
-              style={{ opacity: Math.max(0, Math.min(1, hero.dim ?? 0.4)) }}
+              className="absolute inset-0 z-0 bg-primary/40 mix-blend-multiply"
+              style={{ opacity: Math.max(0.25, Math.min(0.65, hero.dim ?? 0.4)) }}
               aria-hidden
             />
           </>
         )}
-        {!hero.image_url && (
-          <>
-            <div className="absolute inset-0 z-0 hh-grain opacity-80" />
-            <div className="absolute inset-0 z-0 bg-gradient-to-b from-transparent via-background/40 to-background" />
-          </>
-        )}
 
-        {/* Floating doodles */}
-        <DoodleStar className="absolute left-6 top-10 h-10 w-10 text-[var(--pop-sun)] hh-wiggle" />
-        <DoodleHouse className="absolute right-8 top-16 h-16 w-16 text-primary hh-bob" />
-        <DoodleSquiggle className="absolute left-10 bottom-6 h-6 w-32 text-[var(--pop-coral)]" />
-        <DoodleKey className="absolute right-12 bottom-10 h-12 w-12 text-[var(--pop-mint)] hh-wiggle" />
-        <DoodleCircle className="absolute left-1/2 top-24 hidden h-40 w-40 -translate-x-1/2 text-primary/15 md:block hh-spin-slow" />
-
-        <div className="relative z-10 mx-auto max-w-5xl px-4 py-20 md:px-6 md:py-28">
-          <div className="mx-auto max-w-3xl text-center hh-pop">
-            <span className="hh-chip mb-5">
-              <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
-              UMaT student housing
-            </span>
-            <h1 className={`text-4xl font-bold tracking-tight md:text-6xl ${hero.image_url ? "text-white drop-shadow-lg" : ""}`}>
-              Your hostel,{" "}
-              <span className="relative inline-block">
-                <span className="relative z-10">sorted.</span>
-                <DoodleSquiggle className="absolute -bottom-3 left-0 z-0 h-4 w-full text-primary" />
+        <div className="relative z-10 mx-auto grid max-w-6xl gap-12 px-4 py-16 md:grid-cols-[1.15fr_1fr] md:items-center md:gap-10 md:px-6 md:py-24">
+          {/* LEFT: headline + search */}
+          <div className="hh-pop">
+            <span className="inline-flex items-center gap-2 rounded-full border border-primary/25 bg-primary/10 px-3 py-1.5 text-xs font-medium text-primary">
+              <span className="relative flex h-2 w-2">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-70" />
+                <span className="relative inline-flex h-2 w-2 rounded-full bg-primary" />
               </span>
+              Live · {hostels.length} hostels near UMaT
+            </span>
+
+            <h1 className="mt-6 font-bold tracking-tight text-foreground">
+              Find your{" "}
+              <span className="relative inline-block">
+                <span className="relative z-10 bg-gradient-to-r from-primary via-primary to-[oklch(0.62_0.19_235)] bg-clip-text text-transparent">
+                  perfect hostel
+                </span>
+                <svg
+                  aria-hidden
+                  viewBox="0 0 200 12"
+                  className="absolute -bottom-2 left-0 z-0 h-3 w-full text-primary/60"
+                >
+                  <path
+                    d="M2 8 C 50 2, 120 12, 198 5"
+                    stroke="currentColor"
+                    strokeWidth="3"
+                    strokeLinecap="round"
+                    fill="none"
+                  />
+                </svg>
+              </span>
+              <br />
+              in minutes.
             </h1>
-            <p className={`mx-auto mt-5 max-w-lg text-base ${hero.image_url ? "text-white/85" : "text-muted-foreground"}`}>
-              Browse verified hostels around campus. Compare. Connect.
+
+            <p className="mt-5 max-w-xl text-base text-muted-foreground md:text-lg">
+              Browse verified hostels around campus. Compare prices, amenities, and message owners on WhatsApp — no stress.
             </p>
-            <form onSubmit={onSearch} className="mt-8 flex w-full items-center gap-2 rounded-full border border-border bg-card p-2 shadow-lg shadow-primary/5">
+
+            <form
+              onSubmit={onSearch}
+              className="mt-8 flex w-full max-w-xl items-center gap-2 rounded-2xl border border-border bg-card p-2 shadow-[0_20px_60px_-30px_oklch(0.55_0.19_255_/_0.5)] focus-within:border-primary focus-within:shadow-[0_20px_60px_-20px_oklch(0.55_0.19_255_/_0.6)] transition"
+            >
               <Search className="ml-3 h-5 w-5 text-muted-foreground" />
               <input
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
                 placeholder="Search by name, area, or amenity…"
-                className="flex-1 bg-transparent px-2 py-2 text-sm outline-none placeholder:text-muted-foreground"
+                className="flex-1 bg-transparent px-2 py-2.5 text-sm outline-none placeholder:text-muted-foreground"
               />
-              <Button type="submit" className="rounded-full px-5">Search</Button>
+              <Button type="submit" className="rounded-xl px-5">
+                Search
+              </Button>
             </form>
-            <div className="mt-5 flex flex-wrap items-center justify-center gap-2 text-xs">
+
+            <div className="mt-5 flex flex-wrap items-center gap-2 text-xs">
+              <span className="text-muted-foreground">Popular:</span>
               {["Tarkwa", "Brahabebome", "T-Polo", "Cyanide", "Akoon"].map((p, i) => (
                 <Link
                   key={p}
                   to={`/hostels?q=${encodeURIComponent(p)}`}
-                  className="rounded-full border border-border bg-background/70 px-3 py-1.5 text-muted-foreground backdrop-blur transition hover:-translate-y-0.5 hover:border-primary hover:text-primary"
+                  className="rounded-full border border-border bg-card/70 px-3 py-1.5 text-muted-foreground backdrop-blur transition hover:-translate-y-0.5 hover:border-primary hover:text-primary"
                   style={{ animation: `hh-pop-in .5s ${i * 80}ms both` }}
                 >
                   #{p}
                 </Link>
               ))}
             </div>
-            <PartnerLogos className="mt-10" />
+
+            <div className="mt-8 flex flex-wrap items-center gap-6 text-sm text-muted-foreground">
+              <div className="flex items-center gap-2">
+                <div className="flex -space-x-2">
+                  <div className="h-7 w-7 rounded-full border-2 border-background bg-primary/70" />
+                  <div className="h-7 w-7 rounded-full border-2 border-background bg-[var(--accent)]" />
+                  <div className="h-7 w-7 rounded-full border-2 border-background bg-[var(--pop-mint)]" />
+                </div>
+                <span>Trusted by UMaT students</span>
+              </div>
+              <div className="hidden h-6 w-px bg-border sm:block" />
+              <span>Verified listings · Instant WhatsApp contact</span>
+            </div>
+          </div>
+
+          {/* RIGHT: interactive floating preview stack */}
+          <div className="relative mx-auto hidden aspect-[4/5] w-full max-w-md md:block">
+            <div className="absolute inset-0">
+              {/* Card 1 */}
+              <div className="absolute left-0 top-4 w-[78%] rotate-[-6deg] rounded-3xl border border-border bg-card p-4 shadow-2xl transition-transform duration-500 hover:-translate-y-2 hover:rotate-[-3deg]">
+                <div className="mb-3 h-32 w-full rounded-2xl bg-gradient-to-br from-primary/70 to-[oklch(0.72_0.16_235)]/70" />
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="text-sm font-semibold">Sunrise Lodge</div>
+                    <div className="text-xs text-muted-foreground">Brahabebome · 8 min</div>
+                  </div>
+                  <div className="rounded-full bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary">
+                    GHS 2.5k
+                  </div>
+                </div>
+              </div>
+
+              {/* Card 2 */}
+              <div className="absolute right-0 top-24 w-[74%] rotate-[5deg] rounded-3xl border border-border bg-card p-4 shadow-2xl transition-transform duration-500 hover:-translate-y-2 hover:rotate-[2deg]">
+                <div className="mb-3 h-28 w-full rounded-2xl bg-gradient-to-br from-[var(--pop-mint)] to-primary/50" />
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="text-sm font-semibold">Palm Court</div>
+                    <div className="text-xs text-muted-foreground">Tarkwa · 5 min</div>
+                  </div>
+                  <div className="rounded-full bg-[var(--accent)]/30 px-2.5 py-1 text-xs font-semibold text-foreground">
+                    GHS 3.2k
+                  </div>
+                </div>
+              </div>
+
+              {/* Card 3 — floating stat */}
+              <div className="absolute bottom-0 left-6 flex w-[70%] items-center gap-3 rounded-2xl border border-border bg-card/95 p-4 shadow-xl backdrop-blur">
+                <div className="grid h-11 w-11 place-items-center rounded-xl bg-primary/15 text-primary">
+                  <Users className="h-5 w-5" />
+                </div>
+                <div>
+                  <div className="text-sm font-semibold">Message on WhatsApp</div>
+                  <div className="text-xs text-muted-foreground">Owner replies in minutes</div>
+                </div>
+              </div>
+
+              {/* Floating accents */}
+              <div className="absolute -right-4 top-0 h-14 w-14 animate-pulse rounded-2xl bg-[var(--accent)]/60" />
+              <div className="absolute -bottom-4 right-8 h-10 w-10 rounded-full border-2 border-primary/40" />
+            </div>
           </div>
         </div>
+
+        <div className="relative z-10 mx-auto max-w-6xl px-4 pb-10 md:px-6">
+          <PartnerLogos />
+        </div>
       </section>
+
 
       <Section
         title="Available hostels"
