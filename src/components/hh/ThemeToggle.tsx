@@ -5,9 +5,15 @@ import { cn } from "@/lib/utils";
 export function ThemeToggle({ className, floating = false }: { className?: string; floating?: boolean }) {
   const [dark, setDark] = useState(() => {
     if (typeof window === "undefined") return false;
+    // One-time reset to enforce the new light-theme default
+    if (!localStorage.getItem("hh-theme-v2")) {
+      localStorage.setItem("hh-theme-v2", "1");
+      localStorage.setItem("hh-theme", "light");
+      return false;
+    }
     const saved = localStorage.getItem("hh-theme");
     if (saved) return saved === "dark";
-    return false; // default to light
+    return false;
   });
 
   useEffect(() => {
