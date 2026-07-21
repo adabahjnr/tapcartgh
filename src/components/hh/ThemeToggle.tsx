@@ -7,7 +7,7 @@ export function ThemeToggle({ className, floating = false }: { className?: strin
     if (typeof window === "undefined") return false;
     const saved = localStorage.getItem("hh-theme");
     if (saved) return saved === "dark";
-    return window.matchMedia("(prefers-color-scheme: dark)").matches;
+    return false; // default to light
   });
 
   useEffect(() => {
